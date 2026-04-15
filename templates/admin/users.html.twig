@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion Utilisateurs — Orange Tunisie</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .sidebar {
+            width: 250px; background: #1a1a2e; height: 100vh;
+            position: fixed; left: 0; top: 0;
+            display: flex; flex-direction: column; padding: 1.5rem;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
+        .logo-circle {
+            width: 42px; height: 42px; background: #FF6600;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; color: white; font-size: 18px;
+        }
+        .logo-text { color: white; font-size: 14px; font-weight: 500; }
+        .logo-sub { color: #aaa; font-size: 11px; }
+        .nav-section {
+            font-size: 10px; color: #666;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin: 1.5rem 0 0.5rem;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0.6rem 0.8rem; border-radius: 8px;
+            color: #ccc; text-decoration: none; font-size: 13px;
+            margin-bottom: 2px; transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active { background: #FF6600; color: white; }
+        .main { margin-left: 250px; padding: 2rem; }
+        .topbar {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 2rem;
+        }
+        .topbar h1 { font-size: 20px; font-weight: 500; color: #333; }
+        .user-badge {
+            display: flex; align-items: center; gap: 10px;
+            background: white; padding: 0.5rem 1rem;
+            border-radius: 20px; border: 1px solid #eee;
+            font-size: 13px; color: #555;
+        }
+        .avatar {
+            width: 32px; height: 32px; background: #FF6600;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 13px; font-weight: 600;
+        }
+        .flash-success {
+            background: #e6ffe6; border: 1px solid #00cc66;
+            color: #006600; padding: 0.75rem 1rem;
+            border-radius: 8px; margin-bottom: 1rem; font-size: 13px;
+        }
+        .flash-error {
+            background: #fff0f0; border: 1px solid #ffcccc;
+            color: #cc0000; padding: 0.75rem 1rem;
+            border-radius: 8px; margin-bottom: 1rem; font-size: 13px;
+        }
+        .users-table {
+            background: white; border-radius: 10px;
+            border: 1px solid #eee; overflow: hidden;
+        }
+        .table-header {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 1rem 1.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        .table-header span { font-size: 14px; font-weight: 500; color: #333; }
+        .btn-add {
+            background: #FF6600; color: white; border: none;
+            padding: 0.5rem 1rem; border-radius: 8px;
+            font-size: 13px; cursor: pointer;
+            text-decoration: none; display: inline-block;
+        }
+        .btn-add:hover { background: #e55a00; }
+        
+        /* STYLES POUR LE TABLEAU */
+        .table-wrapper {
+            overflow-x: auto;
+            width: 100%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+        th {
+            text-align: left;
+            font-size: 12px;
+            color: #888;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            background: #fafafa;
+            border-bottom: 1px solid #eee;
+        }
+        td {
+            padding: 0.85rem 1rem;
+            font-size: 13px;
+            color: #333;
+            border-bottom: 1px solid #f5f5f5;
+            white-space: nowrap;
+        }
+        tr:last-child td { border-bottom: none; }
+        
+        /* STYLES POUR LES BOUTONS DANS LA MÊME LIGNE */
+        .actions-wrapper {
+            display: flex;
+            gap: 6px;
+            flex-wrap: nowrap;
+            align-items: center;
+        }
+        .actions-wrapper > * {
+            flex-shrink: 0;
+        }
+        .inline-form {
+            display: inline-block;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* STYLES DES BOUTONS */
+        .role-badge {
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 500;
+            white-space: nowrap;
+            display: inline-block;
+            transition: all 0.2s ease;
+        }
+        .role-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .role-superuser { background: #e6e6ff; color: #3300cc; }
+        .role-support_fo { background: #e6f0ff; color: #0066cc; }
+        .role-support_fh { background: #f0e6ff; color: #6600cc; }
+        .role-ingenierie_fh { background: #e6ffe6; color: #006600; }
+        .role-ingenierie_ip { background: #e6f9ff; color: #003399; }
+        .role-gc { background: #fff3e0; color: #996600; }
+        .role-deploiement { background: #ffe6e6; color: #cc0000; }
+        .role-admin { background: #fff0e6; color: #FF6600; }
+        
+        /* Nouveau badge pour le rôle Contrôleur */
+        .role-controleur {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3);
+        }
+        .role-controleur:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+        }
+        
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            display: inline-block; margin-right: 6px;
+        }
+        .status-active { background: #00cc66; }
+        .status-inactive { background: #ccc; }
+        
+        .btn-edit {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            text-decoration: none;
+            background: #e6f0ff;
+            color: #0066cc;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-edit:hover { background: #0066cc; color: white; }
+        
+        .btn-toggle-on {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            text-decoration: none;
+            background: #fff3e0;
+            color: #FF6600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-toggle-on:hover { background: #FF6600; color: white; }
+        
+        .btn-toggle-off {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            text-decoration: none;
+            background: #e6ffe6;
+            color: #006600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-toggle-off:hover { background: #006600; color: white; }
+        
+        .btn-delete {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            background: #ffe6e6;
+            color: #cc0000;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-delete:hover { background: #cc0000; color: white; }
+        
+        .btn-reset {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            background: #f0f0f0;
+            color: #555;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-reset:hover { background: #555; color: white; }
+        
+        .logout-btn {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            color: #ccc;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover { background: #cc0000; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-circle">O</div>
+        <div>
+            <div class="logo-text">NetWON</div>
+            <div class="logo-sub">You Don't Save Time. You WON It</div>
+        </div>
+    </div>
+    <span class="nav-section">Administration</span>
+    <a href="{{ path('admin_dashboard') }}" class="nav-item">🏠 Dashboard</a>
+    <a href="{{ path('admin_users') }}" class="nav-item active">👥 Gestion Utilisateurs</a>
+    <a href="#" class="nav-item">📊 Rapports</a>
+    <span class="nav-section">Système</span>
+    <a href="{{ path('admin_settings') }}" class="nav-item">⚙️ Paramètres</a>
+    <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+</div>
+
+<div class="main">
+    <div class="topbar">
+        <h1>Gestion des Utilisateurs</h1>
+        <div class="user-badge">
+            <div class="avatar">{{ user.fullName|slice(0,1)|upper }}</div>
+            {{ user.fullName }} — <strong>{{ user.roleLabel }}</strong>
+        </div>
+    </div>
+
+    {% for msg in app.flashes('success') %}
+        <div class="flash-success">✅ {{ msg }}</div>
+    {% endfor %}
+    {% for msg in app.flashes('error') %}
+        <div class="flash-error">❌ {{ msg }}</div>
+    {% endfor %}
+
+    <div class="users-table">
+        <div class="table-header">
+            <span>{{ users|length }} utilisateur(s) enregistré(s)</span>
+            <a href="{{ path('admin_user_new') }}" class="btn-add">+ Ajouter un utilisateur</a>
+        </div>
+        
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom complet</th>
+                        <th>Email</th>
+                        <th>Rôle</th>
+                        <th>Statut</th>
+                        <th>Créé le</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.fullName ?? '—' }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>
+                            <span class="role-badge {% if u.role == 'controleur' %}role-controleur{% else %}role-{{ u.role }}{% endif %}">
+                                {{ u.roleLabel }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-dot {{ u.isActive ? 'status-active' : 'status-inactive' }}"></span>
+                            {{ u.isActive ? 'Actif' : 'Inactif' }}
+                        </td>
+                        <td>{{ u.createdAt ? u.createdAt|date('d/m/Y') : '—' }}</td>
+                        <td>
+                            <div class="actions-wrapper">
+                                <a href="{{ path('admin_user_edit', {id: u.id}) }}" class="btn-edit">✏️ Modifier</a>
+
+                                {% if u.id != user.id %}
+                                    <a href="{{ path('admin_user_toggle', {id: u.id}) }}"
+                                       class="{{ u.isActive ? 'btn-toggle-on' : 'btn-toggle-off' }}"
+                                       onclick="return confirmToggle('{{ u.fullName }}', {{ u.isActive ? 'true' : 'false' }})">
+                                        {{ u.isActive ? '🔒 Désactiver' : '🔓 Activer' }}
+                                    </a>
+
+                                    <form method="post" 
+                                          action="{{ path('admin_user_delete', {id: u.id}) }}" 
+                                          class="inline-form"
+                                          onsubmit="return confirmDelete('{{ u.fullName }}')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ u.id) }}">
+                                        <button type="submit" class="btn-delete">🗑️ Supprimer</button>
+                                    </form>
+
+                                    <form method="post" 
+                                          action="{{ path('admin_user_reset_password', {id: u.id}) }}" 
+                                          class="inline-form"
+                                          onsubmit="return handleResetSubmit(event, this, '{{ u.fullName }}')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('reset' ~ u.id) }}">
+                                        <input type="hidden" name="new_password" id="new_password_{{ u.id }}">
+                                        <button type="button" class="btn-reset" onclick="showResetPrompt({{ u.id }}, '{{ u.fullName }}')">
+                                            🔑 Reset MDP
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">Aucun utilisateur trouvé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// Confirmation pour la suppression
+function confirmDelete(userName) {
+    return confirm(`⚠️ Êtes-vous ABSOLUMENT sûr de vouloir supprimer "${userName}" ?\n\nCette action est IRRÉVERSIBLE et supprimera toutes les données associées !`);
+}
+
+// Confirmation pour l'activation/désactivation
+function confirmToggle(userName, isActive) {
+    const action = isActive ? 'désactiver' : 'activer';
+    return confirm(`Voulez-vous ${action} le compte de "${userName}" ?`);
+}
+
+// Fonction pour le reset du mot de passe
+function showResetPrompt(userId, userName) {
+    const newPassword = prompt(`🔑 Réinitialisation du mot de passe pour : ${userName}\n\nEntrez le nouveau mot de passe (minimum 6 caractères) :`);
+    
+    if (newPassword && newPassword.length >= 6) {
+        document.getElementById('new_password_' + userId).value = newPassword;
+        const form = document.getElementById('new_password_' + userId).closest('form');
+        form.submit();
+    } else if (newPassword && newPassword.length < 6) {
+        alert('❌ Le mot de passe doit contenir au moins 6 caractères !');
+    }
+}
+
+// Gestionnaire pour la soumission du reset
+function handleResetSubmit(event, form, userName) {
+    const passwordInput = form.querySelector('input[name="new_password"]');
+    if (!passwordInput.value || passwordInput.value.length < 6) {
+        event.preventDefault();
+        alert('❌ Veuillez entrer un mot de passe valide (minimum 6 caractères)');
+        return false;
+    }
+    return confirm(`Confirmer la réinitialisation du mot de passe pour "${userName}" ?`);
+}
+
+console.log('✅ Page chargée - Tous les boutons sont sur la même ligne');
+</script>
+
+</body>
+</html>

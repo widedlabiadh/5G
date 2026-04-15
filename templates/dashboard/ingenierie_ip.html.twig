@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Ingénierie IP — Orange Tunisie</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .sidebar {
+            width: 250px; background: #1a1a2e; height: 100vh;
+            position: fixed; left: 0; top: 0;
+            display: flex; flex-direction: column; padding: 1.5rem;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
+        .logo-circle {
+            width: 42px; height: 42px; background: #FF6600;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; color: white; font-size: 18px;
+        }
+        .logo-text { color: white; font-size: 14px; font-weight: 500; }
+        .logo-sub { color: #aaa; font-size: 11px; }
+        .nav-section {
+            font-size: 10px; color: #666;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin: 1.5rem 0 0.5rem;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0.6rem 0.8rem; border-radius: 8px;
+            color: #ccc; text-decoration: none; font-size: 13px;
+            margin-bottom: 2px; transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active { background: #FF6600; color: white; }
+        .main { margin-left: 250px; padding: 2rem; }
+        .topbar {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 2rem;
+        }
+        .topbar h1 { font-size: 20px; font-weight: 500; color: #333; }
+        .user-badge {
+            display: flex; align-items: center; gap: 10px;
+            background: white; padding: 0.5rem 1rem;
+            border-radius: 20px; border: 1px solid #eee;
+            font-size: 13px; color: #555;
+        }
+        .avatar {
+            width: 32px; height: 32px; background: #003399;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 11px; font-weight: 600;
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 16px; margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white; border-radius: 10px;
+            padding: 1.2rem; border: 1px solid #eee;
+        }
+        .stat-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+        .stat-value { font-size: 26px; font-weight: 600; color: #333; }
+        .stat-sub { font-size: 11px; color: #aaa; margin-top: 4px; }
+        .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .info-card {
+            background: white; border-radius: 10px;
+            border: 1px solid #eee; padding: 1.5rem;
+            border-top: 4px solid #003399;
+        }
+        .info-card h3 { font-size: 14px; font-weight: 500; color: #333; margin-bottom: 1rem; }
+        .info-row {
+            display: flex; justify-content: space-between;
+            padding: 0.5rem 0; border-bottom: 1px solid #f5f5f5; font-size: 13px;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #888; }
+        .info-value { font-weight: 500; color: #333; }
+        .backbone-card {
+            background: white; border-radius: 10px;
+            border: 1px solid #eee; padding: 1.5rem;
+            border-top: 4px solid #FF6600; margin-top: 1.5rem;
+        }
+        .backbone-card h3 { font-size: 14px; font-weight: 500; color: #333; margin-bottom: 1rem; }
+        .backbone-row {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+            padding: 0.6rem 0; border-bottom: 1px solid #f5f5f5;
+            font-size: 13px; align-items: center;
+        }
+        .backbone-row.header { color: #888; font-size: 11px; font-weight: 500; }
+        .backbone-row:last-child { border-bottom: none; }
+        .logout-btn {
+            margin-top: auto; display: flex; align-items: center; gap: 10px;
+            padding: 0.6rem 0.8rem; border-radius: 8px;
+            color: #ccc; text-decoration: none; font-size: 13px; transition: all 0.2s;
+        }
+        .logout-btn:hover { background: #cc0000; color: white; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-circle">O</div>
+        <div>
+            <div class="logo-text">Orange Tunisie</div>
+            <div class="logo-sub">Transmission Monitor</div>
+        </div>
+    </div>
+    <span class="nav-section">Ingénierie IP</span>
+    <a href="#" class="nav-item active">🏠 Dashboard</a>
+    <a href="#" class="nav-item">🌐 Backbone Partagé</a>
+    <a href="#" class="nav-item">🤖 Prévisions IA</a>
+    <span class="nav-section">Réseau IP</span>
+    <a href="#" class="nav-item">🔗 Liens IP</a>
+    <a href="#" class="nav-item">📊 QoS</a>
+    <a href="#" class="nav-item">⚠️ Congestions</a>
+    <span class="nav-section">Rapports</span>
+    <a href="#" class="nav-item">📅 Journalier</a>
+    <a href="#" class="nav-item">📅 Hebdomadaire</a>
+    <a href="#" class="nav-item">📅 Mensuel</a>
+    <a href="#" class="nav-item">🕐 Historique</a>
+    <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+</div>
+<div class="main">
+    <div class="topbar">
+        <h1>Dashboard Ingénierie IP</h1>
+        <div class="user-badge">
+            <div class="avatar">IP</div>
+            {{ user.fullName ?? user.email }} 
+        </div>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Liens IP actifs</div>
+            <div class="stat-value">—</div>
+            <div class="stat-sub">Backbone partagé</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Congestions IP</div>
+            <div class="stat-value" style="color:#cc0000">0</div>
+            <div class="stat-sub">Aujourd'hui</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">QoS moyenne</div>
+            <div class="stat-value" style="color:#00cc66">—</div>
+            <div class="stat-sub">Réseau IP</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Prévision J+7</div>
+            <div class="stat-value" style="color:#FF6600">—</div>
+            <div class="stat-sub">Estimation trafic</div>
+        </div>
+    </div>
+    <div class="two-cols">
+        <div class="info-card">
+            <h3>🌐 Backbone Partagé</h3>
+            <div class="info-row">
+                <span class="info-label">Opérateurs partagés</span>
+                <span class="info-value">TT / Ooredoo</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Bande passante totale</span>
+                <span class="info-value">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Trafic actuel</span>
+                <span class="info-value">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Taux utilisation</span>
+                <span class="info-value">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Seuil critique (90%)</span>
+                <span class="info-value">—</span>
+            </div>
+        </div>
+        <div class="info-card">
+            <h3>📊 QoS & Performance</h3>
+            <div class="info-row">
+                <span class="info-label">Latence moyenne</span>
+                <span class="info-value">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Jitter</span>
+                <span class="info-value">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Perte de paquets</span>
+                <span class="info-value">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Disponibilité</span>
+                <span class="info-value">—</span>
+            </div>
+        </div>
+    </div>
+    <div class="backbone-card">
+        <h3>🔗 État Backbone par opérateur</h3>
+        <div class="backbone-row header">
+            <span>Opérateur</span>
+            <span>Trafic</span>
+            <span>Utilisation</span>
+            <span>État</span>
+        </div>
+        <div class="backbone-row">
+            <span>Tunisie Telecom</span>
+            <span>—</span>
+            <span>—</span>
+            <span style="color:#00cc66">OK</span>
+        </div>
+        <div class="backbone-row">
+            <span>Ooredoo</span>
+            <span>—</span>
+            <span>—</span>
+            <span style="color:#00cc66">OK</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

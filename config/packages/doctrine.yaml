@@ -1,13 +1,27 @@
+# config/packages/doctrine.yaml
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
 
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
-        #server_version: '16'
+        server_version: '16'  # ← DÉCOMMENTEZ CETTE LIGNE
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        
+        # 🔧 Configuration pour les gros imports (optimisation PostgreSQL)
+        driver: 'pdo_pgsql'
+        charset: utf8
+        default_table_options:
+            charset: utf8
+            collate: utf8_unicode_ci
+            
+        # 🔧 Augmenter les limites de connexion pour les gros volumes
+        options:
+            PDO::ATTR_EMULATE_PREPARES: false
+            PDO::ATTR_STRINGIFY_FETCHES: false
+            
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
@@ -17,6 +31,19 @@ doctrine:
         identity_generation_preferences:
             Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
         auto_mapping: true
+        
+        # 🔧 Configuration pour les gros imports
+        second_level_cache:
+            enabled: false  # Désactiver pour les gros imports (gain de mémoire)
+            
+        dql:
+            string_functions:
+                DATE: DoctrineExtensions\Query\Postgresql\DateFormat  # Pour PostgreSQL
+                YEAR: DoctrineExtensions\Query\Postgresql\Year
+                MONTH: DoctrineExtensions\Query\Postgresql\Month
+                DAY: DoctrineExtensions\Query\Postgresql\Day
+                WEEK: DoctrineExtensions\Query\Postgresql\Week
+        
         mappings:
             App:
                 type: attribute

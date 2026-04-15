@@ -1,0 +1,456 @@
+/* public/css/admin.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f5f5f5;
+}
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background: #1a1a2e;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 2rem;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.logo:hover {
+    background: rgba(255, 102, 0, 0.15);
+    transform: translateX(-2px);
+}
+
+.logo-circle {
+    width: 42px;
+    height: 42px;
+    background: #FF6600;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: white;
+    font-size: 18px;
+}
+
+.logo-text {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.logo-sub {
+    color: #aaa;
+    font-size: 11px;
+}
+
+.nav-section {
+    font-size: 10px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 1.5rem 0 0.5rem;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 13px;
+    margin-bottom: 2px;
+    transition: all 0.2s;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: #FF6600;
+    color: white;
+    transform: translateX(5px);
+}
+
+/* Main content */
+.main {
+    margin-left: 250px;
+    padding: 2rem;
+}
+
+/* Topbar */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.topbar h1 {
+    font-size: 20px;
+    font-weight: 500;
+    color: #333;
+}
+
+.user-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    border: 1px solid #eee;
+    font-size: 13px;
+    color: #555;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    background: #FF6600;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.2rem;
+    border: 1px solid #eee;
+    text-decoration: none;
+    display: block;
+    transition: all 0.2s;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.stat-title {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 6px;
+}
+
+.stat-value {
+    font-size: 26px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Section */
+.section-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+/* Users Table */
+.users-table {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    overflow: hidden;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.btn-add {
+    background: #FF6600;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.btn-add:hover {
+    background: #e55a00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 102, 0, 0.3);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    font-size: 12px;
+    color: #888;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+}
+
+td {
+    padding: 0.85rem 1.5rem;
+    font-size: 13px;
+    color: #333;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover {
+    background: #fafafa;
+}
+
+/* Role Badges */
+.role-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.role-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.role-admin {
+    background: #fff0e6;
+    color: #FF6600;
+}
+
+.role-superuser {
+    background: #e6e6ff;
+    color: #3300cc;
+}
+
+.role-support_fo {
+    background: #e6f0ff;
+    color: #0066cc;
+}
+
+.role-support_fh {
+    background: #f0e6ff;
+    color: #6600cc;
+}
+
+.role-ingenierie_fh {
+    background: #e6ffe6;
+    color: #006600;
+}
+
+.role-ingenierie_ip {
+    background: #e6f9ff;
+    color: #003399;
+}
+
+.role-gc {
+    background: #fff3e0;
+    color: #996600;
+}
+
+.role-deploiement {
+    background: #ffe6e6;
+    color: #cc0000;
+}
+
+/* Nouveau badge pour le rôle Contrôleur */
+.role-controleur {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-block;
+    box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3);
+}
+
+.role-controleur:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+}
+
+/* Status */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.status-active {
+    background: #00cc66;
+    box-shadow: 0 0 5px #00cc66;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 204, 102, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(0, 204, 102, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 204, 102, 0);
+    }
+}
+
+.status-inactive {
+    background: #ccc;
+}
+
+/* Buttons */
+.btn-edit {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    text-decoration: none;
+    background: #e6f0ff;
+    color: #0066cc;
+    transition: all 0.2s;
+    display: inline-block;
+}
+
+.btn-edit:hover {
+    background: #0066cc;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Logout */
+.logout-btn {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: #cc0000;
+    color: white;
+    transform: translateX(5px);
+}
+
+/* Flash Messages */
+.flash-success {
+    background: #e6ffe6;
+    border: 1px solid #00cc66;
+    color: #006600;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 13px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 70px;
+        padding: 1rem;
+    }
+    
+    .logo-text-wrapper,
+    .logo-sub,
+    .nav-section,
+    .nav-item span:not(:first-child) {
+        display: none;
+    }
+    
+    .main {
+        margin-left: 70px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .logo-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .nav-item {
+        justify-content: center;
+        padding: 0.6rem;
+    }
+    
+    .logout-btn {
+        justify-content: center;
+    }
+    .users-table {
+        overflow-x: auto;
+    }
+    table {
+        min-width: 600px;
+    }
+}

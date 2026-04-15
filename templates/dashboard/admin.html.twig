@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Admin — Orange Tunisie</title>
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+</head>
+
+<body>
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-circle">
+            <img src="{{ asset('images/logo.jpeg') }}" alt="Orange" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+        </div>
+        <div>
+            <div class="logo-text">NetWON</div>
+            <div class="logo-sub">You Don’t Save Time. You WON It</div>
+        </div>
+    </div>
+
+    <span class="nav-section">Administration</span>
+    <a href="{{ path('admin_dashboard') }}" class="nav-item active">🏠 Dashboard</a>
+    <a href="{{ path('admin_users') }}" class="nav-item">👥 Gestion Utilisateurs</a>
+    <a href="#" class="nav-item">📊 Rapports</a>
+    <span class="nav-section">Système</span>
+    <a href="{{ path('admin_settings') }}" class="nav-item">⚙️ Paramètres</a>
+    <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+</div>
+<div class="main">
+    <div class="topbar">
+        <h1>Dashboard Administrateur</h1>
+        <div class="user-badge">
+            <div class="avatar">A</div>
+            {{ user.fullName }}
+        </div>
+    </div>
+    {% for msg in app.flashes('success') %}
+        <div class="flash-success">✅ {{ msg }}</div>
+    {% endfor %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-title">Total Utilisateurs</div>
+            <div class="stat-value">{{ totalUsers }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🟢</div>
+            <div class="stat-title">Actifs</div>
+            <div class="stat-value">{{ activeUsers }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🔴</div>
+            <div class="stat-title">Inactifs</div>
+            <div class="stat-value">{{ inactiveUsers }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🎭</div>
+            <div class="stat-title">Rôles distincts</div>
+            <div class="stat-value">{{ roleCount }}</div>
+        </div>
+    </div>
+    <div class="section-title">Aperçu des utilisateurs</div>
+    <div class="users-table">
+        <div class="table-header">
+            <span>Liste des comptes</span>
+            <a href="{{ path('admin_user_new') }}" class="btn-add">+ Ajouter un utilisateur</a>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom complet</th>
+                    <th>Email</th>
+                    <th>Rôle</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for u in users %}
+                <tr>
+                    <td>{{ u.fullName ?? '—' }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        <span class="role-badge role-{{ u.role }}">
+                            {{ u.roleLabel }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-dot {{ u.isActive ? 'status-active' : 'status-inactive' }}"></span>
+                        {{ u.isActive ? 'Actif' : 'Inactif' }}
+                    </td>
+                    <td>
+                        <a href="{{ path('admin_user_edit', {id: u.id}) }}" class="btn-edit">✏️ Modifier</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

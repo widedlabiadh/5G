@@ -1,0 +1,470 @@
+{# templates/dashboard/superuser.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Super User NetWON</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .sidebar {
+            width: 250px; background: #1a1a2e; height: 100vh;
+            position: fixed; left: 0; top: 0;
+            display: flex; flex-direction: column; padding: 1.5rem;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
+        .logo-circle {
+            width: 42px; height: 42px; background: #FF6600;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; color: white; font-size: 18px;
+        }
+        .logo-text { color: white; font-size: 16px; font-weight: bold; }
+        .logo-sub { color: #FF6600; font-size: 10px; font-style: italic; }
+        .nav-section {
+            font-size: 10px; color: #666;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin: 1.5rem 0 0.5rem;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0.6rem 0.8rem; border-radius: 8px;
+            color: #ccc; text-decoration: none; font-size: 13px;
+            margin-bottom: 2px; transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active { background: #FF6600; color: white; }
+        .main { margin-left: 250px; padding: 2rem; }
+        .topbar {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .topbar h1 { font-size: 20px; font-weight: 500; color: #333; }
+        .user-badge {
+            display: flex; align-items: center; gap: 10px;
+            background: white; padding: 0.5rem 1rem;
+            border-radius: 20px; border: 1px solid #eee;
+            font-size: 13px; color: #555;
+        }
+        .avatar {
+            width: 32px; height: 32px; background: #1a1a2e;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 13px; font-weight: 600;
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 16px; margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white; border-radius: 10px;
+            padding: 1.2rem; border: 1px solid #eee;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .stat-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+        .stat-value { font-size: 26px; font-weight: 600; color: #333; }
+        .stat-sub { font-size: 11px; color: #aaa; margin-top: 4px; }
+        .cards-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 16px; margin-bottom: 2rem;
+        }
+        .network-card {
+            background: white; border-radius: 10px;
+            padding: 1.5rem; border: 1px solid #eee;
+            border-top: 4px solid #FF6600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .network-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .network-card h3 { font-size: 14px; font-weight: 500; color: #333; margin-bottom: 1rem; }
+        .network-item {
+            display: flex; justify-content: space-between;
+            align-items: center; padding: 0.5rem 0;
+            border-bottom: 1px solid #f5f5f5; font-size: 13px;
+        }
+        .network-item:last-child { border-bottom: none; }
+        .status-ok { color: #00cc66; font-weight: 500; }
+        .status-warn { color: #FF6600; font-weight: 500; }
+        .status-ko { color: #cc0000; font-weight: 500; }
+        
+        /* Boutons */
+        .btn-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-import {
+            background: linear-gradient(135deg, #FF6600, #e55a00);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 2px 4px rgba(255,102,0,0.2);
+        }
+        .btn-import:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,102,0,0.3);
+            background: linear-gradient(135deg, #e55a00, #cc4c00);
+        }
+        
+        .btn-export {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+        }
+        .btn-export:hover {
+            background: linear-gradient(135deg, #1e7e34, #155d27);
+        }
+
+        .btn-workflow {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+        .btn-workflow:hover {
+            background: linear-gradient(135deg, #8e44ad, #7d3c98);
+            box-shadow: 0 4px 12px rgba(155,89,182,0.3);
+        }
+        
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .logout-btn {
+            margin-top: auto; display: flex; align-items: center; gap: 10px;
+            padding: 0.6rem 0.8rem; border-radius: 8px;
+            color: #ccc; text-decoration: none; font-size: 13px; transition: all 0.2s;
+        }
+        .logout-btn:hover { background: #cc0000; color: white; }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .user-name {
+            font-weight: 600;
+            color: #333;
+        }
+        .user-role {
+            font-size: 10px;
+            color: #FF6600;
+        }
+
+        /* Modal Workflow */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 18px;
+        }
+        .modal-content input,
+        .modal-content select,
+        .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .modal-content textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .btn-submit {
+            background: #FF6600;
+            color: white;
+        }
+        
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            border-left: 4px solid #3b82f6;
+        }
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            border-left: 4px solid #f59e0b;
+        }
+        .badge-critical {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-circle">N</div>
+        <div>
+            <div class="logo-text">NetWON</div>
+            <div class="logo-sub">You Don't Save Time. You WON It</div>
+        </div>
+    </div>
+
+    <span class="nav-section">Vue Globale</span>
+    <a href="{{ path('superuser_dashboard') }}" class="nav-item active">🏠 Dashboard</a>
+    <a href="#" class="nav-item">📊 Rapports Globaux</a>
+    <a href="#" class="nav-item">🔔 Alertes</a>
+
+    <span class="nav-section">Réseau</span>
+    <a href="{{ path('superuser_fo') }}" class="nav-item">📡 Fibre Optique</a>
+    <a href="{{ path('superuser_fh') }}" class="nav-item">🔗 Faisceaux Hertziens</a>
+    <a href="{{ path('superuser_backbone') }}" class="nav-item">🌐 Backbone Partagé</a>
+
+    <span class="nav-section">Analyse</span>
+    <a href="#" class="nav-item">🤖 Prévisions IA</a>
+    <a href="#" class="nav-item">📈 Historique Trafic</a>
+
+    <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+</div>
+
+<div class="main">
+    <div class="topbar">
+        <h1>Dashboard Super Utilisateur</h1>
+        <div class="topbar-right">
+            <div class="btn-group">
+                <button class="btn-import btn-workflow" onclick="openWorkflowModal()">
+                    🔄 Création workflow
+                </button>
+                <a href="{{ path('export_trafic_form') }}" class="btn-import btn-export">
+                    📊 Exporter résultats
+                </a>
+                <a href="{{ path('import_excel') }}" class="btn-import">
+                    📂 Importer Excel
+                </a>
+            </div>
+            
+            <div class="user-badge">
+                <div class="avatar">
+                    {% if user.fullName %}
+                        {{ user.fullName|slice(0, 2)|upper }}
+                    {% else %}
+                        {{ user.email|slice(0, 2)|upper }}
+                    {% endif %}
+                </div>
+                <div class="user-info">
+                    <span class="user-name">{{ user.fullName ?? user.email }}</span>
+                    <span class="user-role">{{ user.roleLabel ?? 'SUPERUSER' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message de dernière analyse -->
+    {% if derniere_analyse %}
+        <div class="alert-info">
+            <i class="fas fa-info-circle"></i> 📅 Dernière analyse : {{ derniere_analyse.dateAnalyse|date('d/m/Y H:i:s') }}
+        </div>
+    {% else %}
+        <div class="alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> ⚠️ Aucune donnée disponible. Veuillez importer des fichiers Excel.
+        </div>
+    {% endif %}
+
+    <!-- KPI Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Sites Totaux</div>
+            <div class="stat-value">{{ stats.total_sites|default(0) }}</div>
+            <div class="stat-sub">TF + COTRANS + NO_COTRANS + NON_TDD</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Congestions</div>
+            <div class="stat-value" style="color:#cc0000">{{ stats.total_occurrences|default(0) }}</div>
+            <div class="stat-sub">Nombre total de dépassements</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Sites Critiques</div>
+            <div class="stat-value" style="color:#FF6600">{{ sites_critiques|length|default(0) }}</div>
+            <div class="stat-sub">Occurrences > 50</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Sites sans type</div>
+            <div class="stat-value" style="color:#888">{{ stats.sans_type|default(0) }}</div>
+            <div class="stat-sub">Type NON_DEFINI</div>
+        </div>
+    </div>
+
+    <!-- Cartes par type de transmission -->
+    <div class="cards-grid">
+        <div class="network-card">
+            <h3>📡 Fibre Optique (FO)</h3>
+            <div class="network-item">
+                <span>Sites actifs</span>
+                <span>{{ stats.fo|default(0) }}</span>
+            </div>
+            <div class="network-item">
+                <span>Max trafic</span>
+                <span>{{ max_trafic_fo|default(0)|number_format(2) }} Mbps</span>
+            </div>
+            <div class="network-item">
+                <span>Total congestions</span>
+ <span class="status-{{ stats.fo_congestions|default(0) > 0 ? 'warn' : 'ok' }}">{{ stats.fo_congestions|default(0) }}</span>            </div>
+        </div>
+        <div class="network-card">
+            <h3>🔗 Faisceaux Hertziens (FH)</h3>
+            <div class="network-item">
+                <span>Sites actifs</span>
+                <span>{{ stats.fh|default(0) }}</span>
+            </div>
+            <div class="network-item">
+                <span>Max trafic</span>
+                <span>{{ max_trafic_fh|default(0)|number_format(2) }} Mbps</span>
+            </div>
+            <div class="network-item">
+                <span>Total congestions</span>
+                <span class="status-{{ stats.fh_congestions > 0 ? 'warn' : 'ok' }}">{{ stats.fh_congestions|default(0) }}</span>
+            </div>
+        </div>
+        <div class="network-card">
+            <h3>🌐 Backbone Partagé</h3>
+            <div class="network-item">
+                <span>Sites actifs</span>
+                <span>{{ stats.backbone|default(0) }}</span>
+            </div>
+            <div class="network-item">
+                <span>Max trafic</span>
+                <span>{{ max_trafic_backbone|default(0)|number_format(2) }} Mbps</span>
+            </div>
+            <div class="network-item">
+                <span>Total congestions</span>
+                <span class="status-{{ stats.backbone_congestions > 0 ? 'warn' : 'ok' }}">{{ stats.backbone_congestions|default(0) }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des sites critiques -->
+    {% if sites_critiques|length > 0 %}
+    <div class="cards-grid" style="grid-template-columns: 1fr;">
+        <div class="network-card">
+            <h3>⚠️ Sites critiques (occurrences > 50)</h3>
+            {% for site in sites_critiques|slice(0, 10) %}
+            <div class="network-item">
+                <span><strong>{{ site.site }}</strong> ({{ site.classification }})</span>
+                <span class="badge-critical">{{ site.nombreOccurrences }} dépassements</span>
+            </div>
+            <div class="network-item">
+                <span>Max: {{ site.maxTrafic|number_format(2) }} Mbps</span>
+                <span>Seuil: {{ site.seuilCritique|number_format(2) }} Mbps</span>
+                <span>Type: {{ site.typeTrans ?: 'NON_DEFINI' }}</span>
+            </div>
+            {% endfor %}
+            {% if sites_critiques|length > 10 %}
+            <div class="network-item">
+                <span>... et {{ sites_critiques|length - 10 }} autres sites critiques</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- MODAL CRÉATION WORKFLOW -->
+<div id="workflowModal" class="modal">
+    <div class="modal-content">
+        <h3>🔄 Créer un nouveau workflow</h3>
+        <form action="{{ path('workflow_create') }}" method="POST">
+            <select name="site" required>
+                <option value="">Sélectionner un site</option>
+                {% for site in sites_critiques|slice(0, 20) %}
+                <option value="{{ site.site }}">{{ site.site }} ({{ site.classification }})</option>
+                {% endfor %}
+            </select>
+            
+            <select name="action" required>
+                <option value="">Type d'action</option>
+                <option value="swap_10g">🔄 Swap 10G</option>
+                <option value="tf_balancing">⚖️ T+F Balancing</option>
+                <option value="upgrade_capacite">📈 Upgrade capacité</option>
+                <option value="intervention_urgence">🚨 Intervention urgence</option>
+            </select>
+            
+            <input type="text" name="titre" placeholder="Titre du workflow" required>
+            
+            <textarea name="description" placeholder="Description détaillée..."></textarea>
+            
+            <input type="date" name="date_fin_prevue" required>
+            
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" onclick="closeWorkflowModal()">Annuler</button>
+                <button type="submit" class="btn-submit">Créer workflow</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openWorkflowModal() {
+        document.getElementById('workflowModal').style.display = 'flex';
+    }
+    
+    function closeWorkflowModal() {
+        document.getElementById('workflowModal').style.display = 'none';
+    }
+    
+    window.onclick = function(event) {
+        const modal = document.getElementById('workflowModal');
+        if (event.target === modal) {
+            closeWorkflowModal();
+        }
+    }
+</script>
+
+</body>
+</html>

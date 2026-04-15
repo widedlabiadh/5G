@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Import Excel — Orange Tunisie</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .import-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .import-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 2rem;
+        }
+        .import-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .icon-upload {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        .icon-upload i { font-size: 2.5rem; color: white; }
+        .import-header h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 0.5rem; }
+        .import-header p { color: #64748b; }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; }
+        .required { color: #ff6b35; }
+        select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        select:focus { border-color: #ff6b35; outline: none; }
+        
+        .files-section { display: none; margin-top: 1.5rem; }
+        .files-section.show { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .file-upload-group {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .file-upload-group h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            color: #1e293b;
+        }
+        .upload-area-small {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+        .upload-area-small:hover { border-color: #ff6b35; background: #fff8f5; }
+        .upload-area-small.drag-over { border-color: #ff6b35; background: #fff8f5; }
+        
+        .file-info-small {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f1f5f9;
+            padding: 0.8rem;
+            border-radius: 12px;
+            margin-top: 0.5rem;
+        }
+        .file-info-small.show { display: flex; }
+        .file-name-small { flex: 1; font-size: 0.85rem; color: #1e293b; }
+        
+        .info-text { font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; }
+        .synch-files-list { margin-top: 0.5rem; max-height: 200px; overflow-y: auto; }
+        
+        .btn-import {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1.5rem;
+        }
+        .btn-import:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255,107,53,0.3); }
+        .btn-import:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-back {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .btn-back:hover { color: #ff6b35; }
+        
+        .alert {
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .alert-success { background: #d1fae5; color: #065f46; }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+        
+        #progressBar { display: none; margin-top: 1rem; }
+        .progress-track { background: #e2e8f0; border-radius: 8px; height: 8px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: #ff6b35; transition: width 0.3s; }
+        .progress-text { text-align: center; font-size: 12px; margin-top: 8px; color: #64748b; }
+        
+        #resultMsg { display: none; margin-top: 1rem; padding: 0.8rem 1rem; border-radius: 12px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+<div class="import-container">
+    <div class="import-card">
+        <div class="import-header">
+            <div class="icon-upload"><i class="fas fa-file-excel"></i></div>
+            <h1>Importer des données Excel</h1>
+            <p>Importez vos fichiers de données réseau</p>
+        </div>
+
+        {% for msg in app.flashes('success') %}
+            <div class="alert alert-success"><i class="fas fa-check-circle"></i> {{ msg }}</div>
+        {% endfor %}
+        {% for msg in app.flashes('error') %}
+            <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> {{ msg }}</div>
+        {% endfor %}
+
+        <form id="importForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Type de données <span class="required">*</span></label>
+                <select name="type_donnees" id="typeDonnees" required>
+                    <option value="">Sélectionnez un type</option>
+                    <option value="trans">📊 Transmission (3 fichiers)</option>
+                    <option value="dropcong">⚠️ DropCong (2 fichiers)</option>
+                    <option value="synch">🔄 Synchronisation (N fichiers)</option>
+                </select>
+            </div>
+
+            <!-- Transmission -->
+            <div id="transSection" class="files-section">
+                {% for file in ['traffic', 'liaison', 'port'] %}
+                <div class="file-upload-group">
+                    <h4>
+                        <i class="fas {{ file == 'traffic' ? 'fa-chart-line' : (file == 'liaison' ? 'fa-link' : 'fa-plug') }}"></i>
+                        Fichier {{ file|capitalize }} <span class="required">*</span>
+                    </h4>
+                    <div class="upload-area-small" data-target="{{ file }}">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Cliquez ou glissez le fichier {{ file|capitalize }}</span>
+                    </div>
+                    <input type="file" name="{{ file }}_file" accept=".xlsx,.xls" style="display:none;" data-file="{{ file }}">
+                    <div class="file-info-small" data-info="{{ file }}">
+                        <i class="fas fa-file-excel"></i>
+                        <span class="file-name-small"></span>
+                        <i class="fas fa-times" style="cursor:pointer;color:#cc0000;margin-left:auto;"></i>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- DropCong -->
+            <div id="dropcongSection" class="files-section">
+                {% for i in 1..2 %}
+                <div class="file-upload-group">
+                    <h4><i class="fas fa-chart-simple"></i> Fichier Drop {{ i }} <span class="required">*</span></h4>
+                    <div class="upload-area-small" data-target="drop{{ i }}">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Cliquez ou glissez le fichier Drop {{ i }}</span>
+                    </div>
+                    <input type="file" name="drop{{ i }}_file" accept=".xlsx,.xls" style="display:none;" data-file="drop{{ i }}">
+                    <div class="file-info-small" data-info="drop{{ i }}">
+                        <i class="fas fa-file-excel"></i>
+                        <span class="file-name-small"></span>
+                        <i class="fas fa-times" style="cursor:pointer;color:#cc0000;margin-left:auto;"></i>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Synchronisation -->
+            <div id="synchSection" class="files-section">
+                <div class="file-upload-group">
+                    <h4><i class="fas fa-sync-alt"></i> Fichiers Synchronisation</h4>
+                    <div class="upload-area-small" id="synchUploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Cliquez ou glissez vos fichiers Excel (multiple)</span>
+                    </div>
+                    <input type="file" name="synch_files[]" id="synchFileInput" accept=".xlsx,.xls" multiple style="display:none;">
+                    <div class="info-text">Vous pouvez sélectionner plusieurs fichiers à la fois</div>
+                    <div id="synchFilesList" class="synch-files-list"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-import" id="submitBtn" disabled>
+                <i class="fas fa-upload"></i> Importer les données
+            </button>
+
+            <div id="progressBar">
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText"></div>
+            </div>
+
+            <div id="resultMsg"></div>
+        </form>
+
+        <a href="{{ path('superuser_dashboard') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Retour au Dashboard
+        </a>
+    </div>
+</div>
+
+<script>
+const IMPORT_URL = '{{ path('import_excel_post') }}';
+const DASHBOARD_URL = '{{ path('superuser_dashboard') }}';
+
+let transFiles = { traffic: null, liaison: null, port: null };
+let dropcongFiles = { drop1: null, drop2: null };
+let synchFiles = [];
+
+const typeSelect = document.getElementById('typeDonnees');
+const submitBtn = document.getElementById('submitBtn');
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const resultMsg = document.getElementById('resultMsg');
+
+typeSelect.addEventListener('change', () => {
+    const t = typeSelect.value;
+    document.getElementById('transSection').classList.remove('show');
+    document.getElementById('dropcongSection').classList.remove('show');
+    document.getElementById('synchSection').classList.remove('show');
+    if (t === 'trans') document.getElementById('transSection').classList.add('show');
+    if (t === 'dropcong') document.getElementById('dropcongSection').classList.add('show');
+    if (t === 'synch') document.getElementById('synchSection').classList.add('show');
+    updateSubmitBtn();
+});
+
+function initUpload(target) {
+    const area = document.querySelector(`.upload-area-small[data-target="${target}"]`);
+    const input = document.querySelector(`input[data-file="${target}"]`);
+    const info = document.querySelector(`[data-info="${target}"]`);
+    const nameSpan = info.querySelector('.file-name-small');
+    const remove = info.querySelector('.fa-times');
+
+    area.onclick = () => input.click();
+    area.ondragover = e => { e.preventDefault(); area.classList.add('drag-over'); };
+    area.ondragleave = () => area.classList.remove('drag-over');
+    area.ondrop = e => {
+        e.preventDefault();
+        area.classList.remove('drag-over');
+        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0], target, nameSpan, info, area);
+    };
+    input.onchange = e => { if (e.target.files[0]) handleFile(e.target.files[0], target, nameSpan, info, area); };
+    remove.onclick = () => {
+        input.value = '';
+        info.classList.remove('show');
+        area.style.display = 'block';
+        if (typeSelect.value === 'trans') transFiles[target] = null;
+        else dropcongFiles[target] = null;
+        updateSubmitBtn();
+    };
+}
+
+function handleFile(file, target, nameSpan, info, area) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['xlsx', 'xls'].includes(ext)) {
+        alert('Fichier Excel requis (.xlsx ou .xls)');
+        return;
+    }
+    nameSpan.textContent = file.name + ' (' + formatSize(file.size) + ')';
+    info.classList.add('show');
+    area.style.display = 'none';
+    if (typeSelect.value === 'trans') transFiles[target] = file;
+    else dropcongFiles[target] = file;
+    updateSubmitBtn();
+}
+
+function formatSize(b) {
+    if (!b) return '0 B';
+    const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(b) / Math.log(k));
+    return (b / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+}
+
+['traffic', 'liaison', 'port', 'drop1', 'drop2'].forEach(initUpload);
+
+// Synchronisation
+const synchUpload = document.getElementById('synchUploadArea');
+const synchInput = document.getElementById('synchFileInput');
+const synchList = document.getElementById('synchFilesList');
+
+synchUpload.onclick = () => synchInput.click();
+synchUpload.ondragover = e => { e.preventDefault(); synchUpload.classList.add('drag-over'); };
+synchUpload.ondragleave = () => synchUpload.classList.remove('drag-over');
+synchUpload.ondrop = e => {
+    e.preventDefault();
+    synchUpload.classList.remove('drag-over');
+    addSynchFiles(Array.from(e.dataTransfer.files));
+};
+synchInput.onchange = e => {
+    addSynchFiles(Array.from(e.target.files));
+    synchInput.value = '';
+};
+
+function addSynchFiles(files) {
+    files.forEach(f => {
+        const ext = f.name.split('.').pop().toLowerCase();
+        if (['xlsx', 'xls'].includes(ext) && !synchFiles.find(s => s.name === f.name)) {
+            synchFiles.push(f);
+        }
+    });
+    renderSynchList();
+    updateSubmitBtn();
+}
+
+function renderSynchList() {
+    if (!synchFiles.length) {
+        synchList.innerHTML = '<div style="color:#999;font-size:13px;padding:8px;">Aucun fichier sélectionné</div>';
+        return;
+    }
+    synchList.innerHTML = synchFiles.map((f, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;border-bottom:1px solid #f0f0f0;">
+            <i class="fas fa-file-excel" style="color:#1d6f42;"></i>
+            <span style="flex:1;">${escapeHtml(f.name)}</span>
+            <span style="color:#999;">${formatSize(f.size)}</span>
+            <i class="fas fa-times" style="cursor:pointer;color:#cc0000;" onclick="removeSynch(${i})"></i>
+        </div>
+    `).join('');
+}
+
+window.removeSynch = (i) => {
+    synchFiles.splice(i, 1);
+    renderSynchList();
+    updateSubmitBtn();
+};
+
+function updateSubmitBtn() {
+    const t = typeSelect.value;
+    let ok = false;
+    if (t === 'trans') ok = !!(transFiles.traffic && transFiles.liaison && transFiles.port);
+    if (t === 'dropcong') ok = !!(dropcongFiles.drop1 && dropcongFiles.drop2);
+    if (t === 'synch') ok = synchFiles.length > 0;
+    submitBtn.disabled = !ok;
+}
+
+// Soumission AJAX
+document.getElementById('importForm').onsubmit = async (e) => {
+    e.preventDefault();
+
+    const type = typeSelect.value;
+    const fd = new FormData();
+    fd.append('type_donnees', type);
+
+    if (type === 'trans') {
+        fd.append('traffic_file', transFiles.traffic);
+        fd.append('liaison_file', transFiles.liaison);
+        fd.append('port_file', transFiles.port);
+    } else if (type === 'dropcong') {
+        fd.append('drop1_file', dropcongFiles.drop1);
+        fd.append('drop2_file', dropcongFiles.drop2);
+    } else {
+        synchFiles.forEach(f => fd.append('synch_files[]', f));
+    }
+
+    progressBar.style.display = 'block';
+    progressFill.style.width = '30%';
+    progressFill.style.background = '#ff6b35';
+    progressText.textContent = 'Upload en cours...';
+    submitBtn.disabled = true;
+    resultMsg.style.display = 'none';
+
+    try {
+        progressFill.style.width = '70%';
+        progressText.textContent = 'Traitement en cours...';
+
+        const res = await fetch(IMPORT_URL, { method: 'POST', body: fd });
+        const data = await res.json();
+
+        progressFill.style.width = '100%';
+        progressText.textContent = '';
+
+        if (data.success) {
+            progressFill.style.background = '#28a745';
+            showMsg(data.message, data.warning ? 'warning' : 'success');
+            if (!data.warning) {
+                setTimeout(() => window.location.href = DASHBOARD_URL, 2000);
+            } else {
+                submitBtn.disabled = false;
+            }
+        } else {
+            progressFill.style.background = '#dc3545';
+            showMsg(data.message, 'error');
+            submitBtn.disabled = false;
+        }
+    } catch (err) {
+        progressFill.style.width = '100%';
+        progressFill.style.background = '#dc3545';
+        progressText.textContent = '';
+        showMsg('Erreur réseau : ' + err.message, 'error');
+        submitBtn.disabled = false;
+    }
+};
+
+function showMsg(text, type) {
+    const styles = {
+        success: { bg: '#d4edda', color: '#155724', icon: 'fa-check-circle' },
+        warning: { bg: '#fff3cd', color: '#856404', icon: 'fa-exclamation-triangle' },
+        error: { bg: '#f8d7da', color: '#721c24', icon: 'fa-exclamation-circle' },
+    };
+    const s = styles[type] || styles.error;
+    resultMsg.style.display = 'block';
+    resultMsg.style.background = s.bg;
+    resultMsg.style.color = s.color;
+    resultMsg.style.padding = '12px 16px';
+    resultMsg.style.borderRadius = '12px';
+    resultMsg.innerHTML = `<i class="fas ${s.icon}"></i> ${text}`;
+}
+
+function escapeHtml(t) {
+    const d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+}
+</script>
+</body>
+</html>

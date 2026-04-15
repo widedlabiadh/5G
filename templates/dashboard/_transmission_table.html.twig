@@ -1,0 +1,428 @@
+{# templates/dashboard/_transmission_table.html.twig #}
+{# Template partagé par FO, FH et Backbone #}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ titre }} — NetWON</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 250px; background: #1a1a2e; height: 100vh;
+            position: fixed; left: 0; top: 0;
+            display: flex; flex-direction: column; padding: 1.5rem;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
+        .logo-circle {
+            width: 42px; height: 42px; background: #FF6600;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; color: white; font-size: 18px;
+        }
+        .logo-text { color: white; font-size: 16px; font-weight: bold; }
+        .logo-sub  { color: #FF6600; font-size: 10px; font-style: italic; }
+        .nav-section {
+            font-size: 10px; color: #666;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin: 1.5rem 0 0.5rem;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0.6rem 0.8rem; border-radius: 8px;
+            color: #ccc; text-decoration: none; font-size: 13px;
+            margin-bottom: 2px; transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active { background: #FF6600; color: white; }
+        .logout-btn {
+            margin-top: auto; display: flex; align-items: center; gap: 10px;
+            padding: 0.6rem 0.8rem; border-radius: 8px;
+            color: #ccc; text-decoration: none; font-size: 13px; transition: all 0.2s;
+        }
+        .logout-btn:hover { background: #cc0000; color: white; }
+
+        /* MAIN */
+        .main { margin-left: 250px; padding: 2rem; }
+        .topbar {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 1.5rem; gap: 15px; flex-wrap: wrap;
+        }
+        .topbar h1 { font-size: 20px; font-weight: 500; color: #333; }
+        .user-badge {
+            display: flex; align-items: center; gap: 10px;
+            background: white; padding: 0.5rem 1rem;
+            border-radius: 20px; border: 1px solid #eee;
+            font-size: 13px; color: #555;
+        }
+        .avatar {
+            width: 32px; height: 32px; background: #1a1a2e;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 13px; font-weight: 600;
+        }
+
+        /* STATS */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 14px; margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: white; border-radius: 10px;
+            padding: 1rem 1.2rem; border: 1px solid #eee;
+        }
+        .stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+        .stat-value { font-size: 24px; font-weight: 700; color: #333; }
+        .stat-sub   { font-size: 11px; color: #aaa; margin-top: 3px; }
+
+        /* FILTRES */
+        .filters-bar {
+            display: flex; gap: 12px; align-items: center;
+            margin-bottom: 1.2rem; flex-wrap: wrap;
+            background: white; padding: 14px 16px;
+            border-radius: 10px; border: 1px solid #eee;
+        }
+        .filters-bar input, .filters-bar select {
+            padding: 7px 12px; border: 1px solid #ddd;
+            border-radius: 6px; font-size: 13px; outline: none;
+        }
+        .filters-bar input:focus, .filters-bar select:focus { border-color: #FF6600; }
+        .btn-filter {
+            padding: 7px 16px; background: #FF6600; color: white;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 13px;
+        }
+        .btn-filter:hover { background: #e55a00; }
+        .btn-reset {
+            padding: 7px 14px; background: #f0f0f0; color: #555;
+            border: none; border-radius: 6px; cursor: pointer; font-size: 13px;
+            text-decoration: none;
+        }
+        .count-info { font-size: 13px; color: #666; margin-left: auto; }
+
+        /* TABLE */
+        .table-card {
+            background: white; border-radius: 10px;
+            border: 1px solid #eee; overflow: hidden;
+        }
+        .table-header-bar {
+            padding: 14px 18px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .table-header-bar h3 { font-size: 14px; font-weight: 600; color: #333; }
+        table {
+            width: 100%; border-collapse: collapse; font-size: 13px;
+        }
+        thead th {
+            background: #f8f8f8; padding: 11px 14px;
+            text-align: left; font-weight: 600; color: #555;
+            border-bottom: 1px solid #eee; white-space: nowrap;
+        }
+        tbody td {
+            padding: 10px 14px; border-bottom: 1px solid #f5f5f5;
+            color: #444; vertical-align: middle;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #fafafa; }
+
+        /* BADGES */
+        .badge {
+            padding: 3px 9px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; display: inline-block;
+        }
+        .badge-tf        { background: #fff3cd; color: #856404; }
+        .badge-cotrans   { background: #d1fae5; color: #065f46; }
+        .badge-nocotrans { background: #dbeafe; color: #1e40af; }
+        .badge-nontdd    { background: #f3f4f6; color: #374151; }
+        .occ-high   { color: #dc2626; font-weight: 700; }
+        .occ-med    { color: #d97706; font-weight: 600; }
+        .occ-ok     { color: #059669; font-weight: 500; }
+        .no-data    { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+
+        /* PAGINATION */
+        .pagination {
+            display: flex; justify-content: center; gap: 6px;
+            padding: 16px; border-top: 1px solid #f0f0f0;
+        }
+        .page-btn {
+            padding: 5px 11px; border-radius: 6px;
+            border: 1px solid #ddd; background: white;
+            cursor: pointer; font-size: 13px; color: #555;
+        }
+        .page-btn.active { background: #FF6600; color: white; border-color: #FF6600; }
+        .page-btn:hover:not(.active) { background: #f5f5f5; }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-circle">N</div>
+        <div>
+            <div class="logo-text">NetWON</div>
+            <div class="logo-sub">You Don't Save Time. You WON It</div>
+        </div>
+    </div>
+
+    <span class="nav-section">Vue Globale</span>
+    <a href="{{ path('superuser_dashboard') }}" class="nav-item">🏠 Dashboard</a>
+
+    <span class="nav-section">Réseau</span>
+    <a href="{{ path('superuser_fo') }}"       class="nav-item {{ type == 'FO'       ? 'active' : '' }}">📡 Fibre Optique</a>
+    <a href="{{ path('superuser_fh') }}"       class="nav-item {{ type == 'FH'       ? 'active' : '' }}">🔗 Faisceaux Hertziens</a>
+    <a href="{{ path('superuser_backbone') }}" class="nav-item {{ type == 'BACKBONE' ? 'active' : '' }}">🌐 Backbone Partagé</a>
+
+    <span class="nav-section">Données</span>
+    <a href="{{ path('import_excel') }}" class="nav-item">📂 Importer Excel</a>
+
+    <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+    <div class="topbar">
+        <h1>
+            {% if type == 'FO' %}📡{% elseif type == 'FH' %}🔗{% else %}🌐{% endif %}
+            {{ titre }}
+        </h1>
+        <div class="user-badge">
+            <div class="avatar">{{ user.fullName|slice(0,2)|upper }}</div>
+            <span>{{ user.fullName ?? user.email }}</span>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total sites</div>
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-sub">dans la BDD</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total congestions</div>
+            <div class="stat-value" style="color:#dc2626;">{{ stats.total_occ }}</div>
+            <div class="stat-sub">dépassements seuil 90%</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Max trafic</div>
+            <div class="stat-value" style="color:#FF6600;">{{ stats.max_trafic|number_format(1) }}</div>
+            <div class="stat-sub">Mbit/s</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Sites critiques</div>
+            <div class="stat-value" style="color:#7c3aed;">{{ stats.sites_critiques }}</div>
+            <div class="stat-sub">occurrences &gt; 50</div>
+        </div>
+    </div>
+
+    <!-- SOUS-STATS PAR CLASSIFICATION -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem;">
+        <div style="background:white;border-radius:8px;padding:10px 14px;border:1px solid #eee;font-size:13px;">
+            <span style="color:#888;">TF</span>
+            <strong style="float:right;color:#856404;">{{ stats.total_tf }}</strong>
+        </div>
+        <div style="background:white;border-radius:8px;padding:10px 14px;border:1px solid #eee;font-size:13px;">
+            <span style="color:#888;">COTRANS</span>
+            <strong style="float:right;color:#065f46;">{{ stats.total_cotrans }}</strong>
+        </div>
+        <div style="background:white;border-radius:8px;padding:10px 14px;border:1px solid #eee;font-size:13px;">
+            <span style="color:#888;">NO_COTRANS</span>
+            <strong style="float:right;color:#1e40af;">{{ stats.total_nocotrans }}</strong>
+        </div>
+        <div style="background:white;border-radius:8px;padding:10px 14px;border:1px solid #eee;font-size:13px;">
+            <span style="color:#888;">NON_TDD</span>
+            <strong style="float:right;color:#374151;">{{ stats.total_nontdd }}</strong>
+        </div>
+    </div>
+
+    <!-- FILTRES -->
+    <form method="GET" class="filters-bar">
+        <input type="text" name="search" placeholder="🔍 Rechercher un site..."
+               value="{{ search }}" style="min-width:220px;">
+        <select name="classification">
+            <option value="">Toutes classifications</option>
+            <option value="TF"        {{ classFilter == 'TF'        ? 'selected' : '' }}>TF</option>
+            <option value="COTRANS"   {{ classFilter == 'COTRANS'   ? 'selected' : '' }}>COTRANS</option>
+            <option value="NO_COTRANS"{{ classFilter == 'NO_COTRANS'? 'selected' : '' }}>NO_COTRANS</option>
+            <option value="NON_TDD"   {{ classFilter == 'NON_TDD'   ? 'selected' : '' }}>NON_TDD</option>
+        </select>
+        <button type="submit" class="btn-filter">Filtrer</button>
+        <a href="{{ app.request.pathInfo }}" class="btn-reset">Réinitialiser</a>
+        <span class="count-info">{{ sites|length }} site(s) affiché(s)</span>
+    </form>
+
+    <!-- TABLEAU -->
+    <div class="table-card">
+        <div class="table-header-bar">
+            <h3>Sites {{ titre }} — données réelles BDD</h3>
+        </div>
+
+        {% if sites|length == 0 %}
+            <div class="no-data">
+                Aucun site {{ titre }} trouvé en base de données.<br>
+                <small style="color:#ccc;margin-top:6px;display:block;">
+                    Vérifiez que le champ <code>type_trans</code> contient bien "{{ type }}" dans la table <code>analyse_resultat</code>.
+                </small>
+            </div>
+        {% else %}
+        <div style="overflow-x:auto;">
+        <table id="mainTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Site (FDD)</th>
+                    <th>Site TDD</th>
+                    <th>Classification</th>
+                    <th>Type Trans.</th>
+                    <th>Max FDD (Mbit/s)</th>
+                    <th>Max TDD (Mbit/s)</th>
+                    <th>Trafic Max (Mbit/s)</th>
+                    <th>Seuil 90%</th>
+                    <th>Occurrences</th>
+                    <th>Date Max</th>
+                    <th>Date Analyse</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+            {% for s in sites %}
+                <tr>
+                    <td style="color:#aaa;font-size:12px;">{{ loop.index }}</td>
+
+                    {# Site principal (FDD ou site direct) #}
+                    <td>
+                        <strong style="font-size:12px;font-family:monospace;">
+                            {{ s.site_fdd ?? s.site ?? '—' }}
+                        </strong>
+                    </td>
+
+                    {# Site TDD #}
+                    <td style="font-size:12px;font-family:monospace;color:#666;">
+                        {{ s.site_tdd ?? '—' }}
+                    </td>
+
+                    {# Classification #}
+                    <td>
+                        {% set cls = s.classification|upper %}
+                        <span class="badge badge-{{ cls|lower|replace({'_':''}) }}">{{ cls }}</span>
+                    </td>
+
+                    {# Type Trans #}
+                    <td>
+                        <span style="font-size:12px;font-weight:600;color:
+                            {% if s.type_trans == 'FO' %}#1d6f42
+                            {% elseif s.type_trans == 'FH' %}#1e40af
+                            {% else %}#7c3aed{% endif %};">
+                            {{ s.type_trans ?? '—' }}
+                        </span>
+                    </td>
+
+                    {# Max FDD = somme_fdd_tdd pour NO_COTRANS, sinon max_trafic pour COTRANS/TF #}
+                    <td style="text-align:right;">
+                        {% if s.classification == 'NO_COTRANS' and s.somme_fdd_tdd is not null %}
+                            {{ (s.somme_fdd_tdd / 2)|number_format(4) }}
+                        {% elseif s.classification == 'COTRANS' %}
+                            {{ s.max_trafic|number_format(4) }}
+                        {% else %}
+                            {{ s.max_trafic|number_format(4) }}
+                        {% endif %}
+                    </td>
+
+                    {# Max TDD #}
+                    <td style="text-align:right;">
+                        {% if s.somme_fdd_tdd is not null %}
+                            {{ (s.somme_fdd_tdd / 2)|number_format(4) }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+                    {# Trafic Max (valeur principale) #}
+                    <td style="text-align:right;font-weight:600;">
+                        {% if s.somme_fdd_tdd is not null and s.classification == 'NO_COTRANS' %}
+                            {{ s.somme_fdd_tdd|number_format(4) }}
+                        {% else %}
+                            {{ s.max_trafic|number_format(4) }}
+                        {% endif %}
+                    </td>
+
+                    {# Seuil critique #}
+                    <td style="text-align:right;color:#888;">
+                        {{ s.seuil_critique|number_format(4) }}
+                    </td>
+
+                    {# Occurrences #}
+                    <td style="text-align:center;">
+                        <span class="
+                            {% if s.nombre_occurrences > 50 %}occ-high
+                            {% elseif s.nombre_occurrences > 10 %}occ-med
+                            {% else %}occ-ok{% endif %}">
+                            {{ s.nombre_occurrences }}
+                        </span>
+                    </td>
+
+                    {# Date Max #}
+                    <td style="font-size:11px;color:#888;white-space:nowrap;">
+                        {{ s.date_max ? s.date_max|date('d/m/Y H:i') : '—' }}
+                    </td>
+
+                    {# Date Analyse #}
+                    <td style="font-size:11px;color:#aaa;white-space:nowrap;">
+                        {{ s.date_analyse ? s.date_analyse|date('d/m/Y') : '—' }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+        <!-- PAGINATION JS -->
+        <div class="pagination" id="pagination"></div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Pagination côté client
+const ROWS_PER_PAGE = 50;
+const tbody = document.getElementById('tableBody');
+const pagination = document.getElementById('pagination');
+
+if (tbody && pagination) {
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const total = rows.length;
+    const pages = Math.ceil(total / ROWS_PER_PAGE);
+    let current = 1;
+
+    function showPage(page) {
+        current = page;
+        rows.forEach((row, i) => {
+            row.style.display = (i >= (page-1)*ROWS_PER_PAGE && i < page*ROWS_PER_PAGE) ? '' : 'none';
+        });
+        renderPagination();
+    }
+
+    function renderPagination() {
+        if (pages <= 1) return;
+        let html = '';
+        const start = Math.max(1, current - 2);
+        const end   = Math.min(pages, current + 2);
+
+        if (current > 1) html += `<button class="page-btn" onclick="showPage(${current-1})">‹</button>`;
+        if (start > 1)   html += `<button class="page-btn" onclick="showPage(1)">1</button><span style="padding:5px;">…</span>`;
+
+        for (let i = start; i <= end; i++) {
+            html += `<button class="page-btn ${i===current?'active':''}" onclick="showPage(${i})">${i}</button>`;
+        }
+
+        if (end < pages) html += `<span style="padding:5px;">…</span><button class="page-btn" onclick="showPage(${pages})">${pages}</button>`;
+        if (current < pages) html += `<button class="page-btn" onclick="showPage(${current+1})">›</button>`;
+
+        pagination.innerHTML = html;
+    }
+
+    if (pages > 1) showPage(1);
+}
+</script>
+</body>
+</html>

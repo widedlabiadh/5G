@@ -1,0 +1,146 @@
+{# templates/export/trafic.html.twig #}
+ {% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header" style="background: #FF6600; color: white;">
+            <h4>📊 Export des données trafic</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ path('export_trafic_generate') }}" id="exportForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label>🏭 Sites (séparés par virgule)</label>
+                            <input type="text" name="sites" class="form-control" 
+                                   placeholder="Ex: Tunis, Sfax, Sousse" id="sitesInput">
+                            {% if not canExportAll %}
+                                <small class="text-warning">
+                                    ⚠️ Vous ne pouvez exporter que les sites qui vous sont assignés
+                                </small>
+                            {% else %}
+                                <small class="text-muted">
+                                    💡 Laissez vide pour exporter tous les sites
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label>📅 Période</label>
+                            <select name="date_range" class="form-control" id="dateRange">
+                                <option value="all">Toutes les dates</option>
+                                <option value="day">Jour spécifique</option>
+                                <option value="week">Semaine</option>
+                                <option value="month">Mois</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label>🗓️ Date</label>
+                            <input type="date" name="date_value" class="form-control" id="dateValue" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label>📈 KPIs à inclure :</label>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="kpis[]" value="classification" class="form-check-input" checked>
+                                <label>Classification</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="kpis[]" value="type_liaison" class="form-check-input" checked>
+                                <label>Type Liaison</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="kpis[]" value="max_trafic" class="form-check-input" checked>
+                                <label>Trafic Max</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="kpis[]" value="seuil_critique" class="form-check-input" checked>
+                                <label>Seuil Critique</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="kpis[]" value="nombre_occurrences" class="form-check-input">
+                                <label>Nb Occurrences</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="kpis[]" value="updated_at" class="form-check-input">
+                                <label>Date MAJ</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    📥 Exporter vers Excel
+                </button>
+                   <a href="{{ path('superuser_dashboard') }}" class="btn btn-secondary">Annuler</a>            </form>
+        </div>
+    </div>
+
+    {% if sites|length > 0 %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>🔍 Sélection rapide des sites</h5>
+        </div>
+        <div class="card-body">
+            <input type="text" id="siteSearch" class="form-control mb-2" placeholder="Rechercher un site...">
+            <div id="siteList" style="max-height: 300px; overflow-y: auto;">
+                {% for site in sites %}
+                    <div class="form-check">
+                        <input type="checkbox" class="site-checkbox form-check-input" value="{{ site.enode_name }}">
+                        <label class="form-check-label">{{ site.enode_name }}</label>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="button" id="addSelectedSites" class="btn btn-sm btn-primary mt-2">
+                ➕ Ajouter les sites sélectionnés
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('dateRange').onchange = (e) => {
+    const dateInput = document.getElementById('dateValue');
+    dateInput.disabled = e.target.value === 'all';
+    if (e.target.value === 'all') dateInput.value = '';
+};
+
+document.getElementById('addSelectedSites')?.addEventListener('click', () => {
+    const checkboxes = document.querySelectorAll('.site-checkbox:checked');
+    const selected = Array.from(checkboxes).map(cb => cb.value);
+    const sitesInput = document.getElementById('sitesInput');
+    if (sitesInput.value) {
+        sitesInput.value += ', ' + selected.join(', ');
+    } else {
+        sitesInput.value = selected.join(', ');
+    }
+});
+
+document.getElementById('siteSearch')?.addEventListener('input', (e) => {
+    const search = e.target.value.toLowerCase();
+    document.querySelectorAll('.site-checkbox').forEach(cb => {
+        const label = cb.parentElement.querySelector('label').innerText.toLowerCase();
+        cb.parentElement.style.display = label.includes(search) ? 'flex' : 'none';
+    });
+});
+</script>
+{% endblock %}

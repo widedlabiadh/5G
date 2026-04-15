@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} — Orange Tunisie</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; }
+        .sidebar {
+            width: 250px; background: #1a1a2e; height: 100vh;
+            position: fixed; left: 0; top: 0;
+            display: flex; flex-direction: column; padding: 1.5rem;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
+        .logo-circle {
+            width: 42px; height: 42px; background: #FF6600;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; color: white; font-size: 18px;
+        }
+        .logo-text { color: white; font-size: 14px; font-weight: 500; }
+        .logo-sub { color: #aaa; font-size: 11px; }
+        .nav-section {
+            font-size: 10px; color: #666;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin: 1.5rem 0 0.5rem;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0.6rem 0.8rem; border-radius: 8px;
+            color: #ccc; text-decoration: none; font-size: 13px;
+            margin-bottom: 2px; transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active { background: #FF6600; color: white; }
+        .main { margin-left: 250px; padding: 2rem; }
+        .topbar {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 2rem;
+        }
+        .topbar h1 { font-size: 20px; font-weight: 500; color: #333; }
+        .user-badge {
+            display: flex; align-items: center; gap: 10px;
+            background: white; padding: 0.5rem 1rem;
+            border-radius: 20px; border: 1px solid #eee;
+            font-size: 13px; color: #555;
+        }
+        .avatar {
+            width: 32px; height: 32px; background: #FF6600;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 13px; font-weight: 600;
+        }
+        .form-card {
+            background: white; border-radius: 12px;
+            border: 1px solid #eee; padding: 2rem;
+            max-width: 600px;
+        }
+        .form-card h2 {
+            font-size: 16px; font-weight: 500;
+            color: #333; margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label {
+            display: block; font-size: 13px;
+            color: #555; font-weight: 500; margin-bottom: 6px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%; padding: 0.7rem 1rem;
+            border: 1px solid #ddd; border-radius: 8px;
+            font-size: 14px; outline: none;
+            transition: border-color 0.2s;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .form-group input:focus,
+        .form-group select:focus { border-color: #FF6600; }
+        .form-error {
+            color: #cc0000; font-size: 12px; margin-top: 4px;
+        }
+        .form-actions {
+            display: flex; gap: 10px;
+            margin-top: 1.5rem; padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+        .btn-save {
+            background: #FF6600; color: white;
+            border: none; padding: 0.7rem 1.5rem;
+            border-radius: 8px; font-size: 14px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn-save:hover { background: #e55a00; }
+        .btn-back {
+            background: white; color: #555;
+            border: 1px solid #ddd; padding: 0.7rem 1.5rem;
+            border-radius: 8px; font-size: 14px;
+            cursor: pointer; text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-back:hover { background: #f5f5f5; }
+        .logout-btn {
+            margin-top: auto; display: flex; align-items: center; gap: 10px;
+            padding: 0.6rem 0.8rem; border-radius: 8px;
+            color: #ccc; text-decoration: none; font-size: 13px; transition: all 0.2s;
+        }
+        .logout-btn:hover { background: #cc0000; color: white; }
+        .info-box {
+            background: #fff3e0; border: 1px solid #FFD599;
+            border-radius: 8px; padding: 0.75rem 1rem;
+            font-size: 13px; color: #996600; margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-circle">O</div>
+        <div>
+            <div class="logo-text">NetWON</div>
+            <div class="logo-sub">You Don’t Save Time. You WON It</div>
+        </div>
+    </div>
+    <span class="nav-section">Administration</span>
+    <a href="{{ path('admin_dashboard') }}" class="nav-item">🏠 Dashboard</a>
+    <a href="{{ path('admin_users') }}" class="nav-item active">👥 Gestion Utilisateurs</a>
+    <a href="#" class="nav-item">📊 Rapports</a>
+    <span class="nav-section">Système</span>
+    <a href="{{ path('admin_settings') }}" class="nav-item">⚙️ Paramètres</a>
+    <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+</div>
+
+<div class="main">
+    <div class="topbar">
+        <h1>{{ title }}</h1>
+        <div class="user-badge">
+            <div class="avatar">A</div>
+            {{ user.fullName }} 
+        </div>
+    </div>
+
+    <div class="form-card">
+        {# ✅ CORRECTION 1: isNew → not isNew (l'info box doit apparaître en modification) #}
+        <h2>{{ not isNew ? '✏️ Modifier les informations' : '➕ Nouvel utilisateur' }}</h2>
+
+        {# ✅ CORRECTION 2: isNew → not isNew (l'info box doit apparaître en modification) #}
+        {% if not isNew %}
+        <div class="info-box">
+            ℹ️ Le mot de passe ne peut pas être modifié ici. Utilisez "Reset MDP" depuis la liste des utilisateurs.
+        </div>
+        {% endif %}
+
+        {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+            <div class="form-group">
+                {{ form_label(form.fullName) }}
+                {{ form_widget(form.fullName) }}
+                {% if form_errors(form.fullName) %}
+                    <div class="form-error">{{ form_errors(form.fullName) }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.email) }}
+                {{ form_widget(form.email) }}
+                {% if form_errors(form.email) %}
+                    <div class="form-error">{{ form_errors(form.email) }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.role) }}
+                {{ form_widget(form.role) }}
+                {% if form_errors(form.role) %}
+                    <div class="form-error">{{ form_errors(form.role) }}</div>
+                {% endif %}
+            </div>
+
+            {# ✅ CORRECTION 3: isEdit → isNew (le champ password s'affiche uniquement en création) #}
+            {% if isNew %}
+            <div class="form-group">
+                {{ form_label(form.plainPassword) }}
+                {{ form_widget(form.plainPassword) }}
+                {% if form_errors(form.plainPassword) %}
+                    <div class="form-error">{{ form_errors(form.plainPassword) }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn-save">
+                    {# ✅ CORRECTION 4: isEdit → not isNew #}
+                    {{ not isNew ? '💾 Enregistrer les modifications' : '✅ Créer l\'utilisateur' }}
+                </button>
+                <a href="{{ path('admin_users') }}" class="btn-back">Annuler</a>
+            </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+
+</body>
+</html>

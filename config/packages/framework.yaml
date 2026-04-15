@@ -1,12 +1,31 @@
-# see https://symfony.com/doc/current/reference/configuration/framework.html
+# config/packages/framework.yaml
 framework:
     secret: '%env(APP_SECRET)%'
-
+    
     # Note that the session will be started ONLY if you read or write from it.
     session: true
-
+    
     #esi: true
     #fragments: true
+    
+    # 🔧 Configuration pour les fichiers uploadés
+    http_client:
+        max_host_connections: 10
+        default_options:
+            timeout: 300  # 5 minutes timeout pour les gros fichiers
+            
+    # 🔧 Configuration PHP
+    php_errors:
+        log: true
+        throw: false
+        
+    # 🔧 Configuration des assets
+    assets:
+        enabled: true
+        
+    # 🔧 Configuration des propriétés (pour les uploads)
+    property_info:
+        enabled: true
 
 when@test:
     framework:
