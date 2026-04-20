@@ -234,7 +234,7 @@
             <div id="resultMsg"></div>
         </form>
 
-        <a href="{{ path('superuser_dashboard') }}" class="btn-back">
+        <a href="{{ path('app_dashboard') }}" class="btn-back">
             <i class="fas fa-arrow-left"></i> Retour au Dashboard
         </a>
     </div>
@@ -242,7 +242,7 @@
 
 <script>
 const IMPORT_URL = '{{ path('import_excel_post') }}';
-const DASHBOARD_URL = '{{ path('superuser_dashboard') }}';
+const DASHBOARD_URL = '{{ path('app_dashboard') }}';
 
 let transFiles = { traffic: null, liaison: null, port: null };
 let dropcongFiles = { drop1: null, drop2: null };

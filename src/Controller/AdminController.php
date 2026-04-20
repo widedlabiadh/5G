@@ -19,25 +19,10 @@ use Symfony\Component\Routing\Attribute\Route;
 class AdminController extends AbstractController
 {
     #[Route('/dashboard', name: 'admin_dashboard')]
-    public function dashboard(UserRepository $userRepository): Response
+    public function dashboard(): Response
     {
-        $users = $userRepository->findAll();
-        $totalUsers = count($users);
-        $activeUsers = count(array_filter($users, fn($u) => $u->isActive()));
-        $inactiveUsers = $totalUsers - $activeUsers;
-        
-        // Compter les rôles distincts
-        $roles = array_unique(array_filter(array_map(fn($u) => $u->getRole(), $users)));
-        $roleCount = count($roles);
-
-        return $this->render('dashboard/admin.html.twig', [
-            'user'          => $this->getUser(),
-            'users'         => $users,
-            'totalUsers'    => $totalUsers,
-            'activeUsers'   => $activeUsers,
-            'inactiveUsers' => $inactiveUsers,
-            'roleCount'     => $roleCount,
-        ]);
+        // Rediriger vers le dashboard unique
+        return $this->redirectToRoute('app_dashboard');
     }
 
     #[Route('/users', name: 'admin_users')]
@@ -74,40 +59,38 @@ class AdminController extends AbstractController
         return $this->render('admin/user_form.html.twig', [
             'user'    => $this->getUser(),
             'form'    => $form->createView(),
-           'isNew'      => true,
+            'isNew'   => true,
             'title'   => 'Ajouter un utilisateur',
         ]);
     }
 
-#[Route('/users/{id}/edit', name: 'admin_user_edit')]
-public function editUser(
-    User $targetUser,
-    Request $request,
-    EntityManagerInterface $em
-): Response {
-    $form = $this->createForm(UserType::class, $targetUser, ['is_edit' => true]);
-    $form->handleRequest($request);
+    #[Route('/users/{id}/edit', name: 'admin_user_edit')]
+    public function editUser(
+        User $targetUser,
+        Request $request,
+        EntityManagerInterface $em
+    ): Response {
+        $form = $this->createForm(UserType::class, $targetUser, ['is_edit' => true]);
+        $form->handleRequest($request);
 
-    if ($form->isSubmitted() && $form->isValid()) {
-        // ✅ Pas de modification du mot de passe ici
-        $em->flush();
-        $this->addFlash('success', '✅ Utilisateur modifié avec succès !');
-        return $this->redirectToRoute('admin_users');
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->flush();
+            $this->addFlash('success', '✅ Utilisateur modifié avec succès !');
+            return $this->redirectToRoute('admin_users');
+        }
+
+        return $this->render('admin/user_form.html.twig', [
+            'user'       => $this->getUser(),
+            'form'       => $form->createView(),
+            'isEdit'     => true,
+            'title'      => 'Modifier ' . $targetUser->getFullName(),
+            'targetUser' => $targetUser,
+        ]);
     }
-
-    return $this->render('admin/user_form.html.twig', [
-        'user'       => $this->getUser(),
-        'form'       => $form->createView(),
-        'isEdit'     => true,
-        'title'      => 'Modifier ' . $targetUser->getFullName(),
-        'targetUser' => $targetUser,
-    ]);
-}
 
     #[Route('/users/{id}/toggle', name: 'admin_user_toggle')]
     public function toggleUser(User $targetUser, EntityManagerInterface $em): Response
     {
-        // Empêcher de désactiver son propre compte
         if ($targetUser->getId() === $this->getUser()->getId()) {
             $this->addFlash('error', '❌ Vous ne pouvez pas désactiver votre propre compte !');
             return $this->redirectToRoute('admin_users');
@@ -127,16 +110,13 @@ public function editUser(
         Request $request,
         EntityManagerInterface $em
     ): Response {
-        // Empêcher de supprimer son propre compte
         if ($targetUser->getId() === $this->getUser()->getId()) {
             $this->addFlash('error', '❌ Vous ne pouvez pas supprimer votre propre compte !');
             return $this->redirectToRoute('admin_users');
         }
 
-        // Récupérer le token CSRF
         $token = $request->request->get('_token');
         
-        // Vérifier la validité du token CSRF
         if (!$this->isCsrfTokenValid('delete' . $targetUser->getId(), $token)) {
             $this->addFlash('error', '❌ Token de sécurité invalide. Veuillez rafraîchir la page et réessayer.');
             return $this->redirectToRoute('admin_users');
@@ -146,7 +126,6 @@ public function editUser(
             $userName = $targetUser->getFullName() ?: $targetUser->getEmail();
             $userId = $targetUser->getId();
             
-            // Supprimer l'utilisateur
             $em->remove($targetUser);
             $em->flush();
             
@@ -165,14 +144,12 @@ public function editUser(
         EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher
     ): Response {
-        // Vérifier le token CSRF
         $token = $request->request->get('_token');
         if (!$this->isCsrfTokenValid('reset' . $targetUser->getId(), $token)) {
             $this->addFlash('error', '❌ Token de sécurité invalide. Veuillez rafraîchir la page et réessayer.');
             return $this->redirectToRoute('admin_users');
         }
 
-        // Récupérer le nouveau mot de passe
         $newPassword = $request->request->get('new_password');
         
         if (!$newPassword || strlen($newPassword) < 6) {
@@ -198,7 +175,6 @@ public function editUser(
     {
         $user = $this->getUser();
         
-        // Récupérer les paramètres existants depuis la session
         $session = $request->getSession();
         $existingSettings = $session->get('site_settings', [
             'site_name' => 'NetWON',
@@ -232,7 +208,6 @@ public function editUser(
         
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
-            // Sauvegarder les paramètres dans la session
             $session->set('site_settings', $data);
             
             $this->addFlash('success', '✅ Paramètres sauvegardés avec succès !');

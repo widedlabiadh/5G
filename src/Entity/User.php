@@ -12,10 +12,9 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    const ROLES_REQUIRING_CHECKLIST = [
-        'support_fo', 'support_fh', 'ingenierie_fh',
-        'ingenierie_ip', 'gc', 'deploiement'
-    ];
+    // ============================================================
+    // CONSTANTES (ROLES LABELS uniquement)
+    // ============================================================
 
     const ROLE_LABELS = [
         'admin'         => 'Administrateur',
@@ -26,8 +25,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         'ingenierie_ip' => 'Ingénierie IP',
         'gc'            => 'Département GC',
         'deploiement'   => 'Déploiement',
-        'controleur'    => 'Contrôleur', // Nouveau rôle ajouté
+        'controleur'    => 'Contrôleur',
     ];
+
+    // ============================================================
+    // PROPRIÉTÉS
+    // ============================================================
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -55,6 +58,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    // ============================================================
+    // LIFECYCLE CALLBACKS
+    // ============================================================
+
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
@@ -67,6 +74,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->updatedAt = new \DateTimeImmutable();
     }
+
+    // ============================================================
+    // GETTERS & SETTERS
+    // ============================================================
 
     public function getId(): ?int { return $this->id; }
 
@@ -88,9 +99,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getCreatedAt(): ?\DateTimeImmutable { return $this->createdAt; }
     public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
 
+    // ============================================================
+    // SYMFONY SECURITY INTERFACE
+    // ============================================================
+
     public function getRoles(): array
     {
-        // Convertir le rôle en format Symfony (ROLE_XXX)
         return ['ROLE_' . strtoupper($this->role)];
     }
 
@@ -101,23 +115,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function eraseCredentials(): void {}
 
-    public function needsChecklist(): bool
-    {
-        return in_array($this->role, self::ROLES_REQUIRING_CHECKLIST);
-    }
+    // ============================================================
+    // MÉTHODES UTILITAIRES
+    // ============================================================
 
     public function getRoleLabel(): string
     {
         return self::ROLE_LABELS[$this->role] ?? $this->role;
     }
     
-    // Méthode utilitaire pour vérifier si l'utilisateur est contrôleur
     public function isControleur(): bool
     {
         return $this->role === 'controleur';
     }
     
-    // Méthode utilitaire pour vérifier si l'utilisateur est admin ou superuser
     public function isAdmin(): bool
     {
         return in_array($this->role, ['admin', 'superuser']);

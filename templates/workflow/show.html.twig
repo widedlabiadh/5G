@@ -1,0 +1,304 @@
+{# templates/workflow/show.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket #{{ ticket.id }} - NetWON</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
+        
+        .sidebar {
+            width: 260px; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            height: 100vh; position: fixed; left: 0; top: 0;
+            display: flex; flex-direction: column; padding: 1.5rem;
+            z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
+        .logo-circle {
+            width: 45px; height: 45px; background: linear-gradient(135deg, #f97316, #ea580c);
+            border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; color: white; font-size: 20px;
+        }
+        .logo-text { color: white; font-size: 18px; font-weight: bold; }
+        .logo-sub { color: #f97316; font-size: 10px; font-style: italic; }
+        .nav-section {
+            font-size: 11px; color: #64748b;
+            text-transform: uppercase; letter-spacing: 1px;
+            margin: 1.5rem 0 0.8rem;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 0.7rem 1rem; border-radius: 10px;
+            color: #cbd5e1; text-decoration: none; font-size: 13px;
+            margin-bottom: 4px;
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(249,115,22,0.2); color: #f97316; }
+        .logout-btn {
+            margin-top: auto; display: flex; align-items: center; gap: 12px;
+            padding: 0.7rem 1rem; border-radius: 10px;
+            color: #cbd5e1; text-decoration: none;
+        }
+        .logout-btn:hover { background: rgba(220,38,38,0.2); color: #ef4444; }
+        
+        .main { margin-left: 260px; padding: 1.5rem; }
+        .topbar {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 1.5rem;
+        }
+        .topbar h1 { font-size: 22px; font-weight: 600; color: #1e293b; }
+        .user-badge {
+            display: flex; align-items: center; gap: 12px;
+            background: white; padding: 0.5rem 1rem;
+            border-radius: 40px;
+        }
+        
+        .page-header {
+            margin-bottom: 1.5rem;
+        }
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .page-desc {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f97316;
+            display: inline-block;
+        }
+        .table-like {
+            display: flex;
+            flex-direction: column;
+        }
+        .table-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .table-row:last-child {
+            border-bottom: none;
+        }
+        .badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-open { background: #fff3e0; color: #f97316; }
+        .badge-progress { background: #dbeafe; color: #3b82f6; }
+        .badge-closed { background: #d1fae5; color: #10b981; }
+        .badge-pending { background: #fef3c7; color: #d97706; }
+        .badge-done { background: #d1fae5; color: #10b981; }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+        }
+        .btn-sm { padding: 4px 12px; font-size: 11px; }
+        .btn-primary { background: #f97316; color: white; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #f97316;
+        }
+        .muted {
+            font-size: 11px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-circle">N</div>
+        <div><div class="logo-text">NetWON</div><div class="logo-sub">Workflow</div></div>
+    </div>
+    <span class="nav-section">Workflow</span>
+    <a href="{{ path('workflow_index') }}" class="nav-item">📋 Liste</a>
+    <a href="{{ path('workflow_new') }}" class="nav-item">➕ Nouveau</a>
+    <a href="{{ path('app_dashboard') }}" class="nav-item">🏠 Dashboard</a>
+    <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
+</div>
+
+<div class="main">
+    <div class="topbar">
+        <h1>Ticket #{{ ticket.id }}</h1>
+        <div class="user-badge">
+            <span>👤 {{ user.fullName ?? user.email }}</span>
+        </div>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">{{ ticket.title }}</h2>
+            <div class="page-desc">{{ ticket.description ?: 'Aucune description.' }}</div>
+        </div>
+    </div>
+
+    <!-- Informations générales -->
+    <div class="card">
+        <h3 class="panel-title">Informations générales</h3>
+        <div class="table-like">
+            <div class="table-row">
+                <div><strong>Type d'action</strong></div>
+                <div>{{ ticket.actionTypeLabel|raw }}</div>
+            </div>
+            <div class="table-row">
+                <div><strong>Statut</strong></div>
+                <div>
+                    {% if ticket.status == 'open' %}
+                        <span class="badge badge-open">📋 Ouvert</span>
+                    {% elseif ticket.status == 'in_progress' %}
+                        <span class="badge badge-progress">⚙️ En cours</span>
+                    {% elseif ticket.status == 'closed' %}
+                        <span class="badge badge-closed">✔️ Clôturé</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="table-row">
+                <div><strong>Progression</strong></div>
+                <div>{{ ticket.progress }}%</div>
+            </div>
+            <div class="table-row">
+                <div><strong>Date limite</strong></div>
+                <div>{{ ticket.deadlineAt ? ticket.deadlineAt|date('d/m/Y H:i') : '-' }}</div>
+            </div>
+            <div class="table-row">
+                <div><strong>Créé par</strong></div>
+                <div>{{ ticket.createdBy.fullName ?? ticket.createdBy.email ?? 'Utilisateur' }}</div>
+            </div>
+            <div class="table-row">
+                <div><strong>Site concerné</strong></div>
+                <div>{{ ticket.site ? ticket.site.site : 'Non spécifié' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tâches -->
+    <div class="card">
+        <h3 class="panel-title">Tâches</h3>
+        {% if ticket.tasks is empty %}
+            <div class="muted">Aucune tâche assignée.</div>
+        {% else %}
+            <div class="table-like">
+                {% for task in ticket.tasks %}
+                    <div class="table-row">
+                        <div>
+                            <strong>{{ task.title }}</strong>
+                            <div class="muted">{{ task.description ?: '-' }}</div>
+                            <div class="muted">Assigné à: {{ task.assignedTo.fullName ?? task.assignedTo.email }}</div>
+                            {% if task.comment %}
+                                <div class="muted">Commentaire: {{ task.comment }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% if task.status == 'pending' %}
+                                <span class="badge badge-pending">⏳ En attente</span>
+                            {% elseif task.status == 'in_progress' %}
+                                <span class="badge badge-progress">⚙️ En cours</span>
+                            {% elseif task.status == 'done' %}
+                                <span class="badge badge-done">✅ Terminée</span>
+                            {% endif %}
+                            {% if user.id == task.assignedTo.id and task.status != 'done' %}
+                                <div style="margin-top: 8px;">
+                                    <form method="post" action="{{ path('workflow_task_complete', {id: task.id}) }}">
+                                        <button class="btn btn-success btn-sm">Terminer</button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Ajouter un commentaire -->
+    <div class="card">
+        <h3 class="panel-title">Ajouter un commentaire</h3>
+        <form method="POST" action="{{ path('workflow_comment_add', {id: ticket.id}) }}">
+            <div class="form-group">
+                <textarea name="message" class="form-control" rows="3" placeholder="Votre commentaire..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Ajouter commentaire</button>
+        </form>
+    </div>
+
+    <!-- Historique -->
+    <div class="card">
+        <h3 class="panel-title">Historique</h3>
+        {% if ticket.history is empty %}
+            <div class="muted">Aucun historique.</div>
+        {% else %}
+            <div class="table-like">
+                {% for item in ticket.history %}
+                    <div class="table-row">
+                        <div>{{ item.createdAt|date('d/m/Y H:i') }}</div>
+                        <div>{{ item.action }}</div>
+                        <div>{{ item.details ?: '-' }}</div>
+                        <div>{{ item.user ? (item.user.fullName ?? item.user.email) : 'Système' }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Clôturer le ticket -->
+    {% if ticket.progress == 100 and ticket.status != 'closed' and user.role == 'superuser' %}
+    <div class="card">
+        <form method="post" action="{{ path('workflow_close', {id: ticket.id}) }}">
+            <button class="btn btn-warning">Clôturer le ticket</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>

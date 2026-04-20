@@ -12,16 +12,12 @@
 <div class="login-wrapper">
     <div class="container">
         <div class="hero-grid">
-            <!-- Section Welcome -->
+           <!-- Section Welcome -->
             <div class="welcome-section">
-                <div class="welcome-title">
-                    <h2>
-                        Welcome to <span class="orange-text">Our Platform!</span>
-                    </h2>
-                    
+                <div class="welcome-logo">
+                    <img src="{{ asset('images/NetWON.jpeg') }}" alt="Platform Logo">
                 </div>
             </div>
-
             <!-- Carte Login -->
             <div class="login-card">
                 <div class="login-header">
@@ -36,8 +32,9 @@
                     </div>
                 {% endif %}
 
-                <form method="post">
+                <form method="post" action="{{ path('app_login') }}">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                    <input type="hidden" name="_target_path" value="{{ path('app_dashboard') }}">
                     
                     <div class="input-group">
                         <label>
@@ -75,7 +72,7 @@
         
         <div class="login-footer">
             <i class="fas fa-chart-line"></i> 
-            Orange Tunisie – Transmission & Réseaux 5G | © 2026
+            Orange Tunisie – Transmission & Réseaux 5G | © {{ "now"|date("Y") }}
         </div>
     </div>
 </div>

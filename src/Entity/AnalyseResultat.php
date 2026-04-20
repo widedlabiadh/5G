@@ -51,7 +51,17 @@ class AnalyseResultat
     private ?\DateTimeInterface $dateAnalyse = null;
 
     // ============================================================
-    // GETTERS ET SETTERS
+    // NOUVELLES PROPRIÉTÉS POUR LA CARTE GPS
+    // ============================================================
+    
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $latitude = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $longitude = null;
+
+    // ============================================================
+    // GETTERS ET SETTERS EXISTANTS
     // ============================================================
     
     public function getId(): ?int { return $this->id; }
@@ -91,4 +101,30 @@ class AnalyseResultat
     
     public function getDateAnalyse(): ?\DateTimeInterface { return $this->dateAnalyse; }
     public function setDateAnalyse(\DateTimeInterface $dateAnalyse): self { $this->dateAnalyse = $dateAnalyse; return $this; }
+
+    // ============================================================
+    // NOUVEAUX GETTERS ET SETTERS POUR GPS
+    // ============================================================
+    
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(?float $latitude): self
+    {
+        $this->latitude = $latitude;
+        return $this;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(?float $longitude): self
+    {
+        $this->longitude = $longitude;
+        return $this;
+    }
 }

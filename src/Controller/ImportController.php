@@ -1,6 +1,5 @@
 <?php
 // src/Controller/ImportController.php
-
 namespace App\Controller;
 
 use App\Entity\AnalyseResultat;
@@ -17,12 +16,10 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 class ImportController extends AbstractController
 {
     private FastApiPortDetector $portDetector;
-
     public function __construct(FastApiPortDetector $portDetector)
     {
         $this->portDetector = $portDetector;
     }
-
     // ============================================================
     // ROUTE PRINCIPALE - AFFICHAGE DU FORMULAIRE
     // ============================================================
