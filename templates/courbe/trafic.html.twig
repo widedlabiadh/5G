@@ -1,0 +1,954 @@
+{# templates/courbe/trafic.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Courbes de Trafic — NetWON{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+.main {
+    margin-left: 260px;
+    padding: 1.8rem 2rem !important;
+}
+/* ═══════════════════════════════════════════════
+   VARIABLES
+═══════════════════════════════════════════════ */
+:root {
+    --or:      #f97316;
+    --or-d:    #ea580c;
+    --or-glow: rgba(249,115,22,0.12);
+    --card:    #ffffff;
+    --bg:      #f8fafc;
+    --border:  #eef2f9;
+    --text:    #1e293b;
+    --muted:   #64748b;
+    --faint:   #94a3b8;
+    --r:       16px;
+    --r-lg:    20px;
+    --shadow:  0 2px 8px rgba(0,0,0,0.04);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+/* ═══════════════════════════════════════════════
+   HERO HEADER EPURÉ
+═══════════════════════════════════════════════ */
+.courbe-hero {
+    background: linear-gradient(135deg, #ffffff 0%, #fef9f0 100%);
+    border-radius: var(--r-lg);
+    padding: 1.8rem 2rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.courbe-hero::before {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--or-glow);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--or);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    margin: 0 0 4px;
+}
+
+.hero-title span { color: var(--or); }
+
+.hero-desc {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+}
+
+/* Barre de recherche */
+.hero-search-box {
+    position: relative;
+    width: 340px;
+    flex-shrink: 0;
+}
+
+.hero-search-input {
+    width: 100%;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 40px;
+    padding: 12px 48px 12px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.hero-search-input:focus {
+    border-color: var(--or);
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+}
+
+.hero-search-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--or);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.hero-search-btn:hover { background: var(--or-d); transform: translateY(-50%) scale(1.05); }
+
+/* Autocomplete */
+.autocomplete-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 500;
+    display: none;
+    box-shadow: var(--shadow-lg);
+}
+
+.autocomplete-list.open { display: block; }
+
+.autocomplete-item {
+    padding: 10px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border);
+}
+
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover,
+.autocomplete-item.selected { background: var(--or-glow); color: var(--or); }
+
+.autocomplete-empty {
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--faint);
+    text-align: center;
+}
+
+/* Badge site sélectionné */
+.site-selected-badge {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 40px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #166534;
+    margin-top: 10px;
+}
+
+.site-selected-badge.show { display: inline-flex; }
+
+/* ═══════════════════════════════════════════════
+   CONTROLES
+═══════════════════════════════════════════════ */
+.controls-strip {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow);
+}
+
+.mode-tabs {
+    display: flex;
+    gap: 6px;
+    background: #f1f5f9;
+    border-radius: 40px;
+    padding: 4px;
+}
+
+.mode-tab {
+    padding: 6px 18px;
+    border-radius: 30px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-tab.active {
+    background: white;
+    color: var(--or);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.mode-tab:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.date-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+.date-input {
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    font-size: 12px;
+    background: white;
+    outline: none;
+}
+
+.date-input:focus { border-color: var(--or); }
+
+.seuil-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.seuil-input {
+    width: 90px;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    font-size: 12px;
+    background: white;
+}
+
+.seuil-toggle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.seuil-toggle.active {
+    background: #fef2f2;
+    border-color: #dc2626;
+    color: #dc2626;
+}
+
+.btn-afficher {
+    background: var(--or);
+    color: white;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 40px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.btn-afficher:hover { background: var(--or-d); transform: translateY(-1px); }
+.btn-afficher:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-pdf {
+    background: white;
+    border: 1px solid var(--border);
+    padding: 8px 20px;
+    border-radius: 40px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-pdf:hover { border-color: var(--or); color: var(--or); }
+
+/* ═══════════════════════════════════════════════
+   STATS CARDS (CLAIRES)
+═══════════════════════════════════════════════ */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 1.5rem;
+}
+
+.s-card {
+    background: white;
+    border-radius: var(--r);
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+}
+
+.s-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.s-card .s-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--faint);
+    margin-bottom: 6px;
+}
+
+.s-card .s-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+}
+
+.s-card .s-unit {
+    font-size: 11px;
+    color: var(--faint);
+    margin-top: 4px;
+}
+
+/* Couleurs par carte (pas de fond noir) */
+.s-card.max .s-val { color: var(--or); }
+.s-card.avg .s-val { color: #3b82f6; }
+.s-card.min .s-val { color: #22c55e; }
+.s-card.over .s-val { color: #dc2626; }
+
+/* ═══════════════════════════════════════════════
+   CHART
+═══════════════════════════════════════════════ */
+.chart-card {
+    background: white;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.chart-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.chart-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-title-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--or);
+    animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.chart-meta {
+    display: flex;
+    gap: 18px;
+    font-size: 12px;
+    color: var(--faint);
+}
+
+.chart-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.chart-body {
+    padding: 20px;
+    position: relative;
+    min-height: 400px;
+}
+
+.chart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 320px;
+    color: var(--faint);
+    gap: 12px;
+}
+
+.empty-icon {
+    width: 70px;
+    height: 70px;
+    background: #f8fafc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #cbd5e1;
+}
+
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.92);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    z-index: 10;
+    border-radius: var(--r-lg);
+}
+
+.loading-overlay.active { display: flex; }
+
+.spinner-ring {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--or);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+canvas {
+    display: none;
+    max-height: 400px;
+    width: 100%;
+}
+
+/* Alerte */
+.alert-error {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--r);
+    padding: 12px 18px;
+    margin-bottom: 1rem;
+    font-size: 13px;
+    color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .controls-strip { flex-direction: column; align-items: stretch; }
+    .btn-afficher { margin-left: 0; justify-content: center; }
+    .hero-search-box { width: 100%; }
+    .hero-content { flex-direction: column; align-items: flex-start; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="courbe-hero">
+    <div class="hero-content">
+        <div class="hero-left">
+            <div class="hero-tag"><i class="fas fa-chart-line"></i> Supervision réseau</div>
+            <h1 class="hero-title">Courbes de <span>Trafic</span></h1>
+            <p class="hero-desc">Visualisez et analysez le trafic de chaque site réseau</p>
+        </div>
+        <div class="hero-search-box">
+            <input type="text" class="hero-search-input" id="siteSearchInput" placeholder="Rechercher un site… ex: ARI_0003" autocomplete="off">
+            <button class="hero-search-btn" onclick="loadChart()"><i class="fas fa-chart-line"></i></button>
+            <div class="autocomplete-list" id="autocompleteList"></div>
+            <div class="site-selected-badge" id="siteBadge">
+                <i class="fas fa-tower-broadcast"></i>
+                <span id="siteBadgeText"></span>
+                <i class="fas fa-xmark" style="cursor:pointer;opacity:.6;" onclick="clearSite()"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert-error" id="alertError">
+    <i class="fas fa-circle-exclamation"></i>
+    <span id="alertMsg"></span>
+</div>
+
+<div class="controls-strip">
+    <div>
+        <div style="font-size:10px;font-weight:600;color:var(--faint);margin-bottom:5px;">TYPE TRAFIC</div>
+        <div class="mode-tabs" id="modeTabs">
+            <button class="mode-tab" data-mode="TF">TF</button>
+            <button class="mode-tab active" data-mode="LM">LM (FDD)</button>
+            <button class="mode-tab" data-mode="TC">TC (TDD)</button>
+            <button class="mode-tab" data-mode="both">Les deux</button>
+        </div>
+    </div>
+
+    <div class="date-group">
+        <span class="date-label">Du</span>
+        <input type="date" class="date-input" id="dateStart">
+        <span class="date-label">Au</span>
+        <input type="date" class="date-input" id="dateEnd">
+    </div>
+
+    <div class="seuil-group">
+        <span class="date-label">Seuil</span>
+        <input type="number" class="seuil-input" id="thresholdInput" placeholder="Mbps" min="0" step="10">
+        <button class="seuil-toggle" id="toggleThreshold" title="Afficher seuil"><i class="fas fa-ruler-horizontal"></i></button>
+    </div>
+
+    <button class="btn-afficher" id="btnLoad"><i class="fas fa-bolt"></i> Afficher</button>
+    <button class="btn-pdf" id="btnDownloadPDF" style="display:none" onclick="downloadPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
+</div>
+
+<div class="stats-row" id="statsRow" style="display:none">
+    <div class="s-card max">
+        <div class="s-label">Maximum</div>
+        <div class="s-val" id="statMax">—</div>
+        <div class="s-unit">Mbit/s</div>
+    </div>
+    <div class="s-card avg">
+        <div class="s-label">Moyenne</div>
+        <div class="s-val" id="statAvg">—</div>
+        <div class="s-unit">Mbit/s</div>
+    </div>
+    <div class="s-card min">
+        <div class="s-label">Minimum</div>
+        <div class="s-val" id="statMin">—</div>
+        <div class="s-unit">Mbit/s</div>
+    </div>
+    <div class="s-card over">
+        <div class="s-label">Dépassements seuil</div>
+        <div class="s-val" id="statOver">—</div>
+        <div class="s-unit">occurrences</div>
+    </div>
+</div>
+
+<div class="chart-card" id="pdfContainer">
+    <div class="chart-top">
+        <div class="chart-title">
+            <div class="chart-title-dot" id="chartDot" style="display:none"></div>
+            <span id="chartTitle">VS.FEGE.RxMaxSpeed_Mbs — sélectionnez un site</span>
+        </div>
+        <div class="chart-meta">
+            <span><i class="fas fa-database"></i> <span id="metaPoints">0</span> points</span>
+            <span><i class="fas fa-clock"></i> <span id="metaUpdate">—</span></span>
+        </div>
+    </div>
+    <div class="chart-body" id="chartBody">
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner-ring"></div>
+            <span>Chargement des données…</span>
+        </div>
+        <div class="chart-empty" id="chartEmpty">
+            <div class="empty-icon"><i class="fas fa-chart-area"></i></div>
+            <p>Aucune courbe affichée</p>
+            <small>Recherchez un site et cliquez Afficher</small>
+        </div>
+        <canvas id="traficChart"></canvas>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let chartInstance  = null;
+let currentMode    = null;
+let lastData       = null;
+let showThreshold  = false;
+let selectedSite   = null;
+let allSites       = [];
+let availableTypes = { hasTF: false, hasLM: false, hasTC: false, isPlain: false, defaultMode: null };
+let acIdx          = -1;
+
+/* INIT DATES */
+(function init() {
+    const end   = new Date();
+    const start = new Date(); start.setDate(start.getDate() - 30);
+    document.getElementById('dateEnd').value   = end.toISOString().slice(0,10);
+    document.getElementById('dateStart').value = start.toISOString().slice(0,10);
+    fetchSites();
+})();
+
+async function fetchSites() {
+    try {
+        const res = await fetch('{{ path('api_sites_liste') }}');
+        allSites  = await res.json();
+        const requestedSite = new URLSearchParams(window.location.search).get('site');
+        if (requestedSite) {
+            await pickSite(resolveSiteName(requestedSite));
+            loadChart();
+        }
+    } catch(e) { console.warn(e); }
+}
+
+function resolveSiteName(site) {
+    const normalized = String(site || '').trim().toUpperCase();
+    const exact = allSites.find(s => s.toUpperCase() === normalized);
+    if (exact) return exact;
+    const base = normalized.replace(/_(TF|LM|LMB|LM2|TC|TD|TDD|FDD|BH|BO|TR|OO|OR)(_[A-Z0-9]+)*$/i, '');
+    const baseExact = allSites.find(s => s.toUpperCase() === base);
+    if (baseExact) return baseExact;
+    const suffixed = allSites.find(s => s.toUpperCase().startsWith(`${normalized}_`));
+    return suffixed || site;
+}
+
+window.ouvrirCourbe = async function(site) {
+    await pickSite(resolveSiteName(site));
+    loadChart();
+};
+
+/* AUTOCOMPLETE */
+const searchInput = document.getElementById('siteSearchInput');
+const acList      = document.getElementById('autocompleteList');
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toUpperCase();
+    acIdx = -1;
+    if (!q) { closeAC(); return; }
+    const matches = allSites.filter(s => s.toUpperCase().includes(q)).slice(0, 12);
+    if (!matches.length) {
+        acList.innerHTML = `<div class="autocomplete-empty">Aucun site trouvé</div>`;
+        openAC(); return;
+    }
+    acList.innerHTML = matches.map((s, i) => {
+        const safeSite = escapeHtml(s);
+        const safeMatch = safeSite.replace(new RegExp(escapeRegExp(q), 'gi'), m => `<strong style="color:#f97316">${m}</strong>`);
+        return `
+        <div class="autocomplete-item" data-val="${escapeHtml(s)}" data-idx="${i}" onmousedown="pickSite(${JSON.stringify(s).replace(/"/g, '&quot;')})">
+            <i class="fas fa-tower-broadcast"></i> ${safeMatch}
+        </div>
+    `;
+    }).join('');
+    openAC();
+});
+
+document.addEventListener('click', e => { if (!e.target.closest('.hero-search-box')) closeAC(); });
+
+function openAC() { acList.classList.add('open'); }
+function closeAC() { acList.classList.remove('open'); }
+
+async function pickSite(site) {
+    selectedSite = site;
+    searchInput.value = site;
+    closeAC();
+    document.getElementById('siteBadgeText').textContent = site;
+    document.getElementById('siteBadge').classList.add('show');
+    try {
+        const res = await fetch(`/api/site/${encodeURIComponent(site)}/types`);
+        const types = await res.json();
+        availableTypes = types;
+        updateModeTabs();
+    } catch(e) { console.warn(e); }
+}
+
+function clearSite() {
+    selectedSite = null;
+    searchInput.value = '';
+    document.getElementById('siteBadge').classList.remove('show');
+}
+
+function updateModeTabs() {
+    const tabs = document.querySelector('.mode-tabs');
+    if (availableTypes.isPlain) {
+        tabs.style.display = 'none'; currentMode = null; return;
+    }
+    tabs.style.display = 'flex';
+    const tf = document.querySelector('.mode-tab[data-mode="TF"]');
+    const lm = document.querySelector('.mode-tab[data-mode="LM"]');
+    const tc = document.querySelector('.mode-tab[data-mode="TC"]');
+    const both = document.querySelector('.mode-tab[data-mode="both"]');
+    tf.disabled = !availableTypes.hasTF;
+    lm.disabled = !availableTypes.hasLM;
+    tc.disabled = !availableTypes.hasTC;
+    both.disabled = !(availableTypes.hasLM && availableTypes.hasTC);
+    tf.style.display = availableTypes.hasTF ? '' : 'none';
+    lm.style.display = availableTypes.hasLM ? '' : 'none';
+    tc.style.display = availableTypes.hasTC ? '' : 'none';
+    both.style.display = (availableTypes.hasLM && availableTypes.hasTC) ? '' : 'none';
+
+    if (availableTypes.defaultMode) setMode(availableTypes.defaultMode);
+    else if (availableTypes.hasTF) setMode('TF');
+    else if (availableTypes.hasLM) setMode('LM');
+    else if (availableTypes.hasTC) setMode('TC');
+}
+
+document.querySelectorAll('.mode-tab').forEach(btn => {
+    btn.addEventListener('click', () => { if (!btn.disabled) setMode(btn.dataset.mode); });
+});
+
+function setMode(m) {
+    currentMode = m;
+    document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+}
+
+/* SEUIL */
+document.getElementById('toggleThreshold').addEventListener('click', () => {
+    showThreshold = !showThreshold;
+    document.getElementById('toggleThreshold').classList.toggle('active', showThreshold);
+    if (chartInstance && lastData) redrawChart(lastData);
+});
+
+document.getElementById('thresholdInput').addEventListener('change', () => {
+    if (lastData) { updateStats(lastData.allSpeeds); redrawChart(lastData); }
+});
+
+/* CHARGEMENT */
+document.getElementById('btnLoad').addEventListener('click', loadChart);
+
+async function loadChart() {
+    if (!selectedSite) { showErr('Veuillez sélectionner un site.'); return; }
+    const start = document.getElementById('dateStart').value;
+    const end   = document.getElementById('dateEnd').value;
+    hideErr(); setLoading(true);
+    try {
+        let datasets = [], allSpeeds = [];
+
+        if (availableTypes.isPlain) {
+            const siteName = availableTypes.sitePlain || selectedSite;
+            const data = await fetchTrafficSeries(siteName, start, end);
+            if (!data.length) throw new Error('Aucune donnée');
+            const pts = data.map(d => ({ x: new Date(d.datetime), y: d.max_speed })).filter(p => !isNaN(p.x));
+            allSpeeds = pts.map(p => p.y);
+            datasets.push({ label: siteName, data: pts, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.07)', borderWidth: 2, pointRadius: pts.length>500?0:2, tension: 0.3, fill: true });
+        }
+        else if (currentMode === 'TF') {
+            const siteName = availableTypes.siteTF;
+            const data = await fetchTrafficSeries(siteName, start, end, 'TF');
+            if (!data.length) throw new Error(`Aucune donnee pour ${siteName || selectedSite + '_TF'}`);
+            const pts = data.map(d => ({ x: new Date(d.datetime), y: d.max_speed })).filter(p => !isNaN(p.x));
+            allSpeeds = pts.map(p => p.y);
+            datasets.push({ label: siteName || `${selectedSite}_TF`, data: pts, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.07)', borderWidth: 2, pointRadius: pts.length>500?0:2, tension: 0.3, fill: true });
+        }
+        else if (currentMode === 'both') {
+            const bothParams = new URLSearchParams({ start, end });
+            if (availableTypes.siteLM) bothParams.set('siteLM', availableTypes.siteLM);
+            if (availableTypes.siteTC) bothParams.set('siteTC', availableTypes.siteTC);
+            const both = await (await fetch(`/api/site/${encodeURIComponent(selectedSite)}/both-trafic?${bothParams.toString()}`)).json();
+            ['LM','TC'].forEach((t,i) => {
+                const ser = both[t];
+                if (!ser?.data?.length) return;
+                const pts = ser.data.map(d => ({ x: new Date(d.datetime), y: d.max_speed })).filter(p => !isNaN(p.x));
+                allSpeeds.push(...pts.map(p => p.y));
+                datasets.push({ label: ser.label, data: pts, borderColor: i===0?'#3b82f6':'#f97316', backgroundColor: i===0?'rgba(59,130,246,0.07)':'rgba(249,115,22,0.07)', borderWidth: 2, pointRadius: pts.length>500?0:2, tension: 0.3, fill: false });
+            });
+        }
+        else if (currentMode === 'LM' || currentMode === 'TC') {
+            const siteName = currentMode === 'LM' ? availableTypes.siteLM : availableTypes.siteTC;
+            const data = await fetchTrafficSeries(siteName, start, end, currentMode);
+            if (!data.length) throw new Error(`Aucune donnée pour ${selectedSite}_${currentMode}`);
+            const pts = data.map(d => ({ x: new Date(d.datetime), y: d.max_speed })).filter(p => !isNaN(p.x));
+            allSpeeds = pts.map(p => p.y);
+            datasets.push({ label: siteName || `${selectedSite}_${currentMode}`, data: pts, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.07)', borderWidth: 2, pointRadius: pts.length>500?0:2, tension: 0.3, fill: true });
+        }
+
+        if (!datasets.length) throw new Error('Aucune donnée disponible.');
+        lastData = { datasets, allSpeeds };
+        redrawChart(lastData);
+        updateStats(allSpeeds);
+        document.getElementById('btnDownloadPDF').style.display = '';
+    } catch(e) { showErr(e.message); }
+    finally { setLoading(false); }
+}
+
+async function fetchTrafficSeries(siteName, start, end, type = null) {
+    const params = new URLSearchParams({ start, end });
+    if (siteName) params.set('siteName', siteName);
+    if (type) params.set('type', type);
+    return await (await fetch(`/api/site/${encodeURIComponent(selectedSite)}/trafic?${params.toString()}`)).json();
+}
+
+function redrawChart({ datasets, allSpeeds }) {
+    const canvas = document.getElementById('traficChart');
+    document.getElementById('chartEmpty').style.display = 'none';
+    canvas.style.display = 'block';
+    document.getElementById('chartDot').style.display = '';
+
+    const final = [...datasets];
+    const thr = parseFloat(document.getElementById('thresholdInput').value);
+    if (showThreshold && !isNaN(thr) && thr>0 && datasets[0]?.data?.length) {
+        const f = datasets[0].data[0].x;
+        const l = datasets[0].data[datasets[0].data.length-1].x;
+        final.push({ label: `Seuil (${thr} Mbps)`, data: [{x:f,y:thr},{x:l,y:thr}], borderColor: '#dc2626', borderWidth: 2, borderDash: [6,4], pointRadius: 0, fill: false });
+    }
+
+    const total = datasets.reduce((a,d) => a + d.data.length, 0);
+    document.getElementById('metaPoints').innerText = total.toLocaleString('fr-FR');
+    document.getElementById('metaUpdate').innerText = new Date().toLocaleTimeString('fr-FR');
+
+    const modeStr = availableTypes.isPlain ? '' : currentMode==='both' ? ' — LM + TC' : ` — ${currentMode}`;
+    document.getElementById('chartTitle').textContent = `${selectedSite}${modeStr} · VS.FEGE.RxMaxSpeed_Mbs (Mbit/s)`;
+
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(canvas, {
+        type: 'line',
+        data: { datasets: final },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 11 } } },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} Mbps` } }
+            },
+            scales: {
+                x: { type: 'time', time: { tooltipFormat: 'dd/MM/yyyy HH:mm', unit: 'hour', displayFormats: { hour: 'dd/MM HH:mm' } }, ticks: { maxRotation: 40, autoSkip: true } },
+                y: { title: { display: true, text: 'Débit (Mbps)' }, beginAtZero: false }
+            }
+        }
+    });
+    canvas.style.height = '400px';
+    chartInstance.resize();
+}
+
+function updateStats(speeds) {
+    if (!speeds.length) return;
+    document.getElementById('statMax').textContent = Math.max(...speeds).toFixed(1);
+    document.getElementById('statAvg').textContent = (speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(1);
+    document.getElementById('statMin').textContent = Math.min(...speeds).toFixed(1);
+    const thr = parseFloat(document.getElementById('thresholdInput').value);
+    document.getElementById('statOver').textContent = isNaN(thr) ? '—' : speeds.filter(s=>s>=thr).length.toLocaleString('fr-FR');
+    document.getElementById('statsRow').style.display = '';
+}
+
+async function downloadPDF() {
+    if (!chartInstance) return;
+    const { jsPDF } = window.jspdf;
+    setLoading(true);
+    try {
+        const el = document.getElementById('pdfContainer');
+        const c = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' });
+        const img = c.toDataURL('image/png');
+        const w = 280, h = (c.height * w) / c.width;
+        const pdf = new jsPDF({ orientation: h > w ? 'portrait' : 'landscape', unit: 'mm', format: 'a4' });
+        pdf.addImage(img, 'PNG', (210-w)/2, 10, w, h);
+        pdf.save(`courbe_${selectedSite}_${new Date().toISOString().slice(0,10)}.pdf`);
+    } catch(e) { showErr('Erreur PDF : ' + e.message); }
+    finally { setLoading(false); }
+}
+
+function setLoading(on) {
+    document.getElementById('loadingOverlay').classList.toggle('active', on);
+    document.getElementById('btnLoad').disabled = on;
+}
+
+function showErr(msg) {
+    document.getElementById('alertMsg').textContent = msg;
+    document.getElementById('alertError').style.display = 'flex';
+}
+
+function hideErr() {
+    document.getElementById('alertError').style.display = 'none';
+}
+</script>
+{% endblock %}

@@ -51,7 +51,7 @@ class AnalyseResultat
     private ?\DateTimeInterface $dateAnalyse = null;
 
     // ============================================================
-    // NOUVELLES PROPRIÉTÉS POUR LA CARTE GPS
+    // PROPRIÉTÉS POUR LA CARTE GPS
     // ============================================================
     
     #[ORM\Column(type: 'float', nullable: true)]
@@ -61,7 +61,14 @@ class AnalyseResultat
     private ?float $longitude = null;
 
     // ============================================================
-    // GETTERS ET SETTERS EXISTANTS
+    // PROPRIÉTÉ POUR LA CAPACITÉ (Mbps)
+    // ============================================================
+    
+    #[ORM\Column(type: 'decimal', precision: 15, scale: 4, nullable: true)]
+    private ?float $capaciteMbps = null;
+
+    // ============================================================
+    // GETTERS ET SETTERS
     // ============================================================
     
     public function getId(): ?int { return $this->id; }
@@ -103,7 +110,7 @@ class AnalyseResultat
     public function setDateAnalyse(\DateTimeInterface $dateAnalyse): self { $this->dateAnalyse = $dateAnalyse; return $this; }
 
     // ============================================================
-    // NOUVEAUX GETTERS ET SETTERS POUR GPS
+    // GETTERS ET SETTERS POUR GPS
     // ============================================================
     
     public function getLatitude(): ?float
@@ -125,6 +132,21 @@ class AnalyseResultat
     public function setLongitude(?float $longitude): self
     {
         $this->longitude = $longitude;
+        return $this;
+    }
+
+    // ============================================================
+    // GETTERS ET SETTERS POUR CAPACITE_Mbps
+    // ============================================================
+    
+    public function getCapaciteMbps(): ?float
+    {
+        return $this->capaciteMbps;
+    }
+
+    public function setCapaciteMbps(?float $capaciteMbps): self
+    {
+        $this->capaciteMbps = $capaciteMbps;
         return $this;
     }
 }

@@ -1,457 +1,885 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Import Excel — Orange Tunisie</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
-            min-height: 100vh;
-            padding: 2rem;
-        }
-        .import-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .import-card {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-            padding: 2rem;
-        }
-        .import-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .icon-upload {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #ff6b35, #ff8c5a);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-        }
-        .icon-upload i { font-size: 2.5rem; color: white; }
-        .import-header h1 { font-size: 1.8rem; color: #1e293b; margin-bottom: 0.5rem; }
-        .import-header p { color: #64748b; }
-        
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; }
-        .required { color: #ff6b35; }
-        select {
-            width: 100%;
-            padding: 0.8rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        select:focus { border-color: #ff6b35; outline: none; }
-        
-        .files-section { display: none; margin-top: 1.5rem; }
-        .files-section.show { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        .file-upload-group {
-            background: #f8fafc;
-            border-radius: 16px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        .file-upload-group h4 {
-            font-size: 0.9rem;
-            margin-bottom: 0.8rem;
-            color: #1e293b;
-        }
-        .upload-area-small {
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            padding: 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: white;
-        }
-        .upload-area-small:hover { border-color: #ff6b35; background: #fff8f5; }
-        .upload-area-small.drag-over { border-color: #ff6b35; background: #fff8f5; }
-        
-        .file-info-small {
-            display: none;
-            align-items: center;
-            gap: 0.5rem;
-            background: #f1f5f9;
-            padding: 0.8rem;
-            border-radius: 12px;
-            margin-top: 0.5rem;
-        }
-        .file-info-small.show { display: flex; }
-        .file-name-small { flex: 1; font-size: 0.85rem; color: #1e293b; }
-        
-        .info-text { font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; }
-        .synch-files-list { margin-top: 0.5rem; max-height: 200px; overflow-y: auto; }
-        
-        .btn-import {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, #ff6b35, #ff8c5a);
-            color: white;
-            border: none;
-            border-radius: 40px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 1.5rem;
-        }
-        .btn-import:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255,107,53,0.3); }
-        .btn-import:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .btn-back {
-            display: inline-block;
-            margin-top: 1rem;
-            padding: 0.5rem 1rem;
-            color: #64748b;
-            text-decoration: none;
-            font-size: 0.85rem;
-        }
-        .btn-back:hover { color: #ff6b35; }
-        
-        .alert {
-            padding: 0.8rem 1rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-        }
-        .alert-success { background: #d1fae5; color: #065f46; }
-        .alert-error { background: #fee2e2; color: #991b1b; }
-        
-        #progressBar { display: none; margin-top: 1rem; }
-        .progress-track { background: #e2e8f0; border-radius: 8px; height: 8px; overflow: hidden; }
-        .progress-fill { height: 100%; width: 0%; background: #ff6b35; transition: width 0.3s; }
-        .progress-text { text-align: center; font-size: 12px; margin-top: 8px; color: #64748b; }
-        
-        #resultMsg { display: none; margin-top: 1rem; padding: 0.8rem 1rem; border-radius: 12px; font-size: 0.85rem; }
-    </style>
-</head>
-<body>
-<div class="import-container">
-    <div class="import-card">
-        <div class="import-header">
-            <div class="icon-upload"><i class="fas fa-file-excel"></i></div>
-            <h1>Importer des données Excel</h1>
-            <p>Importez vos fichiers de données réseau</p>
+{% extends 'base.html.twig' %}
+{% block title %}Import — Plan Data{% endblock %}
+
+{% block stylesheets %}
+<style>
+/* ═══ WIZARD PAGE ═══ */
+.wiz-page {
+  padding: 32px 28px 60px;
+}
+
+/* ── Breadcrumb header ── */
+.wiz-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.wiz-topbar-left h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--txt);
+  letter-spacing: -.4px;
+  margin: 0 0 3px;
+}
+.wiz-topbar-left p {
+  font-size: 0.78rem;
+  color: var(--txt-3);
+  margin: 0;
+}
+
+/* ── STEPPER ── */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+}
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  cursor: pointer;
+}
+.step-bubble {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700;
+  flex-shrink: 0;
+  transition: all .25s ease;
+  border: 2px solid var(--border);
+  background: var(--white);
+  color: var(--txt-3);
+  font-family: 'Syne', sans-serif;
+}
+.step-item.done .step-bubble {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+.step-item.active .step-bubble {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(255,98,0,0.15);
+}
+.step-info { min-width: 0; }
+.step-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--txt-3);
+  line-height: 1;
+  margin-bottom: 2px;
+  transition: color .2s;
+}
+.step-item.active .step-label,
+.step-item.done .step-label { color: var(--txt); }
+.step-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--txt-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color .2s;
+}
+.step-item.active .step-name { color: var(--orange); }
+.step-item.done .step-name  { color: var(--green); }
+
+/* Connector line */
+.step-connector {
+  height: 2px;
+  flex: 1;
+  background: var(--border);
+  margin: 0 10px;
+  border-radius: 2px;
+  transition: background .3s;
+}
+.step-connector.done { background: var(--green); }
+.step-connector.active { background: var(--orange); }
+
+/* ── PANELS ── */
+.wiz-panel { display: none; }
+.wiz-panel.active {
+  display: block;
+  animation: panelIn .3s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes panelIn {
+  from { opacity:0; transform:translateX(18px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+
+/* ── TYPE CHOICE CARDS (step 1) ── */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.type-card {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 24px 20px;
+  cursor: pointer;
+  transition: all .22s ease;
+  text-align: center;
+  position: relative;
+}
+.type-card:hover {
+  border-color: var(--orange-border);
+  box-shadow: 0 4px 20px rgba(255,98,0,0.10);
+  transform: translateY(-2px);
+}
+.type-card.selected {
+  border-color: var(--orange);
+  background: var(--orange-pale);
+  box-shadow: 0 0 0 3px rgba(255,98,0,0.12);
+}
+.type-card-check {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--orange);
+  color: white;
+  display: none;
+  align-items: center; justify-content: center;
+  font-size: 0.6rem;
+}
+.type-card.selected .type-card-check { display: flex; }
+.type-icon {
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  margin: 0 auto 14px;
+  transition: background .2s;
+}
+.type-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem; font-weight: 700;
+  color: var(--txt);
+  margin-bottom: 5px;
+}
+.type-card-desc {
+  font-size: 0.72rem;
+  color: var(--txt-3);
+  line-height: 1.5;
+}
+
+/* ── UPLOAD ZONES (step 2) ── */
+.upload-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ufile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 18px;
+  transition: border-color .2s, box-shadow .2s;
+  position: relative;
+  overflow: hidden;
+}
+.ufile:hover { border-color: var(--border-2); }
+.ufile.has-file {
+  border-color: var(--green);
+  background: #f0fdf6;
+}
+.ufile-icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.ufile-meta { flex: 1; min-width: 0; }
+.ufile-label {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .7px; color: var(--txt-3);
+  margin-bottom: 2px;
+}
+.ufile-name {
+  font-size: 0.82rem; font-weight: 600; color: var(--txt);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ufile-sub { font-size: 0.7rem; color: var(--txt-3); }
+.ufile-size {
+  font-size: 0.72rem; color: var(--txt-3); flex-shrink: 0;
+}
+.ufile-action {
+  flex-shrink: 0;
+}
+.ufile-btn {
+  padding: 7px 16px;
+  border-radius: 30px;
+  font-size: 0.75rem; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all .2s;
+  border: 1.5px solid var(--border);
+  background: var(--white); color: var(--txt-2);
+  white-space: nowrap;
+}
+.ufile-btn:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-pale); }
+.ufile.has-file .ufile-btn {
+  border-color: var(--green);
+  background: var(--green-pale);
+  color: #065f46;
+}
+.ufile input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.ufile.has-file input[type=file] { pointer-events: none; }
+
+/* Drag over state */
+.ufile.drag-over {
+  border-color: var(--orange);
+  background: var(--orange-pale);
+  box-shadow: 0 0 0 3px rgba(255,98,0,0.10);
+}
+
+/* optional badge */
+.opt-badge {
+  font-size: 0.63rem; font-weight: 600;
+  background: var(--bg);
+  color: var(--txt-3);
+  border: 1px solid var(--border);
+  padding: 1px 7px; border-radius: 20px;
+  margin-left: 6px;
+}
+
+/* Note GPS */
+.import-note {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: var(--bg); border-radius: 10px;
+  padding: 10px 14px; font-size: 0.72rem; color: var(--txt-3);
+  margin-top: 4px; margin-bottom: 4px;
+  border: 1px solid var(--border);
+}
+.import-note i { color: var(--orange); margin-top: 1px; flex-shrink: 0; }
+
+/* Synch list */
+.synch-list {
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 260px; overflow-y: auto;
+  margin-top: 10px;
+}
+.synch-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 9px 13px; font-size: 0.8rem;
+  animation: panelIn .2s ease both;
+}
+.synch-item i.fa-file-excel { color: #059669; font-size: 0.9rem; }
+.synch-item-name { flex: 1; font-weight: 500; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.synch-item-size { color: var(--txt-3); font-size: 0.7rem; flex-shrink: 0; }
+.synch-rm {
+  cursor: pointer; color: var(--txt-3); font-size: 0.75rem;
+  background: none; border: none; transition: color .15s; padding: 0;
+}
+.synch-rm:hover { color: var(--red); }
+
+/* ── SUMMARY (step 3) ── */
+.summary-card {
+  background: var(--white);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  box-shadow: var(--sh-card);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.summary-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.summary-header h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.88rem; font-weight: 700; color: var(--txt);
+  margin: 0;
+}
+.summary-body { padding: 6px 0; }
+.summary-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f5f6f9;
+  font-size: 0.82rem;
+}
+.summary-row:last-child { border-bottom: none; }
+.summary-icon {
+  width: 32px; height: 32px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.82rem; flex-shrink: 0;
+}
+.summary-file-name { flex: 1; font-weight: 600; color: var(--txt); }
+.summary-file-size { color: var(--txt-3); font-size: 0.72rem; }
+.summary-check { color: var(--green); font-size: 0.85rem; }
+.summary-missing { color: var(--txt-3); font-size: 0.72rem; font-style: italic; }
+
+/* ── NAVIGATION BUTTONS ── */
+.wiz-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+  gap: 12px;
+}
+.btn-wiz-back {
+  padding: 11px 22px;
+  border-radius: 30px;
+  font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  background: var(--white); color: var(--txt-2);
+  border: 1.5px solid var(--border); transition: all .2s;
+  display: flex; align-items: center; gap: 7px;
+}
+.btn-wiz-back:hover { border-color: var(--border-2); color: var(--txt); }
+.btn-wiz-next {
+  padding: 12px 28px;
+  border-radius: 30px;
+  font-size: 0.84rem; font-weight: 700;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  background: var(--orange); color: white;
+  border: none; transition: all .22s ease;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 4px 14px rgba(255,98,0,0.22);
+}
+.btn-wiz-next:hover:not(:disabled) {
+  background: var(--orange-bright);
+  box-shadow: 0 6px 20px rgba(255,98,0,0.32);
+  transform: translateY(-1px);
+}
+.btn-wiz-next:disabled {
+  opacity: .4; cursor: not-allowed; transform: none;
+  box-shadow: none;
+}
+
+/* ── PROGRESS ── */
+.wiz-progress { display: none; margin-top: 18px; }
+.prog-track { background: var(--bg-2); border-radius: 8px; height: 7px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 8px; background: var(--orange); transition: width .4s ease, background .3s; }
+.prog-lbl { font-size: 0.72rem; color: var(--txt-3); margin-top: 6px; text-align: center; }
+
+/* ── RESULT ── */
+.wiz-result { display: none; margin-top: 16px; padding: 12px 16px; border-radius: 12px; font-size: 0.82rem; font-weight: 500; }
+.wiz-result.s { background: var(--green-pale); border: 1px solid #a7f3d0; color: #065f46; }
+.wiz-result.w { background: var(--amber-pale); border: 1px solid #fde68a; color: #92400e; }
+.wiz-result.e { background: var(--red-pale);   border: 1px solid #fecaca; color: #991b1b; }
+
+/* Flash */
+.flash-wiz { padding: 10px 14px; border-radius: 10px; margin-bottom: 18px; font-size: 0.82rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.flash-wiz.s { background: var(--green-pale); border: 1px solid #a7f3d0; color: #065f46; }
+.flash-wiz.e { background: var(--red-pale); border: 1px solid #fecaca; color: #991b1b; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .type-grid { grid-template-columns: 1fr; }
+  .step-info { display: none; }
+  .wiz-page { padding: 20px 14px 40px; }
+}
+@media (max-width: 600px) {
+  .type-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+{% include 'components/_navbar.html.twig' %}
+
+<div class="wiz-page">
+
+  {# ── Topbar ── #}
+  <div class="wiz-topbar">
+    <div class="wiz-topbar-left">
+      <h1>Import <span style="color:var(--orange)">Plan Data</span></h1>
+    </div>
+    <a href="{{ path('app_dashboard') }}" style="font-size:.78rem;color:var(--txt-3);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .15s;"
+       onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--txt-3)'">
+      <i class="fas fa-arrow-left" style="font-size:.7rem;"></i> Dashboard
+    </a>
+  </div>
+
+  {# Flash #}
+  {% for msg in app.flashes('success') %}
+    <div class="flash-wiz s"><i class="fas fa-circle-check"></i> {{ msg }}</div>
+  {% endfor %}
+  {% for msg in app.flashes('error') %}
+    <div class="flash-wiz e"><i class="fas fa-circle-xmark"></i> {{ msg }}</div>
+  {% endfor %}
+
+  <form id="wizForm" enctype="multipart/form-data">
+  <input type="hidden" name="type_donnees" id="typeHidden" value="">
+
+  {# ══ PANEL 1 — TYPE ══ #}
+  <div class="wiz-panel active" id="panel-1">
+    <div class="type-grid">
+
+      <div class="type-card" data-type="trans">
+        <div class="type-card-check"><i class="fas fa-check"></i></div>
+        <div class="type-icon" style="background:#fff4ee;">
+          <i class="fas fa-chart-line" style="color:var(--orange);"></i>
+        </div>
+        <div class="type-card-title">Transmission</div>
+        <div class="type-card-desc">
+          1 fichier obligatoire (Trafic)<br>
+          + Port/Liaison optionnels<br>
+          + GPS optionnel
+        </div>
+      </div>
+
+      <div class="type-card" data-type="dropcong">
+        <div class="type-card-check"><i class="fas fa-check"></i></div>
+        <div class="type-icon" style="background:#fef2f2;">
+          <i class="fas fa-triangle-exclamation" style="color:var(--red);"></i>
+        </div>
+        <div class="type-card-title">DropCong</div>
+        <div class="type-card-desc">2 fichiers requis<br>Analyse congestion</div>
+      </div>
+
+      <div class="type-card" data-type="synch">
+        <div class="type-card-check"><i class="fas fa-check"></i></div>
+        <div class="type-icon" style="background:#eff6ff;">
+          <i class="fas fa-rotate" style="color:#3b82f6;"></i>
+        </div>
+        <div class="type-card-title">Synchronisation</div>
+        <div class="type-card-desc">N fichiers acceptés<br>Sélection multiple</div>
+      </div>
+
+    </div>
+
+    <div class="wiz-nav">
+      <a href="{{ path('app_dashboard') }}" class="btn-wiz-back" style="text-decoration:none;">
+        <i class="fas fa-xmark" style="font-size:.75rem;"></i> Annuler
+      </a>
+      <button type="button" class="btn-wiz-next" id="btn-next-1" disabled onclick="goStep(2)">
+        Choisir les fichiers <i class="fas fa-arrow-right" style="font-size:.75rem;"></i>
+      </button>
+    </div>
+  </div>
+
+  {# ══ PANEL 2 — FICHIERS ══ #}
+  <div class="wiz-panel" id="panel-2">
+
+    {# TRANSMISSION #}
+    <div id="files-trans" style="display:none;">
+      <div class="upload-grid">
+
+        <div class="ufile" id="ufile-traffic">
+          <input type="file" name="traffic_file" accept=".xlsx,.xls" data-key="traffic">
+          <div class="ufile-icon" style="background:#fff4ee;"><i class="fas fa-chart-line" style="color:var(--orange);"></i></div>
+          <div class="ufile-meta">
+            <div class="ufile-label">Trafic <span style="color:var(--orange)">* OBLIGATOIRE</span></div>
+            <div class="ufile-name ufile-placeholder">Aucun fichier sélectionné</div>
+            <div class="ufile-sub">.xlsx · .xls</div>
+          </div>
+          <div class="ufile-size" id="size-traffic"></div>
+          <div class="ufile-action">
+            <span class="ufile-btn"><i class="fas fa-folder-open" style="font-size:.75rem;margin-right:5px;"></i>Parcourir</span>
+          </div>
         </div>
 
-        {% for msg in app.flashes('success') %}
-            <div class="alert alert-success"><i class="fas fa-check-circle"></i> {{ msg }}</div>
-        {% endfor %}
-        {% for msg in app.flashes('error') %}
-            <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> {{ msg }}</div>
-        {% endfor %}
+        <div class="ufile" id="ufile-liaison">
+          <input type="file" name="liaison_file" accept=".xlsx,.xls" data-key="liaison">
+          <div class="ufile-icon" style="background:var(--blue-pale);"><i class="fas fa-link" style="color:var(--blue);"></i></div>
+          <div class="ufile-meta">
+            <div class="ufile-label">Liaison <span class="opt-badge">optionnel</span></div>
+            <div class="ufile-name ufile-placeholder">Aucun fichier sélectionné</div>
+            <div class="ufile-sub">.xlsx · .xls</div>
+          </div>
+          <div class="ufile-size" id="size-liaison"></div>
+          <div class="ufile-action">
+            <span class="ufile-btn"><i class="fas fa-folder-open" style="font-size:.75rem;margin-right:5px;"></i>Parcourir</span>
+          </div>
+        </div>
 
-        <form id="importForm" enctype="multipart/form-data">
-            <div class="form-group">
-                <label>Type de données <span class="required">*</span></label>
-                <select name="type_donnees" id="typeDonnees" required>
-                    <option value="">Sélectionnez un type</option>
-                    <option value="trans">📊 Transmission (3 fichiers)</option>
-                    <option value="dropcong">⚠️ DropCong (2 fichiers)</option>
-                    <option value="synch">🔄 Synchronisation (N fichiers)</option>
-                </select>
-            </div>
+        <div class="ufile" id="ufile-port">
+          <input type="file" name="port_file" accept=".xlsx,.xls" data-key="port">
+          <div class="ufile-icon" style="background:var(--violet-pale);"><i class="fas fa-plug" style="color:var(--violet);"></i></div>
+          <div class="ufile-meta">
+            <div class="ufile-label">Port <span class="opt-badge">optionnel</span></div>
+            <div class="ufile-name ufile-placeholder">Aucun fichier sélectionné</div>
+            <div class="ufile-sub">.xlsx · .xls</div>
+          </div>
+          <div class="ufile-size" id="size-port"></div>
+          <div class="ufile-action">
+            <span class="ufile-btn"><i class="fas fa-folder-open" style="font-size:.75rem;margin-right:5px;"></i>Parcourir</span>
+          </div>
+        </div>
 
-            <!-- Transmission -->
-            <div id="transSection" class="files-section">
-                {% for file in ['traffic', 'liaison', 'port'] %}
-                <div class="file-upload-group">
-                    <h4>
-                        <i class="fas {{ file == 'traffic' ? 'fa-chart-line' : (file == 'liaison' ? 'fa-link' : 'fa-plug') }}"></i>
-                        Fichier {{ file|capitalize }} <span class="required">*</span>
-                    </h4>
-                    <div class="upload-area-small" data-target="{{ file }}">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span>Cliquez ou glissez le fichier {{ file|capitalize }}</span>
-                    </div>
-                    <input type="file" name="{{ file }}_file" accept=".xlsx,.xls" style="display:none;" data-file="{{ file }}">
-                    <div class="file-info-small" data-info="{{ file }}">
-                        <i class="fas fa-file-excel"></i>
-                        <span class="file-name-small"></span>
-                        <i class="fas fa-times" style="cursor:pointer;color:#cc0000;margin-left:auto;"></i>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+        <div class="ufile" id="ufile-gps">
+          <input type="file" name="gps_file" accept=".xlsx,.xls" data-key="gps">
+          <div class="ufile-icon" style="background:var(--green-pale);"><i class="fas fa-map-location-dot" style="color:var(--green);"></i></div>
+          <div class="ufile-meta">
+            <div class="ufile-label">GPS <span class="opt-badge">optionnel</span></div>
+            <div class="ufile-name ufile-placeholder">Aucun fichier sélectionné</div>
+            <div class="ufile-sub">sites · Latitude_Sector · Longitude_Sector</div>
+          </div>
+          <div class="ufile-size" id="size-gps"></div>
+          <div class="ufile-action">
+            <span class="ufile-btn"><i class="fas fa-folder-open" style="font-size:.75rem;margin-right:5px;"></i>Parcourir</span>
+          </div>
+        </div>
 
-            <!-- DropCong -->
-            <div id="dropcongSection" class="files-section">
-                {% for i in 1..2 %}
-                <div class="file-upload-group">
-                    <h4><i class="fas fa-chart-simple"></i> Fichier Drop {{ i }} <span class="required">*</span></h4>
-                    <div class="upload-area-small" data-target="drop{{ i }}">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span>Cliquez ou glissez le fichier Drop {{ i }}</span>
-                    </div>
-                    <input type="file" name="drop{{ i }}_file" accept=".xlsx,.xls" style="display:none;" data-file="drop{{ i }}">
-                    <div class="file-info-small" data-info="drop{{ i }}">
-                        <i class="fas fa-file-excel"></i>
-                        <span class="file-name-small"></span>
-                        <i class="fas fa-times" style="cursor:pointer;color:#cc0000;margin-left:auto;"></i>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Synchronisation -->
-            <div id="synchSection" class="files-section">
-                <div class="file-upload-group">
-                    <h4><i class="fas fa-sync-alt"></i> Fichiers Synchronisation</h4>
-                    <div class="upload-area-small" id="synchUploadArea">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span>Cliquez ou glissez vos fichiers Excel (multiple)</span>
-                    </div>
-                    <input type="file" name="synch_files[]" id="synchFileInput" accept=".xlsx,.xls" multiple style="display:none;">
-                    <div class="info-text">Vous pouvez sélectionner plusieurs fichiers à la fois</div>
-                    <div id="synchFilesList" class="synch-files-list"></div>
-                </div>
-            </div>
-
-            <button type="submit" class="btn-import" id="submitBtn" disabled>
-                <i class="fas fa-upload"></i> Importer les données
-            </button>
-
-            <div id="progressBar">
-                <div class="progress-track">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <div class="progress-text" id="progressText"></div>
-            </div>
-
-            <div id="resultMsg"></div>
-        </form>
-
-        <a href="{{ path('app_dashboard') }}" class="btn-back">
-            <i class="fas fa-arrow-left"></i> Retour au Dashboard
-        </a>
+      </div>
     </div>
+
+    {# DROPCONG #}
+    <div id="files-dropcong" style="display:none;">
+      <div class="upload-grid">
+        {% for i in 1..2 %}
+        <div class="ufile" id="ufile-drop{{ i }}">
+          <input type="file" name="drop{{ i }}_file" accept=".xlsx,.xls" data-key="drop{{ i }}">
+          <div class="ufile-icon" style="background:var(--red-pale);"><i class="fas fa-chart-simple" style="color:var(--red);"></i></div>
+          <div class="ufile-meta">
+            <div class="ufile-label">Drop {{ i }} <span style="color:var(--orange)">*</span></div>
+            <div class="ufile-name ufile-placeholder">Aucun fichier sélectionné</div>
+            <div class="ufile-sub">.xlsx · .xls</div>
+          </div>
+          <div class="ufile-size" id="size-drop{{ i }}"></div>
+          <div class="ufile-action">
+            <span class="ufile-btn"><i class="fas fa-folder-open" style="font-size:.75rem;margin-right:5px;"></i>Parcourir</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# SYNCH #}
+    <div id="files-synch" style="display:none;">
+      <div class="ufile" id="ufile-synch" style="cursor:pointer;">
+        <input type="file" name="synch_files[]" id="synchInput" accept=".xlsx,.xls" multiple>
+        <div class="ufile-icon" style="background:var(--blue-pale);"><i class="fas fa-rotate" style="color:var(--blue);"></i></div>
+        <div class="ufile-meta">
+          <div class="ufile-label">Fichiers synchronisation <span style="color:var(--orange)">*</span></div>
+          <div class="ufile-name ufile-placeholder">Sélection multiple autorisée</div>
+          <div class="ufile-sub">.xlsx · .xls</div>
+        </div>
+        <div class="ufile-action">
+          <span class="ufile-btn"><i class="fas fa-folder-open" style="font-size:.75rem;margin-right:5px;"></i>Parcourir</span>
+        </div>
+      </div>
+      <div class="synch-list" id="synchList"></div>
+    </div>
+
+    <div class="wiz-nav">
+      <button type="button" class="btn-wiz-back" onclick="goStep(1)">
+        <i class="fas fa-arrow-left" style="font-size:.75rem;"></i> Retour
+      </button>
+      <button type="button" class="btn-wiz-next" id="btn-next-2" disabled onclick="goStep(3)">
+        Vérifier <i class="fas fa-arrow-right" style="font-size:.75rem;"></i>
+      </button>
+    </div>
+  </div>
+
+  {# ══ PANEL 3 — RÉSUMÉ ══ #}
+  <div class="wiz-panel" id="panel-3">
+
+    <div class="summary-card" id="summaryCard">
+      <div class="summary-header">
+        <i class="fas fa-clipboard-check" style="color:var(--orange);"></i>
+        <h3>Récapitulatif — <span id="summaryType" style="color:var(--orange);"></span></h3>
+      </div>
+      <div class="summary-body" id="summaryBody"></div>
+    </div>
+
+    <div class="wiz-nav">
+      <button type="button" class="btn-wiz-back" onclick="goStep(2)">
+        <i class="fas fa-arrow-left" style="font-size:.75rem;"></i> Modifier
+      </button>
+      <button type="submit" class="btn-wiz-next" id="btn-submit">
+        <i class="fas fa-arrow-up-from-bracket" style="font-size:.75rem;"></i>
+        Lancer l'import
+      </button>
+    </div>
+
+    <div class="wiz-progress" id="wizProgress">
+      <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+      <div class="prog-lbl" id="progLbl">Traitement en cours…</div>
+    </div>
+    <div class="wiz-result" id="wizResult"></div>
+
+  </div>
+  </form>
 </div>
 
 <script>
-const IMPORT_URL = '{{ path('import_excel_post') }}';
-const DASHBOARD_URL = '{{ path('app_dashboard') }}';
+(function(){
+  const IMPORT_URL = '{{ path('import_excel_post') }}';
+  const DASH_URL   = '{{ path('app_dashboard') }}';
 
-let transFiles = { traffic: null, liaison: null, port: null };
-let dropcongFiles = { drop1: null, drop2: null };
-let synchFiles = [];
+  let currentStep = 1;
+  let selectedType = '';
+  const files = {};
+  let synchFiles = [];
 
-const typeSelect = document.getElementById('typeDonnees');
-const submitBtn = document.getElementById('submitBtn');
-const progressBar = document.getElementById('progressBar');
-const progressFill = document.getElementById('progressFill');
-const progressText = document.getElementById('progressText');
-const resultMsg = document.getElementById('resultMsg');
+  // ── Helpers ──
+  const fmt = b => {
+    const k=1024, s=['B','KB','MB','GB'], i=Math.floor(Math.log(b)/Math.log(k));
+    return (b/Math.pow(k,i)).toFixed(1)+' '+s[i];
+  };
+  const esc = t => { const d=document.createElement('div'); d.textContent=t; return d.innerHTML; };
 
-typeSelect.addEventListener('change', () => {
-    const t = typeSelect.value;
-    document.getElementById('transSection').classList.remove('show');
-    document.getElementById('dropcongSection').classList.remove('show');
-    document.getElementById('synchSection').classList.remove('show');
-    if (t === 'trans') document.getElementById('transSection').classList.add('show');
-    if (t === 'dropcong') document.getElementById('dropcongSection').classList.add('show');
-    if (t === 'synch') document.getElementById('synchSection').classList.add('show');
-    updateSubmitBtn();
-});
-
-function initUpload(target) {
-    const area = document.querySelector(`.upload-area-small[data-target="${target}"]`);
-    const input = document.querySelector(`input[data-file="${target}"]`);
-    const info = document.querySelector(`[data-info="${target}"]`);
-    const nameSpan = info.querySelector('.file-name-small');
-    const remove = info.querySelector('.fa-times');
-
-    area.onclick = () => input.click();
-    area.ondragover = e => { e.preventDefault(); area.classList.add('drag-over'); };
-    area.ondragleave = () => area.classList.remove('drag-over');
-    area.ondrop = e => {
-        e.preventDefault();
-        area.classList.remove('drag-over');
-        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0], target, nameSpan, info, area);
-    };
-    input.onchange = e => { if (e.target.files[0]) handleFile(e.target.files[0], target, nameSpan, info, area); };
-    remove.onclick = () => {
-        input.value = '';
-        info.classList.remove('show');
-        area.style.display = 'block';
-        if (typeSelect.value === 'trans') transFiles[target] = null;
-        else dropcongFiles[target] = null;
-        updateSubmitBtn();
-    };
-}
-
-function handleFile(file, target, nameSpan, info, area) {
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (!['xlsx', 'xls'].includes(ext)) {
-        alert('Fichier Excel requis (.xlsx ou .xls)');
-        return;
-    }
-    nameSpan.textContent = file.name + ' (' + formatSize(file.size) + ')';
-    info.classList.add('show');
-    area.style.display = 'none';
-    if (typeSelect.value === 'trans') transFiles[target] = file;
-    else dropcongFiles[target] = file;
-    updateSubmitBtn();
-}
-
-function formatSize(b) {
-    if (!b) return '0 B';
-    const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(b) / Math.log(k));
-    return (b / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
-}
-
-['traffic', 'liaison', 'port', 'drop1', 'drop2'].forEach(initUpload);
-
-// Synchronisation
-const synchUpload = document.getElementById('synchUploadArea');
-const synchInput = document.getElementById('synchFileInput');
-const synchList = document.getElementById('synchFilesList');
-
-synchUpload.onclick = () => synchInput.click();
-synchUpload.ondragover = e => { e.preventDefault(); synchUpload.classList.add('drag-over'); };
-synchUpload.ondragleave = () => synchUpload.classList.remove('drag-over');
-synchUpload.ondrop = e => {
-    e.preventDefault();
-    synchUpload.classList.remove('drag-over');
-    addSynchFiles(Array.from(e.dataTransfer.files));
-};
-synchInput.onchange = e => {
-    addSynchFiles(Array.from(e.target.files));
-    synchInput.value = '';
-};
-
-function addSynchFiles(files) {
-    files.forEach(f => {
-        const ext = f.name.split('.').pop().toLowerCase();
-        if (['xlsx', 'xls'].includes(ext) && !synchFiles.find(s => s.name === f.name)) {
-            synchFiles.push(f);
-        }
+  // ── STEP 1 : type cards ──
+  document.querySelectorAll('.type-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedType = card.dataset.type;
+      document.getElementById('typeHidden').value = selectedType;
+      document.getElementById('btn-next-1').disabled = false;
     });
-    renderSynchList();
-    updateSubmitBtn();
-}
+  });
 
-function renderSynchList() {
-    if (!synchFiles.length) {
-        synchList.innerHTML = '<div style="color:#999;font-size:13px;padding:8px;">Aucun fichier sélectionné</div>';
-        return;
+  // ── STEP NAV ──
+  window.goStep = function(n) {
+    if (n === 2) {
+      // show correct file section
+      ['trans','dropcong','synch'].forEach(t => {
+        document.getElementById('files-'+t).style.display = t === selectedType ? 'block' : 'none';
+      });
     }
-    synchList.innerHTML = synchFiles.map((f, i) => `
-        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;border-bottom:1px solid #f0f0f0;">
-            <i class="fas fa-file-excel" style="color:#1d6f42;"></i>
-            <span style="flex:1;">${escapeHtml(f.name)}</span>
-            <span style="color:#999;">${formatSize(f.size)}</span>
-            <i class="fas fa-times" style="cursor:pointer;color:#cc0000;" onclick="removeSynch(${i})"></i>
-        </div>
-    `).join('');
-}
+    if (n === 3) buildSummary();
 
-window.removeSynch = (i) => {
-    synchFiles.splice(i, 1);
-    renderSynchList();
-    updateSubmitBtn();
-};
+    document.querySelectorAll('.wiz-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-'+n).classList.add('active');
 
-function updateSubmitBtn() {
-    const t = typeSelect.value;
-    let ok = false;
-    if (t === 'trans') ok = !!(transFiles.traffic && transFiles.liaison && transFiles.port);
-    if (t === 'dropcong') ok = !!(dropcongFiles.drop1 && dropcongFiles.drop2);
-    if (t === 'synch') ok = synchFiles.length > 0;
-    submitBtn.disabled = !ok;
-}
+    // update stepper
+    document.querySelectorAll('.step-item').forEach(item => {
+      const s = +item.dataset.step;
+      item.classList.remove('active','done');
+      if (s < n) item.classList.add('done');
+      if (s === n) item.classList.add('active');
+    });
+    // bubbles
+    for (let i=1;i<=3;i++){
+      const b = document.getElementById('bubble-'+i);
+      b.innerHTML = i < n ? '<i class="fas fa-check" style="font-size:.7rem;"></i>' : i;
+    }
+    // connectors
+    for (let i=1;i<=2;i++){
+      const c = document.getElementById('conn-'+i);
+      c.className = 'step-connector' + (i < n ? ' done' : (i === n-1 ? ' active' : ''));
+    }
+    currentStep = n;
+  };
 
-// Soumission AJAX
-document.getElementById('importForm').onsubmit = async (e) => {
-    e.preventDefault();
+  // ── FILE UPLOAD ROWS ──
+  function attachUfile(key) {
+    const row = document.getElementById('ufile-'+key);
+    if (!row) return;
+    const input = row.querySelector('input[type=file]');
+    const nameEl = row.querySelector('.ufile-name');
+    const sizeEl = document.getElementById('size-'+key);
 
-    const type = typeSelect.value;
-    const fd = new FormData();
-    fd.append('type_donnees', type);
+    function setFile(f) {
+      if (!f) return;
+      const ext = f.name.split('.').pop().toLowerCase();
+      if (!['xlsx','xls'].includes(ext)) { alert('Fichier Excel requis (.xlsx ou .xls)'); return; }
+      files[key] = f;
+      nameEl.textContent = f.name;
+      nameEl.classList.remove('ufile-placeholder');
+      if (sizeEl) sizeEl.textContent = fmt(f.size);
+      row.classList.add('has-file');
+      checkStep2();
+    }
 
-    if (type === 'trans') {
-        fd.append('traffic_file', transFiles.traffic);
-        fd.append('liaison_file', transFiles.liaison);
-        fd.append('port_file', transFiles.port);
-    } else if (type === 'dropcong') {
-        fd.append('drop1_file', dropcongFiles.drop1);
-        fd.append('drop2_file', dropcongFiles.drop2);
+    input.addEventListener('change', e => { if(e.target.files[0]) setFile(e.target.files[0]); });
+
+    row.addEventListener('dragover', e => { e.preventDefault(); row.classList.add('drag-over'); });
+    row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+    row.addEventListener('drop', e => {
+      e.preventDefault(); row.classList.remove('drag-over');
+      if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+    });
+  }
+
+  ['traffic','liaison','port','gps','drop1','drop2'].forEach(attachUfile);
+
+  // ── SYNCH ──
+  const synchInput = document.getElementById('synchInput');
+  const synchList  = document.getElementById('synchList');
+
+  function renderSynch(){
+    synchList.innerHTML = synchFiles.map((f,i) => `
+      <div class="synch-item">
+        <i class="fas fa-file-excel"></i>
+        <span class="synch-item-name">${esc(f.name)}</span>
+        <span class="synch-item-size">${fmt(f.size)}</span>
+        <button type="button" class="synch-rm" data-i="${i}"><i class="fas fa-xmark"></i></button>
+      </div>`).join('');
+    synchList.querySelectorAll('.synch-rm').forEach(b =>
+      b.addEventListener('click', () => { synchFiles.splice(+b.dataset.i,1); renderSynch(); checkStep2(); })
+    );
+    const row = document.getElementById('ufile-synch');
+    if (synchFiles.length) {
+      row.classList.add('has-file');
+      row.querySelector('.ufile-name').textContent = synchFiles.length + ' fichier(s) sélectionné(s)';
+      row.querySelector('.ufile-name').classList.remove('ufile-placeholder');
     } else {
-        synchFiles.forEach(f => fd.append('synch_files[]', f));
+      row.classList.remove('has-file');
+      row.querySelector('.ufile-name').textContent = 'Sélection multiple autorisée';
+      row.querySelector('.ufile-name').classList.add('ufile-placeholder');
+    }
+  }
+  function addSynch(flist){
+    Array.from(flist).forEach(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      if (['xlsx','xls'].includes(ext) && !synchFiles.find(s=>s.name===f.name)) synchFiles.push(f);
+    });
+    renderSynch(); checkStep2();
+  }
+  synchInput && synchInput.addEventListener('change', e => { addSynch(e.target.files); synchInput.value=''; });
+  const synchRow = document.getElementById('ufile-synch');
+  synchRow && synchRow.addEventListener('dragover', e => { e.preventDefault(); synchRow.classList.add('drag-over'); });
+  synchRow && synchRow.addEventListener('dragleave', () => synchRow.classList.remove('drag-over'));
+  synchRow && synchRow.addEventListener('drop', e => { e.preventDefault(); synchRow.classList.remove('drag-over'); addSynch(e.dataTransfer.files); });
+
+  // ── CHECK STEP 2 (MODIFIÉ : seulement traffic obligatoire) ──
+  function checkStep2(){
+    let ok = false;
+    if (selectedType === 'trans')    ok = !!(files.traffic);
+    if (selectedType === 'dropcong') ok = !!(files.drop1 && files.drop2);
+    if (selectedType === 'synch')    ok = synchFiles.length > 0;
+    document.getElementById('btn-next-2').disabled = !ok;
+  }
+
+  // ── BUILD SUMMARY ──
+  function buildSummary(){
+    const typeLabels = { trans:'Transmission', dropcong:'DropCong', synch:'Synchronisation' };
+    document.getElementById('summaryType').textContent = typeLabels[selectedType] || '';
+
+    let rows = '';
+    const icons = {
+      traffic: { ico:'fa-chart-line', bg:'#fff4ee', col:'var(--orange)' },
+      liaison: { ico:'fa-link',       bg:'var(--blue-pale)',   col:'var(--blue)' },
+      port:    { ico:'fa-plug',       bg:'var(--violet-pale)', col:'var(--violet)' },
+      gps:     { ico:'fa-map-location-dot', bg:'var(--green-pale)', col:'var(--green)' },
+      drop1:   { ico:'fa-chart-simple', bg:'var(--red-pale)', col:'var(--red)' },
+      drop2:   { ico:'fa-chart-simple', bg:'var(--red-pale)', col:'var(--red)' },
+    };
+
+    const fileList = selectedType === 'trans'
+      ? ['traffic','liaison','port','gps']
+      : selectedType === 'dropcong'
+        ? ['drop1','drop2']
+        : [];
+
+    if (selectedType === 'synch') {
+      synchFiles.forEach(f => {
+        rows += `<div class="summary-row">
+          <div class="summary-icon" style="background:var(--blue-pale);"><i class="fas fa-file-excel" style="color:var(--blue);"></i></div>
+          <span class="summary-file-name">${esc(f.name)}</span>
+          <span class="summary-file-size">${fmt(f.size)}</span>
+          <i class="fas fa-circle-check summary-check"></i>
+        </div>`;
+      });
+    } else {
+      fileList.forEach(k => {
+        const ic = icons[k] || { ico:'fa-file-excel', bg:'var(--bg)', col:'var(--txt-3)' };
+        if (files[k]) {
+          rows += `<div class="summary-row">
+            <div class="summary-icon" style="background:${ic.bg};"><i class="fas ${ic.ico}" style="color:${ic.col};"></i></div>
+            <span class="summary-file-name">${esc(files[k].name)}</span>
+            <span class="summary-file-size">${fmt(files[k].size)}</span>
+            <i class="fas fa-circle-check summary-check"></i>
+          </div>`;
+        } else if (k === 'liaison') {
+          rows += `<div class="summary-row">
+            <div class="summary-icon" style="background:var(--bg);"><i class="fas fa-link" style="color:var(--txt-3);"></i></div>
+            <span class="summary-file-name" style="color:var(--txt-3);">Type liaison</span>
+            <span class="summary-missing">non fourni (optionnel)</span>
+          </div>`;
+        } else if (k === 'port') {
+          rows += `<div class="summary-row">
+            <div class="summary-icon" style="background:var(--bg);"><i class="fas fa-plug" style="color:var(--txt-3);"></i></div>
+            <span class="summary-file-name" style="color:var(--txt-3);">Port</span>
+            <span class="summary-missing">non fourni (optionnel)</span>
+          </div>`;
+        } else if (k === 'gps') {
+          rows += `<div class="summary-row">
+            <div class="summary-icon" style="background:var(--bg);"><i class="fas fa-map-location-dot" style="color:var(--txt-3);"></i></div>
+            <span class="summary-file-name" style="color:var(--txt-3);">GPS</span>
+            <span class="summary-missing">non fourni (optionnel)</span>
+          </div>`;
+        }
+      });
+    }
+    document.getElementById('summaryBody').innerHTML = rows;
+  }
+
+  // ── SUBMIT ──
+  document.getElementById('wizForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData();
+    fd.append('type_donnees', selectedType);
+    if (selectedType === 'trans') {
+      fd.append('traffic_file', files.traffic);
+      if (files.liaison) fd.append('liaison_file', files.liaison);
+      if (files.port) fd.append('port_file', files.port);
+      if (files.gps) fd.append('gps_file', files.gps);
+    } else if (selectedType === 'dropcong') {
+      fd.append('drop1_file', files.drop1);
+      fd.append('drop2_file', files.drop2);
+    } else {
+      synchFiles.forEach(f => fd.append('synch_files[]', f));
     }
 
-    progressBar.style.display = 'block';
-    progressFill.style.width = '30%';
-    progressFill.style.background = '#ff6b35';
-    progressText.textContent = 'Upload en cours...';
+    const submitBtn = document.getElementById('btn-submit');
+    const prog      = document.getElementById('wizProgress');
+    const fill      = document.getElementById('progFill');
+    const lbl       = document.getElementById('progLbl');
+    const result    = document.getElementById('wizResult');
+
     submitBtn.disabled = true;
-    resultMsg.style.display = 'none';
+    prog.style.display = 'block';
+    fill.style.width   = '35%';
+    fill.style.background = 'var(--orange)';
+    lbl.textContent    = 'Upload en cours…';
+    result.style.display = 'none';
 
     try {
-        progressFill.style.width = '70%';
-        progressText.textContent = 'Traitement en cours...';
-
-        const res = await fetch(IMPORT_URL, { method: 'POST', body: fd });
-        const data = await res.json();
-
-        progressFill.style.width = '100%';
-        progressText.textContent = '';
-
-        if (data.success) {
-            progressFill.style.background = '#28a745';
-            showMsg(data.message, data.warning ? 'warning' : 'success');
-            if (!data.warning) {
-                setTimeout(() => window.location.href = DASHBOARD_URL, 2000);
-            } else {
-                submitBtn.disabled = false;
-            }
-        } else {
-            progressFill.style.background = '#dc3545';
-            showMsg(data.message, 'error');
-            submitBtn.disabled = false;
-        }
-    } catch (err) {
-        progressFill.style.width = '100%';
-        progressFill.style.background = '#dc3545';
-        progressText.textContent = '';
-        showMsg('Erreur réseau : ' + err.message, 'error');
+      fill.style.width = '70%';
+      lbl.textContent  = 'Traitement des données…';
+      const res  = await fetch(IMPORT_URL, { method:'POST', body:fd });
+      const data = await res.json();
+      fill.style.width = '100%';
+      lbl.textContent  = '';
+      if (data.success) {
+        fill.style.background = 'var(--green)';
+        showResult(data.message, data.warning ? 'w' : 's');
+        if (!data.warning) setTimeout(() => window.location.href = DASH_URL, 2000);
+        else submitBtn.disabled = false;
+      } else {
+        fill.style.background = 'var(--red)';
+        showResult(data.message, 'e');
         submitBtn.disabled = false;
+      }
+    } catch(err) {
+      fill.style.width = '100%'; fill.style.background = 'var(--red)'; lbl.textContent = '';
+      showResult('Erreur réseau : ' + err.message, 'e');
+      submitBtn.disabled = false;
     }
-};
+  });
 
-function showMsg(text, type) {
-    const styles = {
-        success: { bg: '#d4edda', color: '#155724', icon: 'fa-check-circle' },
-        warning: { bg: '#fff3cd', color: '#856404', icon: 'fa-exclamation-triangle' },
-        error: { bg: '#f8d7da', color: '#721c24', icon: 'fa-exclamation-circle' },
-    };
-    const s = styles[type] || styles.error;
-    resultMsg.style.display = 'block';
-    resultMsg.style.background = s.bg;
-    resultMsg.style.color = s.color;
-    resultMsg.style.padding = '12px 16px';
-    resultMsg.style.borderRadius = '12px';
-    resultMsg.innerHTML = `<i class="fas ${s.icon}"></i> ${text}`;
-}
-
-function escapeHtml(t) {
-    const d = document.createElement('div');
-    d.textContent = t;
-    return d.innerHTML;
-}
+  function showResult(text, type) {
+    const r = document.getElementById('wizResult');
+    const icons = { s:'fa-circle-check', w:'fa-triangle-exclamation', e:'fa-circle-xmark' };
+    r.className = 'wiz-result ' + type;
+    r.innerHTML = `<i class="fas ${icons[type]}"></i> ${text}`;
+    r.style.display = 'block';
+  }
+})();
 </script>
-</body>
-</html>
+
+{% endblock %}

@@ -1,0 +1,88 @@
+{# templates/layout/sidebar.html.twig #}
+
+<a href="{{ path('app_dashboard') }}" class="logo">
+    <img src="{{ asset('images/logo.jpeg') }}" class="logo-img" alt="NetWON">
+    <div class="logo-content">
+        <div class="logo-text">NetWON</div>
+        <div class="logo-sub">You Don't Save Time. You WON It</div>
+    </div>
+</a>
+
+{% if is_granted('ROLE_SUPERUSER') %}
+    <span class="nav-section">Réseau</span>
+    <a href="{{ path('app_dashboard') }}" class="nav-item {% if app.request.get('_route') == 'app_dashboard' %}active{% endif %}">
+        <i class="fas fa-gauge-high"></i> Dashboard
+    </a>
+    <a href="{{ path('courbe_trafic') }}" class="nav-item {% if 'courbe' in app.request.get('_route') %}active{% endif %}">
+        <i class="fas fa-chart-line"></i> Courbes Trafic
+    </a>
+    <span class="nav-section">Interfaces</span>
+    <a href="{{ path('superuser_fo') }}" class="nav-item {% if app.request.get('_route') == 'superuser_fo' %}active{% endif %}">
+        <i class="fas fa-circle-nodes" style="color:#0e7490;"></i> Fibre Optique
+    </a>
+    <a href="{{ path('superuser_fh') }}" class="nav-item {% if app.request.get('_route') == 'superuser_fh' %}active{% endif %}">
+        <i class="fas fa-tower-broadcast" style="color:#ff6200;"></i> Faisceaux Hertziens
+    </a>
+    <a href="{{ path('superuser_backbone') }}" class="nav-item {% if app.request.get('_route') == 'superuser_backbone' %}active{% endif %}">
+        <i class="fas fa-network-wired" style="color:#7c3aed;"></i> Backbone
+    </a>
+    <a href="{{ path('superuser_tous') }}" class="nav-item {% if app.request.get('_route') == 'superuser_tous' %}active{% endif %}">
+        <i class="fas fa-table-list"></i> Tous les sites
+    </a>
+    <span class="nav-section">Import</span>
+    <a href="{{ path('import_excel') }}" class="nav-item {% if 'import' in app.request.get('_route') %}active{% endif %}">
+        <i class="fas fa-file-arrow-up"></i> Plan Data
+    </a>
+    <a href="{{ path('import_capacite') }}" class="nav-item">
+        <i class="fas fa-bolt"></i> Import Capacité
+    </a>
+    <span class="nav-section">Workflow</span>
+    <a href="{{ path('workflow_index') }}" class="nav-item {% if 'workflow' in app.request.get('_route') %}active{% endif %}">
+        <i class="fas fa-ticket"></i> Tickets & Tâches
+    </a>
+
+{% elseif is_granted('ROLE_ADMIN') %}
+    <span class="nav-section">Administration</span>
+    <a href="{{ path('app_dashboard') }}" class="nav-item {% if app.request.get('_route') == 'app_dashboard' %}active{% endif %}">
+        <i class="fas fa-gauge-high"></i> Dashboard
+    </a>
+    <a href="{{ path('admin_users') }}" class="nav-item {% if 'admin' in app.request.get('_route') %}active{% endif %}">
+        <i class="fas fa-users"></i> Gestion Utilisateurs
+    </a>
+    <a href="{{ path('import_excel') }}" class="nav-item">
+        <i class="fas fa-file-arrow-up"></i> Import Excel
+    </a>
+    <a href="{{ path('workflow_index') }}" class="nav-item">
+        <i class="fas fa-ticket"></i> Tickets & Tâches
+    </a>
+
+{% elseif is_granted('ROLE_CONTROLEUR') %}
+    <span class="nav-section">Support</span>
+    <a href="{{ path('app_dashboard') }}" class="nav-item active">
+        <i class="fas fa-gauge-high"></i> Dashboard
+    </a>
+    <a href="{{ path('workflow_index') }}" class="nav-item">
+        <i class="fas fa-ticket"></i> Mes Tickets
+    </a>
+
+{% elseif is_granted('ROLE_SUPPORT_FO') or is_granted('ROLE_SUPPORT_FH') or is_granted('ROLE_INGENIERIE_FH') or is_granted('ROLE_INGENIERIE_IP') %}
+    <span class="nav-section">Mes tâches</span>
+    <a href="{{ path('app_dashboard') }}" class="nav-item active">
+        <i class="fas fa-gauge-high"></i> Dashboard
+    </a>
+    <a href="{{ path('workflow_index') }}" class="nav-item">
+        <i class="fas fa-ticket"></i> Tickets Assignés
+    </a>
+
+{% endif %}
+
+<div class="sidebar-footer">
+    <a href="{{ path('app_logout') }}" class="logout-btn">
+        <i class="fas fa-arrow-right-from-bracket"></i>
+        <span>Déconnexion</span>
+    </a>
+    <div class="brand-powered">
+        <span>Powered by</span>
+        <img src="{{ asset('images/orange-logo.png') }}" alt="Orange">
+    </div>
+</div>

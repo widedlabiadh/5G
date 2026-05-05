@@ -1,33 +1,73 @@
-/* public/css/login.css */
-* {
+/* ══════════════════════════════════════════════════════════════
+   LOGIN PAGE – NETWON × ORANGE TUNISIE
+   Version corrigée : logo Orange très petit, bien intégré
+   ══════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
 :root {
-    --orange-primary: #FF7900;
-    --orange-dark: #E65C00;
-    --orange-light: #FFF3E8;
-    --gray-dark: #2C3E50;
-    --gray-medium: #5D6E85;
-    --gray-light: #E2E8F0;
-    --white: #FFFFFF;
-    --danger: #DC2626;
-    --danger-light: #FEF2F2;
+    --or:        #FF7900;
+    --or-dark:   #E56500;
+    --or-light:  #FFF4EC;
+    --dark:      #1C2332;
+    --text:      #2C3E50;
+    --muted:     #8896A9;
+    --border:    #E8EDF4;
+    --white:     #FFFFFF;
+    --danger:    #DC2626;
+    --danger-bg: #FEF2F2;
+    --radius-lg: 28px;
+    --radius-md: 16px;
+    --shadow-card: 0 24px 60px rgba(28,35,50,.10), 0 4px 16px rgba(28,35,50,.06);
+    --shadow-btn:  0 8px 28px rgba(255,121,0,.38);
 }
 
 body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #FAFBFC;
     min-height: 100vh;
-    color: var(--gray-dark);
+    color: var(--text);
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow-x: hidden;
 }
 
-/* Container Principal */
+/* ========== ORBES DÉCORATIVES ========== */
+.bg-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+}
+.orb-1 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255,121,0,.11) 0%, transparent 70%);
+    top: -150px;
+    right: -80px;
+    animation: orbFloat 9s ease-in-out infinite;
+}
+.orb-2 {
+    width: 340px;
+    height: 340px;
+    background: radial-gradient(circle, rgba(255,121,0,.07) 0%, transparent 70%);
+    bottom: -90px;
+    left: -60px;
+    animation: orbFloat 12s ease-in-out infinite reverse;
+}
+@keyframes orbFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-24px); }
+}
+
+/* ========== LAYOUT PRINCIPAL ========== */
 .login-wrapper {
     width: 100%;
     min-height: 100vh;
@@ -35,240 +75,327 @@ body {
     align-items: center;
     justify-content: center;
     padding: 2rem;
+    position: relative;
+    z-index: 1;
 }
-
 .container {
-    max-width: 1400px;
+    max-width: 1100px;
     width: 100%;
     margin: 0 auto;
 }
-
-/* Grille Hero */
 .hero-grid {
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    gap: 3rem;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 3.5rem;
     align-items: center;
 }
 
-/* Section Welcome avec image */
+/* ========== SECTION GAUCHE – NETWON ========== */
 .welcome-section {
-    animation: fadeInLeft 0.8s ease;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    animation: slideLeft 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-
 .welcome-logo {
     text-align: center;
-    margin-bottom: 0;
 }
-
 .welcome-logo img {
-    width: 200%;
-    max-width: 600px;
+    width: 100%;
+    max-width: 480px;
     height: auto;
     object-fit: contain;
-    transition: transform 0.3s ease;
+    filter: drop-shadow(0 8px 32px rgba(255,121,0,.12));
+    transition: transform 0.35s ease;
 }
-
 .welcome-logo img:hover {
     transform: scale(1.02);
 }
 
-/* Carte Login */
+/* ========== CARTE LOGIN ========== */
 .login-card {
     background: var(--white);
-    border-radius: 32px;
-    padding: 2.5rem;
-    border: 1px solid rgba(255,121,0,0.1);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
-    animation: fadeInRight 0.8s ease;
+    border-radius: var(--radius-lg);
+    padding: 2.2rem 2rem 1.8rem;
+    box-shadow: var(--shadow-card);
+    border: 1px solid rgba(255,121,0,.08);
+    position: relative;
+    animation: slideRight 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.login-header {
-    text-align: center;
-    margin-bottom: 2rem;
+/* Ligne orange en haut */
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--or), transparent);
+    border-radius: 0 0 4px 4px;
 }
 
-.login-header h3 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--gray-dark);
-    margin-bottom: 0.5rem;
-}
-
-.login-header p {
-    color: var(--gray-medium);
-    font-size: 0.85rem;
-}
-
-/* Formulaire */
-.input-group {
-    margin-bottom: 1.5rem;
-}
-
-.input-group label {
-    display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: var(--gray-dark);
-}
-
-.input-group label i {
-    margin-right: 8px;
-    color: var(--orange-primary);
-}
-
-.input-group input {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid var(--gray-light);
-    border-radius: 16px;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    font-family: inherit;
-}
-
-.input-group input:focus {
-    outline: none;
-    border-color: var(--orange-primary);
-    box-shadow: 0 0 0 3px rgba(255,121,0,0.1);
-}
-
-.input-group input::placeholder {
-    color: #cbd5e1;
-}
-
-/* Bouton Login */
-.btn-login {
-    width: 100%;
-    background: var(--orange-primary);
-    border: none;
-    padding: 14px;
+/* ══════════════════════════════════════════════════
+   BADGE ORANGE TUNISIE — LOGO PETIT + TEXTE
+   Positionné en haut à droite de la carte
+   ══════════════════════════════════════════════════ */
+.orange-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #FFF8F2;
+    border: 1px solid rgba(255,121,0,0.18);
     border-radius: 40px;
-    font-weight: 700;
-    font-size: 1rem;
-    color: white;
-    cursor: pointer;
-    margin-top: 0.5rem;
-    transition: all 0.3s ease;
+    padding: 4px 10px 4px 7px;
+    transition: all 0.22s ease;
+    cursor: default;
+    z-index: 5;
+    text-decoration: none;
+}
+.orange-badge:hover {
+    box-shadow: 0 2px 10px rgba(255,121,0,0.14);
+    transform: translateY(-1px);
+}
+
+/* ── Petit carré orange avec le "o" stylisé ── */
+.ob-icon {
+    width: 18px;
+    height: 18px;
+    background: var(--or);
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    flex-shrink: 0;
+    font-weight: 900;
+    font-size: 11px;
+    color: white;
+    letter-spacing: -0.5px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    line-height: 1;
 }
 
+/* ── OU : si vous utilisez une vraie image PNG ── */
+.orange-logo-img {
+    /* Forcer une taille FIXE très petite */
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 3px;
+    flex-shrink: 0;
+    /* Empêcher tout redimensionnement automatique */
+    display: block;
+}
+
+/* ── Textes du badge ── */
+.ob-texts {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+.ob-name {
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: var(--or);
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+.ob-country {
+    font-size: 0.54rem;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+/* ========== HEADER LOGIN ========== */
+.login-header {
+    text-align: center;
+    margin-bottom: 1.8rem;
+    padding-top: 0.4rem;
+}
+.login-header h3 {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.3px;
+}
+.login-header p {
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+/* ========== INPUT GROUPS ========== */
+.input-group {
+    margin-bottom: 1.3rem;
+}
+.input-group label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 7px;
+    color: var(--dark);
+}
+.input-group label i {
+    color: var(--or);
+    font-size: 0.82rem;
+}
+.input-wrap {
+    position: relative;
+}
+.input-wrap input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 0.94rem;
+    font-family: inherit;
+    color: var(--dark);
+    background: #FAFBFC;
+    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+}
+.input-wrap input:focus {
+    outline: none;
+    border-color: var(--or);
+    background: var(--white);
+    box-shadow: 0 0 0 3.5px rgba(255,121,0,0.12);
+}
+.input-wrap input::placeholder {
+    color: #C8D0DC;
+}
+.input-pwd input {
+    padding-right: 44px;
+}
+.pwd-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.88rem;
+    padding: 4px;
+    transition: color 0.2s;
+}
+.pwd-toggle:hover {
+    color: var(--or);
+}
+
+/* ========== BOUTON LOGIN ========== */
+.btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, var(--or) 0%, var(--or-dark) 100%);
+    border: none;
+    padding: 13px 20px;
+    border-radius: 40px;
+    font-weight: 800;
+    font-size: 0.96rem;
+    font-family: inherit;
+    color: var(--white);
+    cursor: pointer;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: var(--shadow-btn);
+    transition: transform 0.25s, box-shadow 0.25s;
+}
 .btn-login i {
-    font-size: 1rem;
+    font-size: 0.88rem;
+    transition: transform 0.25s;
 }
-
 .btn-login:hover {
-    background: var(--orange-dark);
     transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(255,121,0,0.3);
+    box-shadow: 0 12px 36px rgba(255,121,0,0.45);
 }
-
+.btn-login:hover i {
+    transform: translateX(4px);
+}
 .btn-login:active {
     transform: translateY(0);
 }
 
-/* Alertes */
+/* ========== ALERTE ERREUR ========== */
 .alert {
-    background: var(--danger-light);
+    background: var(--danger-bg);
     border: 1px solid #fecaca;
     color: var(--danger);
-    padding: 0.875rem 1rem;
-    border-radius: 16px;
-    font-size: 0.875rem;
-    margin-bottom: 1.5rem;
-    text-align: center;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.86rem;
+    margin-bottom: 1.4rem;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    font-weight: 600;
+    animation: shake 0.4s ease;
+}
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-5px); }
+    75%      { transform: translateX(5px); }
 }
 
-.alert i {
-    font-size: 1rem;
+/* ========== ANIMATIONS ========== */
+@keyframes slideLeft {
+    from { opacity: 0; transform: translateX(-40px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideRight {
+    from { opacity: 0; transform: translateX(40px); }
+    to   { opacity: 1; transform: translateX(0); }
 }
 
-/* Footer */
-.login-footer {
-    margin-top: 3rem;
-    text-align: center;
-    padding: 1.5rem;
-    border-top: 1px solid var(--gray-light);
-    color: var(--gray-medium);
-    font-size: 0.8rem;
-}
-
-.login-footer i {
-    margin-right: 6px;
-    color: var(--orange-primary);
-}
-
-/* Animations */
-@keyframes fadeInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes fadeInRight {
-    from {
-        opacity: 0;
-        transform: translateX(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Responsive */
+/* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
-    .welcome-logo img {
-        max-width: 260px;
-    }
+    .welcome-logo img { max-width: 340px; }
 }
-
 @media (max-width: 900px) {
     .hero-grid {
         grid-template-columns: 1fr;
         gap: 2rem;
     }
-    
-    .login-wrapper {
-        padding: 1rem;
+    .login-wrapper { padding: 1.5rem; }
+    .login-card    { padding: 1.8rem 1.5rem 1.4rem; }
+    .welcome-logo img { max-width: 260px; }
+}
+@media (max-width: 640px) {
+    .orange-logo-img {
+        width: 16px !important;
+        height: 16px !important;
+        max-width: 16px !important;
+        max-height: 16px !important;
     }
-    
-    .login-card {
-        padding: 1.5rem;
-    }
-    
-    .welcome-section {
-        text-align: center;
-    }
-    
-    .welcome-logo img {
-        max-width: 220px;
+    .ob-icon   { width: 16px; height: 16px; font-size: 10px; }
+    .ob-name   { font-size: 0.58rem; }
+    .ob-country{ font-size: 0.50rem; }
+    .orange-badge {
+        padding: 3px 8px 3px 5px;
+        gap: 4px;
+        top: 0.8rem;
+        right: 0.9rem;
     }
 }
-
 @media (max-width: 480px) {
     .login-card {
-        padding: 1.25rem;
+        padding: 1.4rem 1.2rem 1.2rem;
+        border-radius: 20px;
     }
-    
-    .welcome-logo img {
-        max-width: 180px;
-    }
+    .welcome-logo img { max-width: 200px; }
+    .login-header h3  { font-size: 1.4rem; }
 }

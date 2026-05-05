@@ -1,0 +1,321 @@
+{# templates/alertes/index.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Alertes réseau — NetWON{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Page Alertes */
+        .alertes-page {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .alertes-header {
+            margin-bottom: 28px;
+        }
+        
+        .alertes-header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--txt);
+            margin-bottom: 8px;
+        }
+        
+        .alertes-header h1 span {
+            color: var(--orange);
+        }
+        
+        .alertes-header p {
+            color: var(--txt-3);
+            font-size: 0.85rem;
+        }
+        
+        .alertes-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .alert-stat-card {
+            background: var(--bg-card);
+            border-radius: var(--r-card);
+            padding: 20px;
+            box-shadow: var(--sh-card);
+            text-align: center;
+        }
+        
+        .alert-stat-card .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+        
+        .alert-stat-card .stat-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+        
+        .alert-stat-card .stat-label {
+            font-size: 0.75rem;
+            color: var(--txt-3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .alertes-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .alert-card {
+            background: var(--bg-card);
+            border-radius: var(--r-card);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        
+        .alert-card:hover {
+            box-shadow: var(--sh-hover);
+            transform: translateY(-2px);
+        }
+        
+        .alert-card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .alert-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+        
+        .alert-info {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--txt);
+            margin-bottom: 4px;
+        }
+        
+        .alert-subtitle {
+            font-size: 0.8rem;
+            color: var(--txt-3);
+        }
+        
+        .alert-count {
+            font-size: 1.8rem;
+            font-weight: 800;
+            padding: 8px 20px;
+            border-radius: 40px;
+        }
+        
+        .alert-body {
+            padding: 0;
+        }
+        
+        .alert-items {
+            width: 100%;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            border-bottom: 1px solid #f0f2f7;
+            transition: background 0.15s;
+        }
+        
+        .alert-item:hover {
+            background: rgba(255,98,0,0.03);
+        }
+        
+        .alert-item-site {
+            font-family: monospace;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--txt);
+        }
+        
+        .alert-item-value {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        
+        .alert-item-meta {
+            font-size: 0.7rem;
+            color: var(--txt-3);
+            margin-left: 12px;
+        }
+        
+        .alert-footer {
+            padding: 14px 24px;
+            background: #fafcff;
+            border-top: 1px solid var(--border);
+            text-align: right;
+        }
+        
+        .alert-link {
+            color: var(--orange);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .alert-link:hover {
+            text-decoration: underline;
+        }
+        
+        .no-alerts {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--bg-card);
+            border-radius: var(--r-card);
+        }
+        
+        .no-alerts i {
+            font-size: 4rem;
+            color: var(--green);
+            margin-bottom: 16px;
+        }
+        
+        .no-alerts h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+        
+        .no-alerts p {
+            color: var(--txt-3);
+        }
+        
+        @media (max-width: 768px) {
+            .alert-card-header {
+                flex-wrap: wrap;
+            }
+            .alert-count {
+                margin-left: auto;
+            }
+            .alert-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            .alert-item-value {
+                margin-left: auto;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="main">
+    <div class="alertes-page">
+        
+        <!-- Header -->
+        <div class="alertes-header">
+            <h1>
+                <i class="fas fa-bell" style="color: var(--orange);"></i> 
+                Centre d'<span>Alertes</span>
+            </h1>
+            <p>Synthèse des anomalies détectées sur le réseau – dernière analyse en temps réel</p>
+        </div>
+        
+        <!-- Statistiques -->
+        <div class="alertes-stats">
+            <div class="alert-stat-card">
+                <div class="stat-icon">🔔</div>
+                <div class="stat-number">{{ total_alertes }}</div>
+                <div class="stat-label">Catégories d'alertes</div>
+            </div>
+            <div class="alert-stat-card">
+                <div class="stat-icon">🔴</div>
+                <div class="stat-number">{{ total_sites_critiques }}</div>
+                <div class="stat-label">Sites critiques</div>
+            </div>
+            <div class="alert-stat-card">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-number">{{ alerts|reduce((sum, a) => sum + a.count, 0) }}</div>
+                <div class="stat-label">Total anomalies</div>
+            </div>
+            <div class="alert-stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-number">{{ "now"|date("d/m/Y") }}</div>
+                <div class="stat-label">Dernière mise à jour</div>
+            </div>
+        </div>
+        
+        <!-- Liste des alertes -->
+        <div class="alertes-grid">
+            {% if alerts is defined and alerts|length > 0 %}
+                {% for alert in alerts %}
+                    <div class="alert-card">
+                        <div class="alert-card-header">
+                            <div class="alert-icon" style="background: {{ alert.bg }}; color: {{ alert.color }};">
+                                <i class="fas {{ alert.icon }}"></i>
+                            </div>
+                            <div class="alert-info">
+                                <div class="alert-title">{{ alert.title }}</div>
+                                <div class="alert-subtitle">{{ alert.subtitle }}</div>
+                            </div>
+                            <div class="alert-count" style="background: {{ alert.bg }}; color: {{ alert.color }};">
+                                {{ alert.count }}
+                            </div>
+                        </div>
+                        
+                        {% if alert.items is defined and alert.items|length > 0 %}
+                            <div class="alert-body">
+                                <div class="alert-items">
+                                    {% for item in alert.items %}
+                                        <div class="alert-item">
+                                            <div class="alert-item-site">{{ item.label }}</div>
+                                            <div>
+                                                <span class="alert-item-value" style="color: {{ alert.color }};">{{ item.value }}</span>
+                                                {% if item.meta is defined %}
+                                                    <span class="alert-item-meta">{{ item.meta }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="alert-footer">
+                            <a href="{{ alert.link }}" class="alert-link">
+                                Voir tous les sites concernés 
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-alerts">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>Aucune alerte active</h3>
+                    <p>Tous les sites sont en bonne santé et fonctionnent normalement.</p>
+                </div>
+            {% endif %}
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+<nav class="netwon-navbar">
+
+    {# 🔵 MENU GAUCHE #}
+    <div class="menu-links">
+        <a href="{{ path('app_dashboard') }}" class="nav-link">🏠 Dashboard</a>
+
+        {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPERUSER') %}
+            <a href="{{ path('import_excel') }}" class="nav-link">📂 Import Excel</a>
+            <a href="{{ path('import_capacite') }}" class="nav-link">⚡ Import Capacité</a>
+            <a href="{{ path('workflow_index') }}" class="nav-link">🎫 Workflows</a>
+        {% endif %}
+    </div>
+
+    {# 🔵 DROITE #}
+    <div class="navbar-right">
+
+        <div class="navbar-action">
+            <i class="fas fa-bell"></i>
+            {% if sites_critiques is defined and sites_critiques|length > 0 %}
+                <span class="notif-badge">{{ sites_critiques|length }}</span>
+            {% endif %}
+        </div>
+
+        <div class="navbar-sep"></div>
+
+        <div class="navbar-profile">
+            <div class="profile-avatar">
+                {{ app.user.fullName|slice(0,1)|upper }}
+            </div>
+
+            <div class="profile-info">
+                <span class="profile-name">{{ app.user.fullName ?? app.user.email }}</span>
+                <span class="profile-role">{{ app.user.roleLabel }}</span>
+            </div>
+        </div>
+
+    </div>
+
+</nav>
