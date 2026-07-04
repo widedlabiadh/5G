@@ -1,0 +1,133 @@
+{
+  "status": "ok",
+  "trained_at": "2026-06-08T16:53:45.283626",
+  "total_rows": 268694,
+  "train_rows": 214955,
+  "test_rows": 53739,
+  "accuracy_test": 0.9843502856398518,
+  "classes": [
+    "A_VERIFIER_CAPACITE",
+    "BRIDAGE",
+    "CONGESTION",
+    "OK",
+    "RISQUE_CRITIQUE"
+  ],
+  "features": [
+    "taux_utilisation",
+    "taux_utilisation_tdd",
+    "taux_utilisation_fdd",
+    "nombre_occurrences",
+    "nombre_occurrences_tdd",
+    "nombre_occurrences_fdd",
+    "variation_j1",
+    "variation_j7",
+    "max_trafic",
+    "max_trafic_tdd",
+    "max_trafic_fdd",
+    "capacite_mbps",
+    "capacite_tdd_mbps",
+    "capacite_fdd_mbps",
+    "type_code",
+    "classification_code"
+  ],
+  "classification_report": {
+    "A_VERIFIER_CAPACITE": {
+      "precision": 0.888175411119812,
+      "recall": 0.9859179415855355,
+      "f1-score": 0.9344978165938864,
+      "support": 5752.0
+    },
+    "BRIDAGE": {
+      "precision": 0.9567099567099567,
+      "recall": 0.9921436588103255,
+      "f1-score": 0.9741046831955923,
+      "support": 891.0
+    },
+    "CONGESTION": {
+      "precision": 0.9976076555023924,
+      "recall": 0.9976076555023924,
+      "f1-score": 0.9976076555023924,
+      "support": 418.0
+    },
+    "OK": {
+      "precision": 0.9981076025965453,
+      "recall": 0.9836915269675348,
+      "f1-score": 0.9908471318100398,
+      "support": 46111.0
+    },
+    "RISQUE_CRITIQUE": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 567.0
+    },
+    "accuracy": 0.9843502856398518,
+    "macro avg": {
+      "precision": 0.9681201251857413,
+      "recall": 0.9918721565731576,
+      "f1-score": 0.979411457420382,
+      "support": 53739.0
+    },
+    "weighted avg": {
+      "precision": 0.9856706153728025,
+      "recall": 0.9843502856398518,
+      "f1-score": 0.9846872998877548,
+      "support": 53739.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      5671,
+      3,
+      0,
+      78,
+      0
+    ],
+    [
+      0,
+      884,
+      0,
+      7,
+      0
+    ],
+    [
+      0,
+      0,
+      417,
+      1,
+      0
+    ],
+    [
+      714,
+      37,
+      1,
+      45359,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      567
+    ]
+  ],
+  "feature_importance": {
+    "nombre_occurrences": 0.3870973444908375,
+    "taux_utilisation": 0.1722552554736506,
+    "variation_j7": 0.10058834110238608,
+    "max_trafic": 0.07064116409098407,
+    "variation_j1": 0.06898526816882296,
+    "classification_code": 0.04799483757150419,
+    "capacite_mbps": 0.04333071954121304,
+    "capacite_fdd_mbps": 0.03027954837834878,
+    "max_trafic_fdd": 0.02673655942427562,
+    "taux_utilisation_fdd": 0.018124319871304743,
+    "nombre_occurrences_fdd": 0.015679602820570716,
+    "type_code": 0.013582904511255971,
+    "max_trafic_tdd": 0.0024461370056875435,
+    "nombre_occurrences_tdd": 0.0017114408690939028,
+    "capacite_tdd_mbps": 0.00038559731309519376,
+    "taux_utilisation_tdd": 0.00016095936696913142
+  }
+}

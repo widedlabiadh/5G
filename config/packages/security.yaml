@@ -28,16 +28,19 @@ security:
             logout:
                 path: app_logout
                 target: app_login
+                invalidate_session: true
 
     # ⬇️ HIÉRARCHIE DES RÔLES ⬇️
     role_hierarchy:
         ROLE_SUPERUSER: [ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
-        ROLE_ADMIN: [ROLE_CONTROLEUR, ROLE_SUPPORT_FO, ROLE_SUPPORT_FH, ROLE_INGENIERIE_FH, ROLE_INGENIERIE_IP, ROLE_GC, ROLE_DEPLOIEMENT]
+        ROLE_ADMIN: [ROLE_CONTROLEUR, ROLE_SUPPORT_FO, ROLE_SUPPORT_FH, ROLE_SUPPORT_RADIO, ROLE_INGENIERIE_FH, ROLE_INGENIERIE_IP, ROLE_INGENIERIE_BACKBONE, ROLE_GC, ROLE_DEPLOIEMENT]
         ROLE_CONTROLEUR: [ROLE_USER]
         ROLE_SUPPORT_FO: [ROLE_USER]
         ROLE_SUPPORT_FH: [ROLE_USER]
+        ROLE_SUPPORT_RADIO: [ROLE_USER]
         ROLE_INGENIERIE_FH: [ROLE_USER]
         ROLE_INGENIERIE_IP: [ROLE_USER]
+        ROLE_INGENIERIE_BACKBONE: [ROLE_USER]
         ROLE_GC: [ROLE_USER]
         ROLE_DEPLOIEMENT: [ROLE_USER]
 
@@ -57,12 +60,20 @@ security:
         
         # Routes Superuser
         - { path: ^/superuser, roles: ROLE_SUPERUSER }
+        # Page complète assistant : superuser uniquement ; endpoints /ask /stream : tous sauf admin (contrôle dans le controller)
+        - { path: ^/assistant, roles: IS_AUTHENTICATED_FULLY }
         
         # Routes Checklist (tous les utilisateurs connectés)
         - { path: ^/checklist, roles: IS_AUTHENTICATED_FULLY }
         
         # Routes Dashboard (tous les utilisateurs connectés)
         - { path: ^/dashboard, roles: IS_AUTHENTICATED_FULLY }
+
+        # Routes Courbes trafic (tous les utilisateurs connectés)
+        - { path: ^/courbe, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/site, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/trafic, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/sites, roles: IS_AUTHENTICATED_FULLY }
         
         # Route par défaut - nécessite authentification
         - { path: ^/, roles: IS_AUTHENTICATED_FULLY }

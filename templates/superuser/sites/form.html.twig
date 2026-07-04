@@ -1,0 +1,482 @@
+{# templates/superuser/sites/form.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pageTitle }}{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+.main {
+    margin-left: var(--sidebar-width);
+    padding: 0.5rem 1rem !important;
+}
+
+:root {
+    --bg-page: #f5f7fb;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text: #1a2c3e;
+    --text-muted: #64748b;
+    --primary: #f97316;
+    --primary-dark: #ea580c;
+    --blue-light: #eff6ff;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+body {
+    background: var(--bg-page);
+    color: var(--text);
+}
+
+.site-navbar {
+    background: rgba(255,255,255,0.96);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--primary);
+}
+
+.site-form-shell {
+    padding: 28px 32px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 18px;
+}
+
+.page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+
+.page-header p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0;
+}
+
+.form-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    background: #fafcff;
+}
+
+.form-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.error-box {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 16px 20px;
+    font-size: 13px;
+    color: #dc2626;
+}
+
+.ref-panel {
+    background: var(--blue-light);
+    border: 1px solid rgba(59,130,246,0.15);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 16px 20px;
+}
+
+.ref-panel strong {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.ref-grid {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.ref-card {
+    background: white;
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.ref-card span {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.ref-card b {
+    font-size: 13px;
+}
+
+.site-entry-table-wrap {
+    overflow-x: auto;
+    background: white;
+}
+
+.site-entry-table {
+    width: 100%;
+    min-width: 2180px;
+    border-collapse: collapse;
+}
+
+.site-entry-table th {
+    text-align: left;
+    padding: 12px 10px;
+    background: #f8fafc;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.site-entry-table td {
+    padding: 12px 10px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+}
+
+.site-entry-table .site-input,
+.site-entry-table .site-textarea {
+    width: 100%;
+    max-width: none;
+    min-height: 38px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    background: white;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.site-entry-table .site-input:focus,
+.site-entry-table .site-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.08);
+}
+
+.site-entry-table .site-textarea {
+    height: 38px;
+    min-height: 38px;
+    resize: horizontal;
+}
+
+.col-site { width: 190px; }
+.col-short { width: 115px; }
+.col-medium { width: 145px; }
+.col-long { width: 220px; }
+
+.field-error {
+    margin-top: 5px;
+    color: #dc2626;
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+@media (max-width: 768px) {
+    .site-navbar {
+        height: auto;
+        padding: 10px 20px;
+    }
+
+    .site-form-shell {
+        padding: 18px;
+    }
+
+    .form-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .site-entry-table {
+        min-width: 1900px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<nav class="site-navbar">
+    <a href="{{ path('app_dashboard') }}" class="nav-brand">
+        <i class="fas fa-chart-network" style="color: var(--primary);"></i>
+    </a>
+    <div class="nav-links">
+        <a href="{{ path('superuser_sites_index') }}" class="nav-link {{ app.request.get('_route') == 'superuser_sites_index' ? 'active' : '' }}">
+            <i class="fas fa-list"></i> Sites
+        </a>
+        <a href="{{ path('import_excel') }}" class="nav-link">
+            <i class="fas fa-upload"></i> Import
+        </a>
+    </div>
+</nav>
+
+<div class="site-form-shell">
+    <div class="page-header">
+        <h1>{{ pageTitle }}</h1>
+        <p>{{ pageSubtitle }}</p>
+    </div>
+
+    <div class="form-card">
+        <div class="form-header">
+            <h2><i class="fas fa-table" style="color: var(--primary);"></i> {{ isEdit ? 'Modifier la ligne site' : 'Nouvelle ligne site' }}</h2>
+            <div class="btn-group">
+                <a href="{{ path('superuser_sites_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Annuler
+                </a>
+                <button form="site-form" type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> {{ isEdit ? 'Mettre a jour' : 'Creer' }}
+                </button>
+            </div>
+        </div>
+
+        {{ form_start(form, {'attr': {'id': 'site-form'}}) }}
+
+        {% if form_errors(form)|trim %}
+            <div class="error-box">{{ form_errors(form) }}</div>
+        {% endif %}
+
+        <div class="ref-panel" id="referencePanel" {% if not referenceSite %}style="display:none"{% endif %}>
+            <strong><i class="fas fa-database"></i> Donnees issues de l'analyse</strong>
+            <div class="ref-grid">
+                <div class="ref-card">
+                    <span>Latitude BDD</span>
+                    <b id="referenceLatitude">{{ referenceSite and referenceSite.latitude is not null ? referenceSite.latitude|number_format(6, '.', ' ') : '-' }}</b>
+                </div>
+                <div class="ref-card">
+                    <span>Longitude BDD</span>
+                    <b id="referenceLongitude">{{ referenceSite and referenceSite.longitude is not null ? referenceSite.longitude|number_format(6, '.', ' ') : '-' }}</b>
+                </div>
+                <div class="ref-card">
+                    <span>Type BDD</span>
+                    <b>{{ referenceSite.type_trans|default('-') }}</b>
+                </div>
+                <div class="ref-card">
+                    <span>Classification BDD</span>
+                    <b>{{ referenceSite.classification|default('-') }}</b>
+                </div>
+            </div>
+        </div>
+
+        {% set nameAttrs = {'class': 'site-input', 'placeholder': 'ARI_0003'} %}
+        {% if editableName is defined and not editableName %}
+            {% set nameAttrs = nameAttrs|merge({'readonly': 'readonly'}) %}
+        {% else %}
+            {% set nameAttrs = nameAttrs|merge({'list': 'site-reference-list'}) %}
+        {% endif %}
+
+        <div class="site-entry-table-wrap">
+            <table class="site-entry-table">
+                <thead>
+                    <tr>
+                        <th class="col-site">Site</th>
+                        <th class="col-medium">Classification</th>
+                        <th class="col-medium">Type</th>
+                        <th class="col-short">Max TDD</th>
+                        <th class="col-short">Max FDD</th>
+                        <th class="col-short">Trafic Max</th>
+                        <th class="col-short">Cap. TDD</th>
+                        <th class="col-short">Cap. FDD</th>
+                        <th class="col-short">Taux util.</th>
+                        <th class="col-short">Occurrences</th>
+                        <th class="col-short">Occ. TDD</th>
+                        <th class="col-short">Occ. FDD</th>
+                        <th class="col-medium">Statut</th>
+                        <th class="col-medium">Etat</th>
+                        <th class="col-medium">Date Max</th>
+                        <th class="col-medium">Latitude</th>
+                        <th class="col-medium">Longitude</th>
+                        <th class="col-long">Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            {{ form_widget(form.name, {'attr': nameAttrs}) }}
+                            <datalist id="site-reference-list">
+                                {% for ref in referenceSites|default([]) %}
+                                    <option value="{{ ref.site }}"></option>
+                                {% endfor %}
+                            </datalist>
+                            <div class="field-error">{{ form_errors(form.name) }}</div>
+                        </td>
+                        <td>
+                            {{ form_widget(form.classification, {'attr': {'class': 'site-input', 'placeholder': 'TF, FDD...'}}) }}
+                            <div class="field-error">{{ form_errors(form.classification) }}</div>
+                        </td>
+                        <td>
+                            {{ form_widget(form.typeTrans, {'attr': {'class': 'site-input', 'placeholder': 'FO, FH...'}}) }}
+                            <div class="field-error">{{ form_errors(form.typeTrans) }}</div>
+                        </td>
+                        <td>{{ form_widget(form.maxTdd, {'attr': {'class': 'site-input', 'placeholder': '0'}}) }}</td>
+                        <td>{{ form_widget(form.maxFdd, {'attr': {'class': 'site-input', 'placeholder': '0'}}) }}</td>
+                        <td>{{ form_widget(form.maxTrafic, {'attr': {'class': 'site-input', 'placeholder': '0'}}) }}</td>
+                        <td>{{ form_widget(form.capaciteTddMbps, {'attr': {'class': 'site-input', 'placeholder': '0'}}) }}</td>
+                        <td>{{ form_widget(form.capaciteFddMbps, {'attr': {'class': 'site-input', 'placeholder': '0'}}) }}</td>
+                        <td>{{ form_widget(form.tauxUtilisation, {'attr': {'class': 'site-input', 'placeholder': '%'}}) }}</td>
+                        <td>{{ form_widget(form.nombreOccurrences, {'attr': {'class': 'site-input', 'min': 0, 'placeholder': '0'}}) }}</td>
+                        <td>{{ form_widget(form.nombreOccurrencesTdd, {'attr': {'class': 'site-input', 'min': 0, 'placeholder': '0'}}) }}</td>
+                        <td>{{ form_widget(form.nombreOccurrencesFdd, {'attr': {'class': 'site-input', 'min': 0, 'placeholder': '0'}}) }}</td>
+                        <td>{{ form_widget(form.decisionStatut, {'attr': {'class': 'site-input', 'placeholder': 'OK'}}) }}</td>
+                        <td>{{ form_widget(form.etat, {'attr': {'class': 'site-input', 'placeholder': 'OK'}}) }}</td>
+                        <td>{{ form_widget(form.dateMax, {'attr': {'class': 'site-input'}}) }}</td>
+                        <td>{{ form_widget(form.latitude, {'attr': {'class': 'site-input', 'placeholder': '36.89404'}}) }}</td>
+                        <td>{{ form_widget(form.longitude, {'attr': {'class': 'site-input', 'placeholder': '10.16641'}}) }}</td>
+                        <td>{{ form_widget(form.description, {'attr': {'class': 'site-textarea', 'rows': 1, 'placeholder': 'Notes'}}) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{% if editableName is not defined or editableName %}
+<script>
+(function () {
+    const nameField = document.getElementById('{{ form.name.vars.id }}');
+    const maxField = document.getElementById('{{ form.maxTrafic.vars.id }}');
+    const typeField = document.getElementById('{{ form.typeTrans.vars.id }}');
+    const classField = document.getElementById('{{ form.classification.vars.id }}');
+    const latField = document.getElementById('{{ form.latitude.vars.id }}');
+    const lngField = document.getElementById('{{ form.longitude.vars.id }}');
+    const panel = document.getElementById('referencePanel');
+    const referenceLatitude = document.getElementById('referenceLatitude');
+    const referenceLongitude = document.getElementById('referenceLongitude');
+    const urlTemplate = '{{ path('superuser_sites_reference', {site: '__SITE__'})|e('js') }}';
+
+    if (!nameField) return;
+
+    async function syncReference() {
+        const site = nameField.value.trim();
+        if (!site) return;
+
+        try {
+            const response = await fetch(urlTemplate.replace('__SITE__', encodeURIComponent(site)));
+            if (!response.ok) return;
+
+            const ref = await response.json();
+            if (!ref.found) return;
+
+            if (maxField && !maxField.value && ref.maxTrafic !== null) maxField.value = ref.maxTrafic;
+            if (typeField && !typeField.value && ref.typeTrans) typeField.value = ref.typeTrans;
+            if (classField && !classField.value && ref.classification) classField.value = ref.classification;
+            if (latField && ref.latitude !== null) latField.value = ref.latitude;
+            if (lngField && ref.longitude !== null) lngField.value = ref.longitude;
+
+            if (panel) panel.style.display = '';
+            if (referenceLatitude) referenceLatitude.textContent = ref.latitude !== null ? Number(ref.latitude).toFixed(6) : '-';
+            if (referenceLongitude) referenceLongitude.textContent = ref.longitude !== null ? Number(ref.longitude).toFixed(6) : '-';
+        } catch (error) {
+            console.warn(error);
+        }
+    }
+
+    nameField.addEventListener('change', syncReference);
+    nameField.addEventListener('blur', syncReference);
+})();
+</script>
+{% endif %}
+{% endblock %}

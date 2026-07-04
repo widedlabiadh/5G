@@ -1,0 +1,108 @@
+{# Bouton chatbot flottant — visible pour tous sauf admin, ouvre /assistant #}
+{% if app.user and app.user.role != 'admin' %}
+
+<button type="button" class="chat-widget-fab" id="chatWidgetFab" aria-label="Assistant NetWON" title="Assistant NetWON">
+    <span class="chatbot-face" aria-hidden="true">
+        <span class="chatbot-eye left"></span>
+        <span class="chatbot-eye right"></span>
+        <span class="chatbot-mouth"></span>
+    </span>
+    <span class="chatbot-label">Assistant NetWON</span>
+</button>
+
+<script>
+(function () {
+    var FAB  = document.getElementById('chatWidgetFab');
+    var DEST = '{{ path('assistant') }}';
+
+    /* ── Draggable ── */
+    var cwDragging = false;
+    var cwMoved    = false;
+    var cwOffsetX  = 0;
+    var cwOffsetY  = 0;
+    var cwStartX   = 0;
+    var cwStartY   = 0;
+
+    (function () {
+        var saved = localStorage.getItem('netwonChatbotFabPosition');
+        if (saved) {
+            try {
+                var pos = JSON.parse(saved);
+                if (Number.isFinite(pos.left) && Number.isFinite(pos.top)) {
+                    FAB.style.left   = pos.left + 'px';
+                    FAB.style.top    = pos.top  + 'px';
+                    FAB.style.right  = 'auto';
+                    FAB.style.bottom = 'auto';
+                }
+            } catch (e) { localStorage.removeItem('netwonChatbotFabPosition'); }
+        }
+    }());
+
+    function cwClamp(left, top) {
+        var m    = 10;
+        var rect = FAB.getBoundingClientRect();
+        return {
+            left : Math.min(Math.max(m, left), Math.max(m, window.innerWidth  - rect.width  - m)),
+            top  : Math.min(Math.max(m, top),  Math.max(m, window.innerHeight - rect.height - m))
+        };
+    }
+
+    FAB.addEventListener('pointerdown', function (e) {
+        if (e.button !== 0) { return; }
+        var rect = FAB.getBoundingClientRect();
+        cwDragging = true;
+        cwMoved    = false;
+        cwStartX   = e.clientX;
+        cwStartY   = e.clientY;
+        cwOffsetX  = e.clientX - rect.left;
+        cwOffsetY  = e.clientY - rect.top;
+        FAB.classList.add('dragging');
+        if (FAB.setPointerCapture) { FAB.setPointerCapture(e.pointerId); }
+    });
+
+    FAB.addEventListener('pointermove', function (e) {
+        if (!cwDragging) { return; }
+        if (Math.hypot(e.clientX - cwStartX, e.clientY - cwStartY) > 4) { cwMoved = true; }
+        var pos = cwClamp(e.clientX - cwOffsetX, e.clientY - cwOffsetY);
+        FAB.style.left   = pos.left + 'px';
+        FAB.style.top    = pos.top  + 'px';
+        FAB.style.right  = 'auto';
+        FAB.style.bottom = 'auto';
+    });
+
+    function cwStopDrag(e) {
+        if (!cwDragging) { return; }
+        cwDragging = false;
+        FAB.classList.remove('dragging');
+        if (FAB.releasePointerCapture) { FAB.releasePointerCapture(e.pointerId); }
+        var rect = FAB.getBoundingClientRect();
+        localStorage.setItem('netwonChatbotFabPosition', JSON.stringify({
+            left : Math.round(rect.left),
+            top  : Math.round(rect.top)
+        }));
+    }
+
+    FAB.addEventListener('pointerup',     cwStopDrag);
+    FAB.addEventListener('pointercancel', cwStopDrag);
+
+    window.addEventListener('resize', function () {
+        var rect = FAB.getBoundingClientRect();
+        var pos  = cwClamp(rect.left, rect.top);
+        FAB.style.left   = pos.left + 'px';
+        FAB.style.top    = pos.top  + 'px';
+        FAB.style.right  = 'auto';
+        FAB.style.bottom = 'auto';
+        localStorage.setItem('netwonChatbotFabPosition', JSON.stringify({
+            left : Math.round(pos.left),
+            top  : Math.round(pos.top)
+        }));
+    });
+
+    /* ── Clic → ouvre la page assistant ── */
+    FAB.addEventListener('click', function () {
+        if (cwMoved) { cwMoved = false; return; }
+        window.location.href = DEST;
+    });
+}());
+</script>
+{% endif %}

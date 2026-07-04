@@ -37,15 +37,17 @@ class UserType extends AbstractType
             ->add('role', ChoiceType::class, [
                 'label'   => 'Rôle',
                 'choices' => [
-                    'Administrateur'    => 'admin',
-                    'Super Utilisateur' => 'superuser',
-                    'Support FO'        => 'support_fo',
-                    'Support FH'        => 'support_fh',
-                    'Ingénierie FH'     => 'ingenierie_fh',
-                    'Ingénierie IP'     => 'ingenierie_ip',
-                    'Département GC'    => 'gc',
-                    'Déploiement'       => 'deploiement',
-                    'Contrôleur'        => 'controleur', // Nouveau rôle ajouté
+                    'Administrateur'      => 'admin',
+                    'Super Utilisateur'   => 'superuser',
+                    'Support FO'          => 'support_fo',
+                    'Support FH'          => 'support_fh',
+                    'Support Radio'       => 'support_radio',
+                    'Ingénierie FH'       => 'ingenierie_fh',
+                    'Ingénierie IP'       => 'ingenierie_ip',
+                    'Ingénierie Backhaul Sharing' => 'ingenierie_backbone',
+                    'Département GC'      => 'gc',
+                    'Déploiement'         => 'deploiement',
+                    'Contrôleur'          => 'controleur',
                 ],
                 'attr' => ['class' => 'form-control'],
             ]);

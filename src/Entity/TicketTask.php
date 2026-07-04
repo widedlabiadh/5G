@@ -12,6 +12,11 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(name: 'idx_task_assigned', columns: ['assigned_to_id'])]
 class TicketTask
 {
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_DONE = 'done';
+    public const STATUS_BLOCKED = 'blocked';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -36,6 +41,15 @@ class TicketTask
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $comment = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $decision = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $stepCode = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $stepOrder = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $proofFile = null;
@@ -71,6 +85,9 @@ class TicketTask
     public function getDescription(): ?string { return $this->description; }
     public function getStatus(): string { return $this->status; }
     public function getComment(): ?string { return $this->comment; }
+    public function getDecision(): ?string { return $this->decision; }
+    public function getStepCode(): ?string { return $this->stepCode; }
+    public function getStepOrder(): ?int { return $this->stepOrder; }
     public function getProofFile(): ?string { return $this->proofFile; }
     public function getStartedAt(): ?\DateTimeInterface { return $this->startedAt; }
     public function getCompletedAt(): ?\DateTimeInterface { return $this->completedAt; }
@@ -84,6 +101,9 @@ class TicketTask
     public function setDescription(?string $description): static { $this->description = $description; return $this; }
     public function setStatus(string $status): static { $this->status = $status; return $this; }
     public function setComment(?string $comment): static { $this->comment = $comment; return $this; }
+    public function setDecision(?string $decision): static { $this->decision = $decision; return $this; }
+    public function setStepCode(?string $stepCode): static { $this->stepCode = $stepCode; return $this; }
+    public function setStepOrder(?int $stepOrder): static { $this->stepOrder = $stepOrder; return $this; }
     public function setProofFile(?string $proofFile): static { $this->proofFile = $proofFile; return $this; }
     public function setStartedAt(?\DateTimeInterface $startedAt): static { $this->startedAt = $startedAt; return $this; }
     public function setCompletedAt(?\DateTimeInterface $completedAt): static { $this->completedAt = $completedAt; return $this; }

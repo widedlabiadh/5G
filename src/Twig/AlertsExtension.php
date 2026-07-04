@@ -17,6 +17,8 @@ class AlertsExtension extends AbstractExtension implements GlobalsInterface
         return [
             'alerts' => $alerts,
             'total_alertes' => count($alerts),
+            'total_toutes_alertes' => $this->alertService->countToutesAlertes(),
+            'total_alertes_non_lues' => $this->alertService->countAlertesNonLues(),
         ];
     }
 }

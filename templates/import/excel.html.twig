@@ -395,8 +395,6 @@
 {% endblock %}
 
 {% block body %}
-{% include 'components/_navbar.html.twig' %}
-
 <div class="wiz-page">
 
   {# ── Topbar ── #}
@@ -444,7 +442,7 @@
           <i class="fas fa-triangle-exclamation" style="color:var(--red);"></i>
         </div>
         <div class="type-card-title">DropCong</div>
-        <div class="type-card-desc">2 fichiers requis<br>Analyse congestion</div>
+        <div class="type-card-desc">1 fichier requis<br>Analyse KPI DropCong</div>
       </div>
 
       <div class="type-card" data-type="synch">
@@ -542,7 +540,14 @@
           <input type="file" name="drop{{ i }}_file" accept=".xlsx,.xls" data-key="drop{{ i }}">
           <div class="ufile-icon" style="background:var(--red-pale);"><i class="fas fa-chart-simple" style="color:var(--red);"></i></div>
           <div class="ufile-meta">
-            <div class="ufile-label">Drop {{ i }} <span style="color:var(--orange)">*</span></div>
+            <div class="ufile-label">
+              Drop {{ i }}
+              {% if i == 1 %}
+                <span style="color:var(--orange)">*</span>
+              {% else %}
+                <span class="opt-badge">optionnel</span>
+              {% endif %}
+            </div>
             <div class="ufile-name ufile-placeholder">Aucun fichier sélectionné</div>
             <div class="ufile-sub">.xlsx · .xls</div>
           </div>
@@ -617,6 +622,7 @@
 (function(){
   const IMPORT_URL = '{{ path('import_excel_post') }}';
   const DASH_URL   = '{{ path('app_dashboard') }}';
+  const DROPCONG_URL = '{{ path('superuser_dropcong') }}';
 
   let currentStep = 1;
   let selectedType = '';
@@ -749,7 +755,7 @@
   function checkStep2(){
     let ok = false;
     if (selectedType === 'trans')    ok = !!(files.traffic);
-    if (selectedType === 'dropcong') ok = !!(files.drop1 && files.drop2);
+    if (selectedType === 'dropcong') ok = !!files.drop1;
     if (selectedType === 'synch')    ok = synchFiles.length > 0;
     document.getElementById('btn-next-2').disabled = !ok;
   }
@@ -830,7 +836,7 @@
       if (files.gps) fd.append('gps_file', files.gps);
     } else if (selectedType === 'dropcong') {
       fd.append('drop1_file', files.drop1);
-      fd.append('drop2_file', files.drop2);
+      if (files.drop2) fd.append('drop2_file', files.drop2);
     } else {
       synchFiles.forEach(f => fd.append('synch_files[]', f));
     }
@@ -858,7 +864,7 @@
       if (data.success) {
         fill.style.background = 'var(--green)';
         showResult(data.message, data.warning ? 'w' : 's');
-        if (!data.warning) setTimeout(() => window.location.href = DASH_URL, 2000);
+        if (!data.warning) setTimeout(() => window.location.href = selectedType === 'dropcong' ? DROPCONG_URL : DASH_URL, 2000);
         else submitBtn.disabled = false;
       } else {
         fill.style.background = 'var(--red)';

@@ -3,6 +3,8 @@
 
 namespace App\Controller;
 
+use App\Service\SiteCapacityResolver;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -12,24 +14,77 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class ApiCourbeController extends AbstractController
 {
+    public function __construct(
+        private readonly SiteCapacityResolver $siteCapacityResolver,
+    ) {
+    }
     #[Route('/api/sites/liste', name: 'api_sites_liste', methods: ['GET'])]
     public function listeSites(EntityManagerInterface $em): JsonResponse
     {
         $conn = $em->getConnection();
-        $lastDate = $this->getLastAnalyseDate($conn);
-
-        if ($lastDate !== null) {
-            $sites = $conn->fetchFirstColumn(
-                'SELECT site FROM analyse_resultat WHERE date_analyse = :date ORDER BY site',
-                ['date' => $lastDate]
-            );
-
-            return $this->json($sites);
-        }
-
-        $sites = $conn->fetchFirstColumn('SELECT DISTINCT site FROM trafic_historique ORDER BY site');
+        $sites = $conn->fetchFirstColumn(
+            'SELECT site
+             FROM (
+                SELECT DISTINCT site
+                FROM trafic_historique
+                WHERE site IS NOT NULL AND TRIM(site) <> \'\'
+                UNION
+                SELECT DISTINCT site
+                FROM analyse_resultat
+                WHERE site IS NOT NULL AND TRIM(site) <> \'\'
+             ) AS all_sites
+             ORDER BY site'
+        );
 
         return $this->json($sites);
+    }
+
+    #[Route('/api/trafic/date-range', name: 'api_trafic_date_range', methods: ['GET'])]
+    public function dateRange(EntityManagerInterface $em): JsonResponse
+    {
+        $range = $this->getTrafficDateRange($em->getConnection());
+
+        return $this->json([
+            'start' => $range['start']?->format('Y-m-d'),
+            'end' => $range['end']?->format('Y-m-d'),
+            'points' => $range['points'],
+        ]);
+    }
+
+    #[Route('/api/site/{baseSite}/trafic-date-range', name: 'api_site_trafic_date_range', methods: ['GET'])]
+    public function siteTrafficDateRange(string $baseSite, Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $conn = $em->getConnection();
+        $siteNames = array_filter(array_map('trim', explode(',', (string) $request->query->get('siteNames', ''))));
+        $siteName = $request->query->get('siteName');
+
+        if ($siteName) {
+            $siteNames[] = (string) $siteName;
+        }
+
+        if ($siteNames === []) {
+            $type = $request->query->get('type');
+            $types = json_decode($this->getSiteTypes($baseSite, $em)->getContent(), true);
+            $resolved = match ($type) {
+                'TF' => $types['siteTF'] ?? null,
+                'LM' => $types['siteLM'] ?? null,
+                'TC' => $types['siteTC'] ?? null,
+                default => $types['sitePlain'] ?? $baseSite,
+            };
+            if ($resolved) {
+                $siteNames[] = (string) $resolved;
+            }
+        }
+
+        $latestImportOnly = $request->query->getBoolean('latest_import');
+        $range = $this->getTrafficDateRangeForSites($conn, $siteNames, $latestImportOnly);
+
+        return $this->json([
+            'start' => $range['start']?->format('Y-m-d'),
+            'end' => $range['end']?->format('Y-m-d'),
+            'points' => $range['points'],
+            'dateImportation' => $range['dateImportation'],
+        ]);
     }
 
     #[Route('/api/site/{baseSite}/types', name: 'api_site_types', methods: ['GET'])]
@@ -55,7 +110,7 @@ class ApiCourbeController extends AbstractController
                 ?? $this->findTrafficSite($conn, $baseSite, ['LM', 'LMB', 'LM2', 'FDD']);
             $siteTc = $this->existingTrafficSite($conn, $analyse['site_tdd'] ?? null)
                 ?? $this->findTrafficSite($conn, $baseSite, ['TC', 'TD', 'TDD']);
-        } elseif ($classification === 'FDD') {
+        } elseif (in_array($classification, ['FDD', 'ONLY_FDD'], true)) {
             $siteLm = $this->existingTrafficSite($conn, $analyse['site_fdd'] ?? null)
                 ?? $this->findTrafficSite($conn, $baseSite, ['LM', 'LMB', 'LM2', 'FDD']);
         } else {
@@ -68,6 +123,16 @@ class ApiCourbeController extends AbstractController
             $sitePlain = null;
         }
 
+        $capacities = $this->siteCapacityResolver->resolveForCourbe(
+            $conn,
+            $baseSite,
+            $analyse,
+            $siteTf,
+            $siteLm,
+            $siteTc,
+            $sitePlain
+        );
+
         return $this->json([
             'classification' => $classification,
             'hasTF' => $siteTf !== null,
@@ -78,6 +143,13 @@ class ApiCourbeController extends AbstractController
             'siteLM' => $siteLm,
             'siteTC' => $siteTc,
             'sitePlain' => $sitePlain,
+            'capacityMbps' => $capacities['capacityMbps'],
+            'capacityTF' => $capacities['capacityTF'],
+            'capacityLM' => $capacities['capacityLM'],
+            'capacityTC' => $capacities['capacityTC'],
+            'capacityPlain' => $capacities['capacityPlain'],
+            'capaciteTddMbps' => $capacities['capacite_tdd_mbps'],
+            'capaciteFddMbps' => $capacities['capacite_fdd_mbps'],
             'defaultMode' => $this->getDefaultMode($classification, $siteTf, $siteLm, $siteTc, $isPlain),
         ]);
     }
@@ -136,7 +208,7 @@ class ApiCourbeController extends AbstractController
         }
 
         $row = $conn->fetchAssociative(
-            'SELECT site, classification, site_fdd, site_tdd
+            'SELECT site, classification, site_fdd, site_tdd, capacite_mbps, type_trans
              FROM analyse_resultat
              WHERE date_analyse = :date AND UPPER(site) = UPPER(:site)
              LIMIT 1',
@@ -153,6 +225,16 @@ class ApiCourbeController extends AbstractController
         $siteTc = $this->findTrafficSite($conn, $site, ['TC', 'TD', 'TDD']);
         $sitePlain = $this->existingTrafficSite($conn, $site);
 
+        $capacities = $this->siteCapacityResolver->resolveForCourbe(
+            $conn,
+            $site,
+            null,
+            $siteTf,
+            $siteLm,
+            $siteTc,
+            $sitePlain
+        );
+
         return [
             'classification' => $siteTf ? 'TF' : 'PLAIN',
             'hasTF' => $siteTf !== null,
@@ -163,6 +245,13 @@ class ApiCourbeController extends AbstractController
             'siteLM' => $siteLm,
             'siteTC' => $siteTc,
             'sitePlain' => $sitePlain,
+            'capacityMbps' => $capacities['capacityMbps'],
+            'capacityTF' => $capacities['capacityTF'],
+            'capacityLM' => $capacities['capacityLM'],
+            'capacityTC' => $capacities['capacityTC'],
+            'capacityPlain' => $capacities['capacityPlain'],
+            'capaciteTddMbps' => $capacities['capacite_tdd_mbps'],
+            'capaciteFddMbps' => $capacities['capacite_fdd_mbps'],
             'defaultMode' => $siteTf ? 'TF' : ($sitePlain ? null : ($siteLm ? 'LM' : ($siteTc ? 'TC' : null))),
         ];
     }
@@ -233,16 +322,49 @@ class ApiCourbeController extends AbstractController
 
     private function fetchTrafficRows(Connection $conn, string $siteName, Request $request): array
     {
-        $startParam = $request->query->get('start');
-        $endParam = $request->query->get('end');
-        $start = $startParam ? \DateTime::createFromFormat('Y-m-d', $startParam)->setTime(0, 0, 0) : new \DateTime('2025-01-01');
-        $end = $endParam ? \DateTime::createFromFormat('Y-m-d', $endParam)->setTime(23, 59, 59) : new \DateTime('2030-12-31');
+        $startParam = $request->query->get('start') ?: $request->query->get('date_debut');
+        $endParam = $request->query->get('end') ?: $request->query->get('date_fin');
+        $range = $this->getTrafficDateRange($conn, $siteName);
+        $fallbackStart = $range['start']?->format('Y-m-d') ?? '1970-01-01';
+        $fallbackEnd = $range['end']?->format('Y-m-d') ?? '2999-12-31';
+        $start = $this->parseDateParam($startParam, $fallbackStart)->setTime(0, 0, 0);
+        $end = $this->parseDateParam($endParam, $fallbackEnd)->setTime(23, 59, 59);
+
+        if ($range['start'] instanceof \DateTimeInterface && $start < $range['start']) {
+            $start = \DateTime::createFromInterface($range['start']);
+        }
+        if ($range['end'] instanceof \DateTimeInterface && $end > $range['end']) {
+            $end = \DateTime::createFromInterface($range['end']);
+        }
+
+        if ($start > $end) {
+            return [];
+        }
 
         $rows = $conn->fetchAllAssociative(
-            'SELECT date_heure, max_speed
-             FROM trafic_historique
-             WHERE site = :site AND date_heure BETWEEN :start AND :end
-             ORDER BY date_heure ASC',
+            "WITH hourly_axis AS (
+                SELECT generate_series(
+                    date_trunc('hour', CAST(:start AS timestamp)),
+                    date_trunc('hour', CAST(:end AS timestamp)),
+                    interval '1 hour'
+                ) AS date_heure
+             ),
+             hourly_traffic AS (
+                SELECT
+                    date_trunc('hour', date_heure) AS date_heure,
+                    MAX(max_speed) AS max_speed
+                FROM trafic_historique
+                WHERE site = :site
+                  AND date_heure >= :start
+                  AND date_heure <= :end
+                GROUP BY date_trunc('hour', date_heure)
+             )
+             SELECT
+                hourly_axis.date_heure,
+                COALESCE(hourly_traffic.max_speed, 0) AS max_speed
+             FROM hourly_axis
+             LEFT JOIN hourly_traffic ON hourly_traffic.date_heure = hourly_axis.date_heure
+             ORDER BY hourly_axis.date_heure ASC",
             [
                 'site' => $siteName,
                 'start' => $start->format('Y-m-d H:i:s'),
@@ -250,9 +372,115 @@ class ApiCourbeController extends AbstractController
             ]
         );
 
-        return array_map(static fn (array $row): array => [
-            'datetime' => (new \DateTime($row['date_heure']))->format('Y-m-d\TH:i:s'),
-            'max_speed' => (float) $row['max_speed'],
-        ], $rows);
+        $points = [];
+        foreach ($rows as $row) {
+            $points[] = [
+                'time' => new \DateTime($row['date_heure']),
+                'speed' => (float) $row['max_speed'],
+            ];
+        }
+
+        return array_map(static function (array $point): array {
+            return [
+                'datetime' => $point['time']->format('Y-m-d\TH:i:s'),
+                'timestamp' => ((int) $point['time']->format('U')) * 1000,
+                'max_speed' => $point['speed'],
+            ];
+        }, $points);
     }
+
+    private function getTrafficDateRange(Connection $conn, ?string $siteName = null): array
+    {
+        $where = '';
+        $params = [];
+
+        if ($siteName !== null && trim($siteName) !== '') {
+            $where = ' WHERE site = :site';
+            $params['site'] = $siteName;
+        }
+
+        $row = $conn->fetchAssociative(
+            'SELECT MIN(date_heure) AS start_date, MAX(date_heure) AS end_date, COUNT(*) AS points
+             FROM trafic_historique' . $where,
+            $params
+        );
+
+        return [
+            'start' => !empty($row['start_date']) ? new \DateTime((string) $row['start_date']) : null,
+            'end' => !empty($row['end_date']) ? new \DateTime((string) $row['end_date']) : null,
+            'points' => (int) ($row['points'] ?? 0),
+        ];
+    }
+
+    /**
+     * @param string[] $siteNames
+     */
+    private function getTrafficDateRangeForSites(Connection $conn, array $siteNames, bool $latestImportOnly = false): array
+    {
+        $siteNames = array_values(array_unique(array_filter($siteNames, static fn (string $site): bool => $site !== '')));
+        if ($siteNames === []) {
+            return [
+                'start' => null,
+                'end' => null,
+                'points' => 0,
+                'dateImportation' => null,
+            ];
+        }
+
+        if ($latestImportOnly) {
+            $row = $conn->fetchAssociative(
+                'WITH latest_import AS (
+                    SELECT MAX(date_importation) AS date_importation
+                    FROM trafic_historique
+                    WHERE site IN (:sites)
+                )
+                SELECT
+                    MIN(th.date_heure) AS start_date,
+                    MAX(th.date_heure) AS end_date,
+                    COUNT(*) AS points,
+                    latest_import.date_importation
+                FROM latest_import
+                LEFT JOIN trafic_historique th
+                    ON th.date_importation = latest_import.date_importation
+                   AND th.site IN (:sites)
+                GROUP BY latest_import.date_importation',
+                ['sites' => $siteNames],
+                ['sites' => ArrayParameterType::STRING]
+            );
+
+            return [
+                'start' => !empty($row['start_date']) ? new \DateTime((string) $row['start_date']) : null,
+                'end' => !empty($row['end_date']) ? new \DateTime((string) $row['end_date']) : null,
+                'points' => (int) ($row['points'] ?? 0),
+                'dateImportation' => $row['date_importation'] ?? null,
+            ];
+        }
+
+        $row = $conn->fetchAssociative(
+            'SELECT MIN(date_heure) AS start_date, MAX(date_heure) AS end_date, COUNT(*) AS points, MAX(date_importation) AS date_importation
+             FROM trafic_historique
+             WHERE site IN (:sites)',
+            ['sites' => $siteNames],
+            ['sites' => ArrayParameterType::STRING]
+        );
+
+        return [
+            'start' => !empty($row['start_date']) ? new \DateTime((string) $row['start_date']) : null,
+            'end' => !empty($row['end_date']) ? new \DateTime((string) $row['end_date']) : null,
+            'points' => (int) ($row['points'] ?? 0),
+            'dateImportation' => $row['date_importation'] ?? null,
+        ];
+    }
+
+    private function parseDateParam(?string $value, string $fallback): \DateTime
+    {
+        if (!$value) {
+            return new \DateTime($fallback);
+        }
+
+        $date = \DateTime::createFromFormat('Y-m-d', $value);
+
+        return $date ?: new \DateTime($fallback);
+    }
+
 }

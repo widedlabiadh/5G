@@ -21,7 +21,8 @@ class AlertController extends AbstractController
             return $this->redirectToRoute('alertes_liste');
         }
         return $this->json([
-            'count' => $this->alertService->countAlertesNonLues(),
+            'count' => $this->alertService->countToutesAlertes(),
+            'non_lues' => $this->alertService->countAlertesNonLues(),
             'alertes' => $this->alertService->getAlertesNonLues()
         ]);
     }
@@ -29,10 +30,51 @@ class AlertController extends AbstractController
     #[Route('/alertes', name: 'alertes_liste', methods: ['GET'])]
     public function liste(): Response
     {
-        return $this->render('alertes/liste.html.twig', [
+        $this->denyAccessUnlessGranted('ROLE_SUPERUSER');
+        $alertes = $this->alertService->getHistoriqueAlertes(1000);
+        $sitesSansType = array_map(
+            static function (array $row): array {
+                return [
+                    'id' => 'sans-type-' . $row['id'],
+                    'site' => $row['site'],
+                    'etat' => 'SANS_TYPE',
+                    'trafic_j' => 0,
+                    'capacite_mbps' => 0,
+                    'taux_utilisation' => 0,
+                    'type_trans' => $row['type_trans'] ?? 'NON_DEFINI',
+                    'classification' => $row['classification'] ?? 'NON_DEFINI',
+                    'message' => sprintf('Site Type %s %s', $row['site'], $row['type_trans'] ?? 'NON_DEFINI'),
+                    'date_alerte' => $row['date_analyse'] ?? null,
+                    'alerte_lue' => true,
+                    'email_envoye' => false,
+                ];
+            },
+            $this->alertService->getSitesSansType(500)
+        );
+
+        $historiqueByKey = [];
+
+        foreach (array_merge($alertes, $sitesSansType) as $row) {
+            $key = ($row['site'] ?? '') . '|' . ($row['etat'] ?? '');
+            if ($key === '|') {
+                continue;
+            }
+            $historiqueByKey[$key] = $row;
+        }
+
+        $historique = array_values($historiqueByKey);
+        usort($historique, static function (array $left, array $right): int {
+            $leftDate = $left['date_alerte'] ?? '';
+            $rightDate = $right['date_alerte'] ?? '';
+            return strcmp((string) $rightDate, (string) $leftDate);
+        });
+
+        return $this->render('alertes/index.html.twig', [
             'alertes' => $this->alertService->getAlertesNonLues(),
             'total_non_lues' => $this->alertService->countAlertesNonLues(),
-            'historique' => $this->alertService->getHistoriqueAlertes(50),
+            'total_toutes_alertes' => count($historique),
+            'total_sans_type' => $this->alertService->countSitesSansType(),
+            'historique' => $historique,
         ]);
     }
 

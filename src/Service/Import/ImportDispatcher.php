@@ -25,11 +25,9 @@ class ImportDispatcher
     public function handleTransmission(UploadedFile $traffic, ?UploadedFile $port, ?UploadedFile $liaison, ?UploadedFile $gps = null): array
     {
         $timestamp = date('Ymd_His');
-        
-        // Envoi à l'API Python (tous les fichiers, port et liaison optionnels)
+
         $result = $this->pythonClient->processFiles($traffic, $port, $liaison, $gps);
-        
-        // Archivage des fichiers
+
         $this->moveFile($traffic, $timestamp . '_traffic_' . $traffic->getClientOriginalName());
         if ($port) {
             $this->moveFile($port, $timestamp . '_port_' . $port->getClientOriginalName());
@@ -40,16 +38,21 @@ class ImportDispatcher
         if ($gps) {
             $this->moveFile($gps, $timestamp . '_gps_' . $gps->getClientOriginalName());
         }
-        
+
         return $result;
     }
 
-    public function handleDropCong(UploadedFile $drop1, UploadedFile $drop2): array
+    public function handleDropCong(UploadedFile $drop1, ?UploadedFile $drop2 = null): array
     {
         $timestamp = date('Ymd_His');
+        $result = $this->pythonClient->importDropCong($drop1, $drop2);
+
         $this->moveFile($drop1, $timestamp . '_drop1_' . $drop1->getClientOriginalName());
-        $this->moveFile($drop2, $timestamp . '_drop2_' . $drop2->getClientOriginalName());
-        return ['success' => true, 'message' => 'Fichiers DropCong sauvegardés.'];
+        if ($drop2) {
+            $this->moveFile($drop2, $timestamp . '_drop2_' . $drop2->getClientOriginalName());
+        }
+
+        return $result;
     }
 
     public function handleSynch(array $files): array
@@ -62,7 +65,8 @@ class ImportDispatcher
                 $count++;
             }
         }
-        return ['success' => true, 'message' => "$count fichier(s) synchronisé(s)."];
+
+        return ['success' => true, 'message' => "$count fichier(s) synchronise(s)."];
     }
 
     private function moveFile(UploadedFile $file, string $newName): void

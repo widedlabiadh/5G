@@ -1,39 +1,98 @@
 <nav class="netwon-navbar">
+    {% set display_name = app.user.fullName ?: app.user.email %}
 
-    {# 🔵 MENU GAUCHE #}
-    <div class="menu-links">
-        <a href="{{ path('app_dashboard') }}" class="nav-link">🏠 Dashboard</a>
-
-        {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPERUSER') %}
-            <a href="{{ path('import_excel') }}" class="nav-link">📂 Import Excel</a>
-            <a href="{{ path('import_capacite') }}" class="nav-link">⚡ Import Capacité</a>
-            <a href="{{ path('workflow_index') }}" class="nav-link">🎫 Workflows</a>
-        {% endif %}
-    </div>
-
-    {# 🔵 DROITE #}
     <div class="navbar-right">
 
-        <div class="navbar-action">
-            <i class="fas fa-bell"></i>
-            {% if sites_critiques is defined and sites_critiques|length > 0 %}
-                <span class="notif-badge">{{ sites_critiques|length }}</span>
-            {% endif %}
+        {% if app.request.get('_route') starts with 'superuser_sites' %}
+            <form method="get" action="{{ path('superuser_sites_index') }}" class="site-navbar-search">
+                <input type="search"
+                       name="q"
+                       value="{{ app.request.query.get('q', '') }}"
+                       class="site-navbar-search-input"
+                       placeholder="Recherche par mot cles">
+            </form>
+
+            <a class="site-navbar-action" href="{{ path('superuser_sites_export_template') }}">
+                <i class="fas fa-file-excel"></i>
+                <span>Export</span>
+            </a>
+
+            <form method="post"
+                  action="{{ path('superuser_sites_import_template') }}"
+                  enctype="multipart/form-data"
+                  class="site-navbar-import"
+                  id="globalSitesImportForm">
+                <input type="hidden" name="_token" value="{{ csrf_token('import_sites_template') }}">
+                <input class="site-navbar-file-input"
+                       type="file"
+                       name="sites_file"
+                       id="globalSitesImportFile"
+                       accept=".xlsx,.xls,.csv"
+                       onchange="this.form.submit()"
+                       required>
+                <label class="site-navbar-action" for="globalSitesImportFile">
+                    <i class="fas fa-file-import"></i>
+                    <span>Import Excel</span>
+                </label>
+            </form>
+
+            <a class="site-navbar-action site-navbar-action-primary" href="{{ path('superuser_sites_new') }}">
+                <i class="fas fa-plus"></i>
+                <span>Nouveau site</span>
+            </a>
+        {% endif %}
+
+        {% block navbar_links %}{% endblock %}
+
+        <div class="navbar-notification">
+            <button type="button"
+                    class="navbar-action"
+                    id="ticketNotifBtn"
+                    data-unread-url="{{ path('api_workflow_unread_notifications') }}"
+                    data-mark-read-url="{{ path('api_workflow_mark_read') }}"
+                    data-all-url="{{ path('dashboard_notifications') }}"
+                    title="Notifications tickets"
+                    aria-label="Notifications tickets"
+                    aria-expanded="false">
+                <i class="fas fa-ticket"></i>
+                <span class="notif-badge ticket-notif-badge" id="ticketNotifBadge" hidden>0</span>
+            </button>
+
+            <div class="ticket-notif-dropdown" id="ticketNotifDropdown" aria-label="Notifications tickets">
+                <div class="ticket-notif-head">
+                    <div>
+                        <strong>Notifications tickets</strong>
+                        <span id="ticketNotifCountText">Aucune non lue</span>
+                    </div>
+                    <button type="button" id="ticketNotifMarkRead" class="ticket-notif-read" hidden>Tout lu</button>
+                </div>
+                <div class="ticket-notif-list" id="ticketNotifList">
+                    <div class="ticket-notif-empty">Chargement...</div>
+                </div>
+                <a href="{{ path('dashboard_notifications') }}" class="ticket-notif-all">Voir toutes les notifications</a>
+            </div>
         </div>
+
+        <a href="{{ path('alertes_liste') }}" 
+           class="navbar-action" 
+           title="Voir toutes les alertes">
+            <i class="fas fa-bell"></i>
+            {% if total_toutes_alertes is defined and total_toutes_alertes > 0 %}
+                <span class="notif-badge">{{ total_toutes_alertes }}</span>
+            {% endif %}
+        </a>
 
         <div class="navbar-sep"></div>
 
         <div class="navbar-profile">
             <div class="profile-avatar">
-                {{ app.user.fullName|slice(0,1)|upper }}
+                {{ display_name|slice(0,1)|upper }}
             </div>
-
             <div class="profile-info">
-                <span class="profile-name">{{ app.user.fullName ?? app.user.email }}</span>
+                <span class="profile-name">{{ display_name }}</span>
                 <span class="profile-role">{{ app.user.roleLabel }}</span>
             </div>
         </div>
 
     </div>
-
 </nav>

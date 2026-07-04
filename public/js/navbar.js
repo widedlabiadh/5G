@@ -1,91 +1,80 @@
 // public/js/navbar.js
-// Navbar horizontale NetWON – recherche, notifications, profil, API status
-
-(function() {
-    // Éléments DOM
-    const searchInput    = document.getElementById('navbarSearchInput');
-    const searchResults  = document.getElementById('navbarSearchResults');
-    const notifBtn       = document.getElementById('notifBtn');
-    const notifDropdown  = document.getElementById('notifDropdown');
-    const profileBtn     = document.getElementById('profileBtn');
+(function () {
+    const searchInput = document.getElementById('navbarSearchInput');
+    const searchResults = document.getElementById('navbarSearchResults');
+    const ticketNotifBtn = document.getElementById('ticketNotifBtn');
+    const ticketNotifDropdown = document.getElementById('ticketNotifDropdown');
+    const ticketNotifBadge = document.getElementById('ticketNotifBadge');
+    const ticketNotifList = document.getElementById('ticketNotifList');
+    const ticketNotifCountText = document.getElementById('ticketNotifCountText');
+    const ticketNotifMarkRead = document.getElementById('ticketNotifMarkRead');
+    const profileBtn = document.getElementById('profileBtn');
     const profileDropdown = document.getElementById('profileDropdown');
-    const profileCaret   = document.getElementById('profileCaret');
-    const overlay        = document.getElementById('navbarOverlay');
-    const apiDot         = document.getElementById('apiDot');
-    const apiLabel       = document.getElementById('apiLabel');
+    const profileCaret = document.getElementById('profileCaret');
+    const overlay = document.getElementById('navbarOverlay');
+    const apiDot = document.getElementById('apiDot');
+    const apiLabel = document.getElementById('apiLabel');
+    const SITES = Array.isArray(window.sitesData) ? window.sitesData : [];
 
-    // Données des sites (transmises par le contrôleur)
-    // Si la variable n'existe pas (ex: page autre que dashboard), on utilise un tableau vide
-    const SITES = (typeof window.sitesData !== 'undefined' && Array.isArray(window.sitesData))
-                  ? window.sitesData
-                  : [];
-
-    // ── Helper : échappement HTML (sécurité) ────────────────────
-    function escHtml(str) {
-        if (!str) return '';
+    function escHtml(value) {
         const div = document.createElement('div');
-        div.textContent = str;
+        div.textContent = value == null ? '' : String(value);
         return div.innerHTML;
     }
 
-    // ── Fermeture de tous les overlays / dropdowns ──────────────
     function closeAll() {
-        if (notifDropdown)    notifDropdown.classList.remove('open');
-        if (profileDropdown)  profileDropdown.classList.remove('open');
-        if (profileCaret)     profileCaret.classList.remove('open');
-        if (searchResults)    searchResults.classList.remove('open');
-        if (overlay)          overlay.classList.remove('open');
+        ticketNotifDropdown?.classList.remove('open');
+        ticketNotifBtn?.setAttribute('aria-expanded', 'false');
+        profileDropdown?.classList.remove('open');
+        profileCaret?.classList.remove('open');
+        searchResults?.classList.remove('open');
+        overlay?.classList.remove('open');
     }
 
-    // ── Raccourci Ctrl+K / Cmd+K pour focus sur la recherche ────
-    document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            if (searchInput) {
-                searchInput.focus();
-                searchInput.select();
-            }
+    document.addEventListener('keydown', function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+            event.preventDefault();
+            searchInput?.focus();
+            searchInput?.select();
         }
-        if (e.key === 'Escape') {
+
+        if (event.key === 'Escape') {
             closeAll();
-            if (searchInput) searchInput.blur();
+            searchInput?.blur();
         }
     });
 
-    // ── Fonction pour ouvrir la page de courbe de trafic ─────────
     function openTraficCourbe(siteName) {
-        // Si le contrôleur principal a défini une fonction globale, on l'utilise
         if (typeof window.ouvrirCourbe === 'function') {
             window.ouvrirCourbe(siteName);
             return;
         }
-        // Fallback : redirection vers la page des courbes avec le nom du site en paramètre
-        const url = `/courbe/trafic?site=${encodeURIComponent(siteName)}`;
-        window.location.href = url;
+
+        window.location.href = `/courbe/trafic?site=${encodeURIComponent(siteName)}`;
     }
 
-    // ── RECHERCHE DE SITES ───────────────────────────────────────
     if (searchInput && searchResults) {
-        searchInput.addEventListener('input', function() {
+        const handleSearch = function () {
             const term = this.value.trim().toLowerCase();
             if (term.length < 2) {
                 searchResults.classList.remove('open');
                 return;
             }
 
-            const filtered = SITES.filter(site =>
-                (site.nom || site.code || '').toLowerCase().includes(term) ||
-                (site.typeTrans || '').toLowerCase().includes(term)
-            ).slice(0, 8);
+            const filtered = SITES.filter(function (site) {
+                return (site.nom || site.code || '').toLowerCase().includes(term)
+                    || (site.typeTrans || '').toLowerCase().includes(term);
+            }).slice(0, 8);
 
             if (!filtered.length) {
-                searchResults.innerHTML = `<div class="search-empty">🔍 Aucun site trouvé pour "<strong>${escHtml(term)}</strong>"</div>`;
+                searchResults.innerHTML = `<div class="search-empty">Aucun site trouve pour "<strong>${escHtml(term)}</strong>"</div>`;
             } else {
-                searchResults.innerHTML = filtered.map(site => {
+                searchResults.innerHTML = filtered.map(function (site) {
                     const statut = site.statut || 'non_defini';
                     let dotClass = 'sri-dot-gray';
                     let badgeClass = 'sri-badge-ok';
                     let badgeText = 'OK';
+
                     if (statut === 'critique') {
                         dotClass = 'sri-dot-red';
                         badgeClass = 'sri-badge-crit';
@@ -96,102 +85,192 @@
                         badgeText = 'Obs.';
                     } else if (statut === 'securise') {
                         dotClass = 'sri-dot-green';
-                        badgeClass = 'sri-badge-ok';
-                        badgeText = 'Sécurisé';
+                        badgeText = 'Securise';
                     }
 
                     return `
                         <div class="search-result-item" data-site="${escHtml(site.nom || site.code || '')}">
                             <span class="sri-dot ${dotClass}"></span>
-                            <span class="sri-name">${escHtml(site.nom || site.code || '—')}</span>
-                            <span class="sri-meta">${site.nbOccurrences || 0} congest. · ${site.typeTrans || '—'}</span>
+                            <span class="sri-name">${escHtml(site.nom || site.code || '-')}</span>
+                            <span class="sri-meta">${site.nbOccurrences || 0} congest. - ${escHtml(site.typeTrans || '-')}</span>
                             <span class="sri-badge ${badgeClass}">${badgeText}</span>
                         </div>
                     `;
                 }).join('');
             }
+
             searchResults.classList.add('open');
+        };
 
-            // Ajout des événements de clic sur chaque résultat
-            document.querySelectorAll('.search-result-item').forEach(el => {
-                el.removeEventListener('click', resultClickHandler);
-                el.addEventListener('click', resultClickHandler);
-            });
-        });
-
-        function resultClickHandler(e) {
-            // Évite de remonter jusqu'au parent si on clique sur un enfant
-            const item = e.currentTarget;
-            const siteName = item.dataset.site;
-            if (siteName) {
-                openTraficCourbe(siteName);
-            }
-            closeAll();
-            if (searchInput) searchInput.value = '';
-        }
-
-        // Au focus, réaffiche les résultats si déjà une recherche en cours
-        searchInput.addEventListener('focus', function() {
+        searchInput.addEventListener('input', handleSearch);
+        searchInput.addEventListener('focus', function () {
             if (this.value.trim().length >= 2 && searchResults.innerHTML.trim() !== '') {
                 searchResults.classList.add('open');
             }
         });
-    }
 
-    // ── TOGGLE NOTIFICATIONS ─────────────────────────────────────
-    if (notifBtn && notifDropdown) {
-        notifBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const isOpen = notifDropdown.classList.contains('open');
-            closeAll();
-            if (!isOpen) {
-                notifDropdown.classList.add('open');
-                if (overlay) overlay.classList.add('open');
+        searchResults.addEventListener('click', function (event) {
+            const item = event.target.closest('.search-result-item');
+            if (!item) {
+                return;
             }
+
+            openTraficCourbe(item.dataset.site || '');
+            closeAll();
+            searchInput.value = '';
         });
     }
 
-    // ── TOGGLE PROFIL ────────────────────────────────────────────
+    function renderTicketNotifications(payload) {
+        if (!ticketNotifList || !ticketNotifBadge || !ticketNotifCountText) {
+            return;
+        }
+
+        const count = Number(payload.count || 0);
+        const notifications = Array.isArray(payload.notifications) ? payload.notifications : [];
+
+        ticketNotifBadge.hidden = count <= 0;
+        ticketNotifBadge.textContent = count > 99 ? '99+' : String(count);
+        ticketNotifCountText.textContent = count > 0 ? `${count} non lue${count > 1 ? 's' : ''}` : 'Aucune non lue';
+
+        if (ticketNotifMarkRead) {
+            ticketNotifMarkRead.hidden = count <= 0;
+            ticketNotifMarkRead.disabled = false;
+        }
+
+        if (!notifications.length) {
+            ticketNotifList.innerHTML = '<div class="ticket-notif-empty">Aucune notification non lue.</div>';
+            return;
+        }
+
+        ticketNotifList.innerHTML = notifications.map(function (notification) {
+            const ticketUrl = notification.ticketUrl || `/workflow/show/${encodeURIComponent(notification.ticketId)}`;
+
+            return `
+                <a class="ticket-notif-item" href="${ticketUrl}">
+                    <span class="ticket-notif-icon"><i class="fas fa-ticket"></i></span>
+                    <span class="ticket-notif-body">
+                        <strong>${escHtml(notification.title || 'Notification ticket')}</strong>
+                        <span>${escHtml(notification.message || '')}</span>
+                        <small>Ticket #${escHtml(notification.ticketId)} - ${escHtml(notification.createdAt || '')}</small>
+                    </span>
+                </a>
+            `;
+        }).join('');
+    }
+
+    function renderTicketNotificationError() {
+        if (ticketNotifList) {
+            ticketNotifList.innerHTML = '<div class="ticket-notif-empty">Notifications indisponibles.</div>';
+        }
+    }
+
+    async function loadTicketNotifications() {
+        if (!ticketNotifBtn) {
+            return;
+        }
+
+        try {
+            const response = await fetch(ticketNotifBtn.dataset.unreadUrl, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                cache: 'no-store',
+            });
+
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+
+            renderTicketNotifications(await response.json());
+        } catch (error) {
+            renderTicketNotificationError();
+        }
+    }
+
+    if (ticketNotifBtn && ticketNotifDropdown) {
+        ticketNotifBtn.addEventListener('click', function (event) {
+            event.stopPropagation();
+            const isOpen = ticketNotifDropdown.classList.contains('open');
+            closeAll();
+
+            if (!isOpen) {
+                ticketNotifDropdown.classList.add('open');
+                ticketNotifBtn.setAttribute('aria-expanded', 'true');
+                overlay?.classList.add('open');
+                loadTicketNotifications();
+            }
+        });
+
+        ticketNotifDropdown.addEventListener('click', function (event) {
+            event.stopPropagation();
+        });
+
+        ticketNotifMarkRead?.addEventListener('click', async function () {
+            ticketNotifMarkRead.disabled = true;
+
+            try {
+                const response = await fetch(ticketNotifBtn.dataset.markReadUrl, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    cache: 'no-store',
+                });
+
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                renderTicketNotifications({ count: 0, notifications: [] });
+            } catch (error) {
+                ticketNotifMarkRead.disabled = false;
+                renderTicketNotificationError();
+            }
+        });
+
+        loadTicketNotifications();
+        setInterval(loadTicketNotifications, 30000);
+    }
+
     if (profileBtn && profileDropdown && profileCaret) {
-        profileBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
+        profileBtn.addEventListener('click', function (event) {
+            event.stopPropagation();
             const isOpen = profileDropdown.classList.contains('open');
             closeAll();
+
             if (!isOpen) {
                 profileDropdown.classList.add('open');
                 profileCaret.classList.add('open');
-                if (overlay) overlay.classList.add('open');
+                overlay?.classList.add('open');
             }
         });
     }
 
-    // ── OVERLAY (ferme tout au clic externe) ─────────────────────
-    if (overlay) {
-        overlay.addEventListener('click', closeAll);
-    }
+    overlay?.addEventListener('click', closeAll);
+    document.addEventListener('click', closeAll);
 
-    // ── STATUT API PYTHON ────────────────────────────────────────
     function checkApiStatus() {
-        if (!apiDot || !apiLabel) return;
+        if (!apiDot || !apiLabel) {
+            return;
+        }
+
         fetch('/api/python/health', {
             signal: AbortSignal.timeout(4000),
-            cache: 'no-store'
+            cache: 'no-store',
         })
-        .then(response => response.json())
-        .then(data => {
-            const ok = (data.status === 'ok');
-            apiDot.className = 'api-dot ' + (ok ? 'ok' : 'error');
-            apiLabel.textContent = ok ? 'API OK' : 'API HS';
-            apiLabel.style.color = ok ? '#10b981' : '#ef4444';
-        })
-        .catch(() => {
-            apiDot.className = 'api-dot error';
-            apiLabel.textContent = 'API HS';
-            apiLabel.style.color = '#ef4444';
-        });
+            .then((response) => response.json())
+            .then((data) => {
+                const ok = data.status === 'ok';
+                apiDot.className = 'api-dot ' + (ok ? 'ok' : 'error');
+                apiLabel.textContent = ok ? 'API OK' : 'API HS';
+                apiLabel.style.color = ok ? '#10b981' : '#ef4444';
+            })
+            .catch(() => {
+                apiDot.className = 'api-dot error';
+                apiLabel.textContent = 'API HS';
+                apiLabel.style.color = '#ef4444';
+            });
     }
 
-    // Vérification immédiate puis toutes les 30 secondes
-    if (apiDot) checkApiStatus();
-    setInterval(checkApiStatus, 30000);
+    if (apiDot) {
+        checkApiStatus();
+        setInterval(checkApiStatus, 30000);
+    }
 })();

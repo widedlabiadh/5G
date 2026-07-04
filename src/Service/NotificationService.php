@@ -31,6 +31,32 @@ class NotificationService
         $this->em->flush();
     }
 
+    public function notify(User $user, string $type, string $message, ?Ticket $ticket = null): void
+    {
+        if (!$ticket) {
+            return;
+        }
+
+        $this->create($ticket, $user, 'Notification workflow', $message, $type);
+    }
+
+    public function notifyWorkflowAssignment(Ticket $ticket, array $users, int $assignedCount): void
+    {
+        foreach ($users as $user) {
+            if (!$user instanceof User) {
+                continue;
+            }
+
+            $this->create(
+                $ticket,
+                $user,
+                'Nouveau workflow assigné',
+                sprintf('Vous avez été assigné au workflow #%d avec %d intervenant(s).', $ticket->getId(), $assignedCount),
+                'workflow_assigned'
+            );
+        }
+    }
+
     public function notifyStatusChange(Ticket $ticket, string $oldStatus, string $newStatus, User $changedBy): void
     {
         $users = $this->getConcernedUsers($ticket);

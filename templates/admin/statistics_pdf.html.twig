@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; color: #0f172a; font-size: 12px; }
+        h1 { font-size: 22px; margin: 0 0 6px; }
+        .muted { color: #64748b; }
+        .summary { width: 100%; border-collapse: collapse; margin: 18px 0; }
+        .summary td { width: 25%; border: 1px solid #e2e8f0; padding: 12px; vertical-align: top; }
+        .label { color: #64748b; text-transform: uppercase; font-size: 10px; font-weight: bold; }
+        .value { font-size: 22px; font-weight: bold; margin-top: 5px; }
+        table.data { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        table.data th, table.data td { border: 1px solid #e2e8f0; padding: 7px; }
+        table.data th { background: #f8fafc; text-align: left; font-size: 10px; text-transform: uppercase; color: #475569; }
+        .critical { color: #dc2626; font-weight: bold; }
+        .normal { color: #15803d; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Admin Dashboard - Statistiques</h1>
+    <div class="muted">
+        {% if lastAnalyseDate %}
+            Dernière analyse: {{ lastAnalyseDate|date('d/m/Y H:i') }}
+        {% else %}
+            Aucune analyse disponible
+        {% endif %}
+    </div>
+
+    <table class="summary">
+        <tr>
+            <td><div class="label">Total sites</div><div class="value">{{ totalSites }}</div></td>
+            <td><div class="label">Sites critiques</div><div class="value">{{ criticalSites }}</div><div class="muted">{{ criticalPercentage }}%</div></td>
+            <td><div class="label">Trafic moyen</div><div class="value">{{ avgTraffic|number_format(2, ',', ' ') }}</div><div class="muted">Mbps</div></td>
+            <td><div class="label">Services actifs</div><div class="value">{{ activeServices }}</div></td>
+        </tr>
+    </table>
+
+    <h2>Distribution services</h2>
+    <table class="data">
+        <tr><th>FO</th><th>FH</th><th>Shared</th></tr>
+        <tr>
+            <td>{{ serviceDistribution.FO|default(0) }}</td>
+            <td>{{ serviceDistribution.FH|default(0) }}</td>
+            <td>{{ serviceDistribution.SHARED|default(0) }}</td>
+        </tr>
+    </table>
+
+    <h2>Derniers sites traités</h2>
+    <table class="data">
+        <thead>
+            <tr>
+                <th>Site</th>
+                <th>Service</th>
+                <th>Classification</th>
+                <th>Type</th>
+                <th>Trafic max</th>
+                <th>Occurrences</th>
+                <th>État</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for site in sites %}
+            <tr>
+                <td>{{ site.siteName }}</td>
+                <td>{{ site.serviceName }}</td>
+                <td>{{ site.classification ?: '-' }}</td>
+                <td>{{ site.typeTrans ?: '-' }}</td>
+                <td>{{ site.maxTrafic|number_format(2, ',', ' ') }} Mbps</td>
+                <td>{{ site.nombreOccurrences }}</td>
+                <td class="{{ site.isCritical ? 'critical' : 'normal' }}">{{ site.isCritical ? 'Critique' : 'Normal' }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="7">Aucune donnée disponible.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

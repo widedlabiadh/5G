@@ -1,321 +1,705 @@
-{# templates/alertes/index.html.twig #}
-
 {% extends 'base.html.twig' %}
 
-{% block title %}Alertes réseau — NetWON{% endblock %}
+{% block title %}Alertes réseau - NetWON{% endblock %}
 
 {% block stylesheets %}
-    {{ parent() }}
-    <style>
-        /* Page Alertes */
-        .alertes-page {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        .alertes-header {
-            margin-bottom: 28px;
-        }
-        
-        .alertes-header h1 {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--txt);
-            margin-bottom: 8px;
-        }
-        
-        .alertes-header h1 span {
-            color: var(--orange);
-        }
-        
-        .alertes-header p {
-            color: var(--txt-3);
-            font-size: 0.85rem;
-        }
-        
-        .alertes-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        
-        .alert-stat-card {
-            background: var(--bg-card);
-            border-radius: var(--r-card);
-            padding: 20px;
-            box-shadow: var(--sh-card);
-            text-align: center;
-        }
-        
-        .alert-stat-card .stat-icon {
-            font-size: 2rem;
-            margin-bottom: 12px;
-        }
-        
-        .alert-stat-card .stat-number {
-            font-size: 2.2rem;
-            font-weight: 800;
-        }
-        
-        .alert-stat-card .stat-label {
-            font-size: 0.75rem;
-            color: var(--txt-3);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .alertes-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .alert-card {
-            background: var(--bg-card);
-            border-radius: var(--r-card);
-            border: 1px solid var(--border);
-            overflow: hidden;
-            transition: all 0.2s ease;
-        }
-        
-        .alert-card:hover {
-            box-shadow: var(--sh-hover);
-            transform: translateY(-2px);
-        }
-        
-        .alert-card-header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .alert-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-        }
-        
-        .alert-info {
-            flex: 1;
-        }
-        
-        .alert-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--txt);
-            margin-bottom: 4px;
-        }
-        
-        .alert-subtitle {
-            font-size: 0.8rem;
-            color: var(--txt-3);
-        }
-        
-        .alert-count {
-            font-size: 1.8rem;
-            font-weight: 800;
-            padding: 8px 20px;
-            border-radius: 40px;
-        }
-        
-        .alert-body {
-            padding: 0;
-        }
-        
-        .alert-items {
-            width: 100%;
-        }
-        
-        .alert-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 24px;
-            border-bottom: 1px solid #f0f2f7;
-            transition: background 0.15s;
-        }
-        
-        .alert-item:hover {
-            background: rgba(255,98,0,0.03);
-        }
-        
-        .alert-item-site {
-            font-family: monospace;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--txt);
-        }
-        
-        .alert-item-value {
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-        
-        .alert-item-meta {
-            font-size: 0.7rem;
-            color: var(--txt-3);
-            margin-left: 12px;
-        }
-        
-        .alert-footer {
-            padding: 14px 24px;
-            background: #fafcff;
-            border-top: 1px solid var(--border);
-            text-align: right;
-        }
-        
-        .alert-link {
-            color: var(--orange);
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .alert-link:hover {
-            text-decoration: underline;
-        }
-        
-        .no-alerts {
-            text-align: center;
-            padding: 60px 20px;
-            background: var(--bg-card);
-            border-radius: var(--r-card);
-        }
-        
-        .no-alerts i {
-            font-size: 4rem;
-            color: var(--green);
-            margin-bottom: 16px;
-        }
-        
-        .no-alerts h3 {
-            font-size: 1.2rem;
-            margin-bottom: 8px;
-        }
-        
-        .no-alerts p {
-            color: var(--txt-3);
-        }
-        
-        @media (max-width: 768px) {
-            .alert-card-header {
-                flex-wrap: wrap;
-            }
-            .alert-count {
-                margin-left: auto;
-            }
-            .alert-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 6px;
-            }
-            .alert-item-value {
-                margin-left: auto;
-            }
-        }
-    </style>
+{{ parent() }}
+<style>
+.al-page {
+    width: 100%;
+    color: #1e293b;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ── Header simplifié ── */
+.al-header {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.al-header-left {
+    flex: 1;
+}
+.al-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #f97316;
+    margin-bottom: 8px;
+}
+.al-title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+}
+.al-title span {
+    color: #f97316;
+}
+.al-subtitle {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+.al-header-right {
+    display: flex;
+    gap: 12px;
+}
+.al-stat-chip {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 10px 18px;
+    text-align: center;
+    min-width: 70px;
+    border: 1px solid #e2e8f0;
+}
+.al-stat-chip strong {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1;
+}
+.al-stat-chip span {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-top: 4px;
+}
+.al-stat-chip.red strong { color: #dc2626; }
+.al-stat-chip.orange strong { color: #f97316; }
+.al-stat-chip.violet strong { color: #8b5cf6; }
+
+/* ── Toolbar ── */
+.al-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.al-search {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+    max-width: 340px;
+}
+.al-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 13px;
+}
+.al-search input {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0 12px 0 36px;
+    font-size: 13px;
+    background: #fff;
+    outline: none;
+    transition: all 0.2s;
+}
+.al-search input:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+}
+.al-tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+.al-tab {
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #64748b;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.al-tab i {
+    font-size: 12px;
+}
+.al-tab.active {
+    background: #fff;
+    color: #f97316;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.al-tab:hover:not(.active) {
+    background: #fff;
+    color: #1e293b;
+}
+.al-tab .al-cnt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 99px;
+    background: #f97316;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+}
+
+/* ── Cartes simplifiées ── */
+.al-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.al-card {
+    --sev: #f97316;
+    display: grid;
+    grid-template-columns: 4px 1fr auto auto auto;
+    align-items: stretch;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+.al-card:hover {
+    background: #fafcff;
+    border-color: #cbd5e1;
+}
+
+.al-card[data-state="A_VERIFIER_CAPACITE"],
+.al-card[data-state="CAPACITE_A_VERIFIER"] { --sev: #dc2626; }
+.al-card[data-state="CONGESTIONNE"],
+.al-card[data-state="CONGESTION"] { --sev: #ef4444; }
+.al-card[data-state="RISQUE_DE_CONGESTION"] { --sev: #f97316; }
+.al-card[data-state="BRIDE"],
+.al-card[data-state="BRIDAGE"] { --sev: #f97316; }
+.al-card[data-state="SANS_TYPE"] { --sev: #64748b; }
+.al-card[data-ia="1"] { --sev: #8b5cf6; }
+
+.al-rail {
+    background: var(--sev);
+    width: 100%;
+    height: 100%;
+}
+
+.al-body {
+    padding: 16px 20px;
+    min-width: 0;
+}
+
+.al-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.al-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: var(--sev);
+}
+.al-badge i {
+    font-size: 10px;
+}
+.al-badge-ia {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #ede9fe;
+    color: #6d28d9;
+}
+.al-unread {
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    background: #fef3c7;
+    color: #d97706;
+}
+.al-site {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 5px;
+}
+.al-msg {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.al-meta {
+    border-left: 1px solid #e2e8f0;
+    padding: 16px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 130px;
+}
+.al-meta-lbl {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 5px;
+}
+.al-meta-val {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+}
+.al-meta-sub {
+    margin-top: 4px;
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+.al-load {
+    border-left: 1px solid #e2e8f0;
+    padding: 16px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 120px;
+}
+.al-load-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--sev);
+    line-height: 1;
+}
+.al-load-bar {
+    margin-top: 8px;
+    height: 4px;
+    border-radius: 99px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+.al-load-bar span {
+    display: block;
+    height: 100%;
+    width: min(var(--load, 0%), 100%);
+    background: var(--sev);
+    border-radius: 99px;
+}
+.al-load-sub {
+    margin-top: 5px;
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+.al-action {
+    border-left: 1px solid #e2e8f0;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+}
+.al-read-btn {
+    margin-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid #d1fae5;
+    background: #f0fdf4;
+    color: #16a34a;
+    cursor: pointer;
+    font-size: 11px;
+    transition: background .15s, transform .15s;
+}
+.al-read-btn:hover {
+    background: #16a34a;
+    color: #fff;
+    transform: scale(1.1);
+}
+.al-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 8px;
+    color: #fff;
+    background: #f97316;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+}
+.al-btn:hover {
+    background: #ea580c;
+    transform: translateY(-1px);
+}
+.al-btn i {
+    font-size: 11px;
+}
+
+/* ── Empty state ── */
+.al-empty {
+    text-align: center;
+    padding: 60px 24px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+}
+.al-empty i {
+    font-size: 48px;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+    display: inline-block;
+}
+.al-empty h3 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+}
+.al-empty p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1000px) {
+    .al-card {
+        grid-template-columns: 4px 1fr;
+    }
+    .al-meta, .al-load, .al-action {
+        grid-column: 2;
+        border-left: none;
+        border-top: 1px solid #e2e8f0;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+    }
+    .al-meta, .al-load {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 700px) {
+    .al-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+    }
+    .al-header-right {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+    .al-stat-chip {
+        padding: 8px 14px;
+    }
+    .al-stat-chip strong {
+        font-size: 20px;
+    }
+    .al-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .al-search {
+        max-width: 100%;
+    }
+    .al-tabs {
+        overflow-x: auto;
+        justify-content: flex-start;
+    }
+    .al-body {
+        padding: 14px 16px;
+    }
+}
+</style>
 {% endblock %}
 
 {% block body %}
-<div class="main">
-    <div class="alertes-page">
-        
-        <!-- Header -->
-        <div class="alertes-header">
-            <h1>
-                <i class="fas fa-bell" style="color: var(--orange);"></i> 
-                Centre d'<span>Alertes</span>
-            </h1>
-            <p>Synthèse des anomalies détectées sur le réseau – dernière analyse en temps réel</p>
+{% set all_alerts = historique|default([]) %}
+{% set capacity_states = ['A_VERIFIER_CAPACITE', 'CAPACITE_A_VERIFIER'] %}
+{% set congestion_count = all_alerts|filter(a => a.etat in ['CONGESTIONNE', 'CONGESTION', 'RISQUE_DE_CONGESTION'])|length %}
+{% set bride_count      = all_alerts|filter(a => a.etat in ['BRIDE', 'BRIDAGE'])|length %}
+{% set ia_count         = all_alerts|filter(a => a.type_trans == 'IA_ANOMALY')|length %}
+{% set ia_labels = {
+    'PIC_SOUDAIN':       'Pic soudain',
+    'CHUTE_BRUTALE':     'Chute brutale',
+    'CONGESTION_IA':     'Congestion IA',
+    'PRE_CONGESTION':    'Pré-congestion',
+    'TRAFIC_INHABITUEL': 'Inhabituel'
+} %}
+
+<div class="al-page">
+
+    <div class="al-header">
+        <div class="al-header-left">
+            <div class="al-kicker">
+                <i class="fas fa-satellite-dish"></i>
+                Supervision réseau
+            </div>
+            <h1 class="al-title">Centre d'<span>alertes</span></h1>
+            <p class="al-subtitle">Congestions, bridages et anomalies IA</p>
         </div>
-        
-        <!-- Statistiques -->
-        <div class="alertes-stats">
-            <div class="alert-stat-card">
-                <div class="stat-icon">🔔</div>
-                <div class="stat-number">{{ total_alertes }}</div>
-                <div class="stat-label">Catégories d'alertes</div>
+        <div class="al-header-right">
+            <div class="al-stat-chip">
+                <strong>{{ all_alerts|length }}</strong>
+                <span>Total</span>
             </div>
-            <div class="alert-stat-card">
-                <div class="stat-icon">🔴</div>
-                <div class="stat-number">{{ total_sites_critiques }}</div>
-                <div class="stat-label">Sites critiques</div>
+            <div class="al-stat-chip red">
+                <strong>{{ congestion_count }}</strong>
+                <span>Congestion</span>
             </div>
-            <div class="alert-stat-card">
-                <div class="stat-icon">⚠️</div>
-                <div class="stat-number">{{ alerts|reduce((sum, a) => sum + a.count, 0) }}</div>
-                <div class="stat-label">Total anomalies</div>
+            <div class="al-stat-chip orange">
+                <strong>{{ bride_count }}</strong>
+                <span>Bridage</span>
             </div>
-            <div class="alert-stat-card">
-                <div class="stat-icon">📅</div>
-                <div class="stat-number">{{ "now"|date("d/m/Y") }}</div>
-                <div class="stat-label">Dernière mise à jour</div>
+            <div class="al-stat-chip violet">
+                <strong>{{ ia_count }}</strong>
+                <span>IA</span>
+            </div>
+            <div class="al-stat-chip">
+                <strong id="alUnreadCount">{{ total_non_lues|default(0) }}</strong>
+                <span>Non lues</span>
             </div>
         </div>
-        
-        <!-- Liste des alertes -->
-        <div class="alertes-grid">
-            {% if alerts is defined and alerts|length > 0 %}
-                {% for alert in alerts %}
-                    <div class="alert-card">
-                        <div class="alert-card-header">
-                            <div class="alert-icon" style="background: {{ alert.bg }}; color: {{ alert.color }};">
-                                <i class="fas {{ alert.icon }}"></i>
-                            </div>
-                            <div class="alert-info">
-                                <div class="alert-title">{{ alert.title }}</div>
-                                <div class="alert-subtitle">{{ alert.subtitle }}</div>
-                            </div>
-                            <div class="alert-count" style="background: {{ alert.bg }}; color: {{ alert.color }};">
-                                {{ alert.count }}
-                            </div>
+    </div>
+
+    <div class="al-toolbar">
+        <div class="al-search">
+            <i class="fas fa-search"></i>
+            <input type="search" id="alSearch" placeholder="Rechercher…">
+        </div>
+        <div class="al-tabs" id="alTabs">
+            <button class="al-tab active" data-filter="ALL">Toutes</button>
+            <button class="al-tab" data-filter="A_VERIFIER_CAPACITE">Capacité</button>
+            <button class="al-tab" data-filter="CONGESTION">Congestion</button>
+            <button class="al-tab" data-filter="BRIDAGE">Bridage</button>
+            <button class="al-tab" data-filter="SANS_TYPE">Sans type</button>
+            <button class="al-tab" data-filter="IA_ANOMALY">
+                <i class="fas fa-brain"></i> IA
+                {% if ia_count > 0 %}<span class="al-cnt">{{ ia_count }}</span>{% endif %}
+            </button>
+            <button class="al-tab" data-filter="UNREAD">Non lues</button>
+        </div>
+    </div>
+
+    <div class="al-list" id="alList">
+        {% if all_alerts|length > 0 %}
+            {% for alerte in all_alerts %}
+                {% set is_unread = not alerte.alerte_lue %}
+                {% set search_text = ((alerte.site|clean_site) ~ ' ' ~ alerte.etat ~ ' ' ~ (alerte.type_trans|default('')) ~ ' ' ~ (alerte.classification|default('')) ~ ' ' ~ (alerte.message|default('')))|lower %}
+                <article
+                    class="al-card"
+                    data-state="{{ alerte.etat }}"
+                    data-ia="{{ alerte.type_trans == 'IA_ANOMALY' ? '1' : '0' }}"
+                    data-unread="{{ is_unread ? '1' : '0' }}"
+                    data-search="{{ search_text|e('html_attr') }}"
+                    data-id="{{ alerte.id }}"
+                >
+                    <div class="al-rail"></div>
+
+                    <div class="al-body">
+                        <div class="al-top">
+                            {% if alerte.type_trans == 'IA_ANOMALY' %}
+                                <span class="al-badge-ia">
+                                    <i class="fas fa-brain"></i> {{ ia_labels[alerte.etat]|default(alerte.etat) }}
+                                </span>
+                            {% else %}
+                                <span class="al-badge">
+                                    <i class="fas fa-{{ alerte.etat in ['CONGESTIONNE','CONGESTION','RISQUE_DE_CONGESTION'] or alerte.etat in capacity_states ? 'exclamation-triangle' : (alerte.etat == 'SANS_TYPE' ? 'question-circle' : 'tachometer-alt') }}"></i>
+                                    {{ alerte.etat in capacity_states ? 'CAPACITÉ' : (alerte.etat == 'RISQUE_DE_CONGESTION' ? 'RISQUE CONGESTION' : (alerte.etat in ['CONGESTIONNE','CONGESTION'] ? 'CONGESTION' : (alerte.etat == 'SANS_TYPE' ? 'NON CLASSÉ' : 'BRIDAGE'))) }}
+                                </span>
+                            {% endif %}
+                            {% if is_unread %}
+                                <span class="al-unread"><i class="fas fa-circle" style="font-size: 6px;"></i> Non lue</span>
+                            {% endif %}
                         </div>
-                        
-                        {% if alert.items is defined and alert.items|length > 0 %}
-                            <div class="alert-body">
-                                <div class="alert-items">
-                                    {% for item in alert.items %}
-                                        <div class="alert-item">
-                                            <div class="alert-item-site">{{ item.label }}</div>
-                                            <div>
-                                                <span class="alert-item-value" style="color: {{ alert.color }};">{{ item.value }}</span>
-                                                {% if item.meta is defined %}
-                                                    <span class="alert-item-meta">{{ item.meta }}</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endif %}
-                        
-                        <div class="alert-footer">
-                            <a href="{{ alert.link }}" class="alert-link">
-                                Voir tous les sites concernés 
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
+                        <div class="al-site">{{ alerte.site|clean_site }}</div>
+                        <div class="al-msg">{{ alerte.message ?: 'Alerte réseau détectée' }}</div>
                     </div>
-                {% endfor %}
-            {% else %}
-                <div class="no-alerts">
-                    <i class="fas fa-check-circle"></i>
-                    <h3>Aucune alerte active</h3>
-                    <p>Tous les sites sont en bonne santé et fonctionnent normalement.</p>
-                </div>
-            {% endif %}
-        </div>
-        
+
+                    <div class="al-meta">
+                        <div class="al-meta-lbl">Type</div>
+                        <div class="al-meta-val">{{ alerte.type_trans|default('—') }}</div>
+                        <div class="al-meta-sub">{{ alerte.date_alerte|date('d/m/Y H:i') }}</div>
+                    </div>
+
+                    <div class="al-load">
+                        <div class="al-meta-lbl">Charge</div>
+                        <div class="al-load-val">{{ (alerte.taux_utilisation|default(0))|number_format(0, ',', ' ') }}%</div>
+                        <div class="al-load-bar" style="--load: {{ alerte.taux_utilisation|default(0) }}%">
+                            <span></span>
+                        </div>
+                        <div class="al-load-sub">{{ alerte.trafic_j|number_format(1, '.', ' ') }} / {{ (alerte.capacite_mbps + 0)|replace({'.': ','}) }} Mbps</div>
+                    </div>
+
+                    <div class="al-action">
+                        <a href="{{ path('courbe_trafic', { site: alerte.site }) }}" class="al-btn">
+                            <i class="fas fa-chart-line"></i> Détails
+                        </a>
+                        {% if is_unread and alerte.id|slice(0,9) != 'sans-type' %}
+                        <button type="button" class="al-read-btn" title="Marquer comme lue">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        {% else %}
+            <div class="al-empty">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Aucune alerte</h3>
+                <p>Aucune alerte n'a encore été générée pour cet import.</p>
+            </div>
+        {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+(() => {
+    const search = document.getElementById('alSearch');
+    const tabs   = document.querySelectorAll('.al-tab');
+    const rows   = document.querySelectorAll('.al-card');
+    let activeFilter = 'ALL';
+
+    function filter() {
+        const q = search?.value.toLowerCase().trim() || '';
+        rows.forEach(row => {
+            const matchSearch = !q || (row.dataset.search || '').includes(q);
+            const state    = row.dataset.state;
+            const isUnread = row.dataset.unread === '1';
+            let matchFilter = true;
+            if      (activeFilter === 'A_VERIFIER_CAPACITE') matchFilter = ['A_VERIFIER_CAPACITE','CAPACITE_A_VERIFIER'].includes(state);
+            else if (activeFilter === 'CONGESTION')          matchFilter = ['CONGESTIONNE','CONGESTION','RISQUE_DE_CONGESTION'].includes(state);
+            else if (activeFilter === 'BRIDAGE')             matchFilter = ['BRIDE','BRIDAGE'].includes(state);
+            else if (activeFilter === 'SANS_TYPE')           matchFilter = state === 'SANS_TYPE';
+            else if (activeFilter === 'IA_ANOMALY')          matchFilter = row.dataset.ia === '1';
+            else if (activeFilter === 'UNREAD')              matchFilter = isUnread;
+            row.style.display = matchSearch && matchFilter ? '' : 'none';
+        });
+
+        const visible = Array.from(rows).filter(r => r.style.display !== 'none');
+        let msg = document.getElementById('alNoResults');
+        if (visible.length === 0 && rows.length > 0) {
+            if (!msg) {
+                msg = document.createElement('div');
+                msg.id = 'alNoResults';
+                msg.className = 'al-empty';
+                msg.innerHTML = '<i class="fas fa-search"></i><h3>Aucun résultat</h3><p>Aucune alerte ne correspond à vos critères.</p>';
+                document.getElementById('alList').appendChild(msg);
+            }
+        } else if (msg) {
+            msg.remove();
+        }
+    }
+
+    search?.addEventListener('input', filter);
+    tabs.forEach(tab => tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeFilter = tab.dataset.filter;
+        filter();
+    }));
+
+    /* ── Marquer comme lue ── */
+    const unreadCounter = document.getElementById('alUnreadCount');
+
+    document.querySelectorAll('.al-read-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const card = btn.closest('.al-card');
+            const id   = card?.dataset.id;
+            if (!id || String(id).startsWith('sans-type')) return;
+
+            try {
+                const resp = await fetch(`/alertes/${id}/lue`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!resp.ok) return;
+
+                /* Mise à jour de la carte */
+                card.dataset.unread = '0';
+                card.querySelector('.al-unread')?.remove();
+                btn.remove();
+
+                /* Décrémentation du compteur */
+                if (unreadCounter) {
+                    const current = parseInt(unreadCounter.textContent, 10) || 0;
+                    unreadCounter.textContent = Math.max(0, current - 1);
+                }
+
+                /* Badge navbar (si présent) */
+                const navBadge = document.querySelector('.notif-count, .alert-badge, [data-unread-count]');
+                if (navBadge) {
+                    const n = parseInt(navBadge.textContent, 10) || 0;
+                    const next = Math.max(0, n - 1);
+                    navBadge.textContent = next;
+                    if (next === 0) navBadge.style.display = 'none';
+                }
+
+                /* Si on est sur le filtre "Non lues", masquer la carte */
+                if (activeFilter === 'UNREAD') {
+                    card.style.display = 'none';
+                    filter();
+                }
+            } catch (_) {}
+        });
+    });
+})();
+</script>
 {% endblock %}

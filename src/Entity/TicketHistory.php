@@ -16,7 +16,7 @@ class TicketHistory
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Ticket::class)]
+    #[ORM\ManyToOne(targetEntity: Ticket::class, inversedBy: 'history')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Ticket $ticket = null;
 

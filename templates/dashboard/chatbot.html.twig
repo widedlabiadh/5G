@@ -1,0 +1,1283 @@
+﻿{% extends 'base.html.twig' %}
+
+{% block title %}Assistant NetWON{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .chat-workspace {
+        min-height: calc(100vh - var(--navbar-height) - 76px);
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr) 292px;
+        gap: 14px;
+        color: var(--txt);
+    }
+
+    .chat-panel,
+    .chat-console,
+    .chat-insights {
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+        backdrop-filter: blur(18px);
+    }
+
+    .chat-panel {
+        border-radius: 18px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow: hidden;
+    }
+
+    .chat-panel-head,
+    .chat-insights-head,
+    .chat-thread-actions,
+    .chat-brand,
+    .chat-status-row,
+    .chat-chip-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .chat-panel-head,
+    .chat-insights-head {
+        justify-content: space-between;
+    }
+
+    .chat-panel-title,
+    .chat-insights-title {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: var(--txt);
+        letter-spacing: 0;
+    }
+
+    .chat-panel-subtitle,
+    .chat-insights-subtitle {
+        display: block;
+        margin-top: 2px;
+        font-size: 0.68rem;
+        color: var(--txt-3);
+    }
+
+    .icon-button,
+    .chat-mode,
+    .chat-prompt,
+    .chat-thread,
+    .chat-copy,
+    .chat-clear {
+        border: 1px solid rgba(226, 232, 240, 0.98);
+        background: #fff;
+        color: var(--txt-2);
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .icon-button {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+    }
+
+    .icon-button:hover,
+    .chat-mode:hover,
+    .chat-prompt:hover,
+    .chat-thread:hover,
+    .chat-copy:hover,
+    .chat-clear:hover {
+        border-color: rgba(255, 98, 0, 0.28);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        transform: translateY(-1px);
+    }
+
+    .icon-button.primary {
+        border-color: transparent;
+        background: #111827;
+        color: #fff;
+    }
+
+    .chat-search-wrap {
+        position: relative;
+    }
+
+    .chat-search-wrap i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--txt-3);
+        font-size: 0.78rem;
+        pointer-events: none;
+    }
+
+    .chat-search {
+        width: 100%;
+        min-height: 40px;
+        border: 1px solid rgba(226, 232, 240, 0.98);
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 10px 12px 10px 34px;
+        font-size: 0.78rem;
+        outline: none;
+    }
+
+    .chat-history-list {
+        min-height: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-right: 2px;
+    }
+
+    .chat-thread {
+        width: 100%;
+        min-height: 64px;
+        border-radius: 13px !important;
+        padding: 10px;
+        text-align: left;
+        display: grid;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 9px;
+    }
+
+    .chat-thread.active {
+        border-color: rgba(255, 98, 0, 0.34);
+        background: #fff7ed;
+        color: var(--txt);
+        box-shadow: inset 3px 0 0 var(--orange);
+    }
+
+    .chat-thread-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f5f9;
+        color: var(--orange);
+        font-size: 0.76rem;
+    }
+
+    .chat-thread-title {
+        display: block;
+        overflow: hidden;
+        color: inherit;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .chat-thread-date {
+        display: block;
+        margin-top: 4px;
+        color: var(--txt-3);
+        font-size: 0.66rem;
+        font-weight: 700;
+    }
+
+    .chat-empty-state {
+        border: 1px dashed rgba(148, 163, 184, 0.55);
+        border-radius: 14px;
+        padding: 14px;
+        color: var(--txt-3);
+        font-size: 0.78rem;
+        line-height: 1.45;
+        background: #f8fafc;
+    }
+
+    .chat-mini-metrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: auto;
+    }
+
+    .chat-mini-metric {
+        min-width: 0;
+        border: 1px solid rgba(226, 232, 240, 0.98);
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 10px;
+    }
+
+    .chat-mini-metric strong {
+        display: block;
+        color: var(--txt);
+        font-size: 0.95rem;
+        line-height: 1;
+    }
+
+    .chat-mini-metric span {
+        display: block;
+        margin-top: 5px;
+        color: var(--txt-3);
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .chat-console {
+        min-height: calc(100vh - var(--navbar-height) - 76px);
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .chat-console::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+            linear-gradient(90deg, rgba(255, 98, 0, 0.045) 1px, transparent 1px),
+            linear-gradient(rgba(8, 145, 178, 0.035) 1px, transparent 1px);
+        background-size: 42px 42px;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.78), transparent 58%);
+    }
+
+    .chat-console-head {
+        position: relative;
+        z-index: 1;
+        padding: 18px 20px 14px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.78);
+        background: rgba(255, 255, 255, 0.78);
+    }
+
+    .chat-bot-mark {
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background:
+            linear-gradient(135deg, #111827 0%, #263447 42%, #ff6200 100%);
+        box-shadow: 0 12px 28px rgba(255, 98, 0, 0.22);
+        flex: 0 0 auto;
+    }
+
+    .chat-brand h1 {
+        margin: 0;
+        color: var(--txt);
+        font-family: 'Syne', 'DM Sans', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 900;
+        letter-spacing: 0;
+    }
+
+    .chat-brand p {
+        margin: 4px 0 0;
+        color: var(--txt-3);
+        font-size: 0.76rem;
+    }
+
+    .chat-status-row {
+        align-self: start;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .chat-status,
+    .chat-pill {
+        min-height: 30px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 10px;
+        font-size: 0.68rem;
+        font-weight: 900;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        background: #fff;
+        color: var(--txt-2);
+        white-space: nowrap;
+    }
+
+    .chat-status.online {
+        color: #047857;
+        background: #ecfdf5;
+        border-color: #bbf7d0;
+    }
+
+    .chat-status.online::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.16);
+    }
+
+    .chat-hero {
+        position: relative;
+        z-index: 1;
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 24px 20px 10px;
+    }
+
+    .chat-hero-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        color: var(--orange);
+        font-size: 0.72rem;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .chat-hero h2 {
+        margin: 0;
+        max-width: 650px;
+        color: #111827;
+        font-family: 'Syne', 'DM Sans', sans-serif;
+        font-size: clamp(1.55rem, 3vw, 2.45rem);
+        font-weight: 900;
+        line-height: 1.08;
+        letter-spacing: 0;
+    }
+
+    .chat-hero p {
+        max-width: 680px;
+        margin: 12px 0 0;
+        color: var(--txt-2);
+        font-size: 0.9rem;
+        line-height: 1.55;
+    }
+
+    .chat-chip-row {
+        flex-wrap: wrap;
+        margin-top: 16px;
+    }
+
+    .chat-mode {
+        min-height: 34px;
+        border-radius: 999px !important;
+        padding: 7px 11px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 0.72rem;
+        font-weight: 900;
+    }
+
+    .chat-mode.active {
+        border-color: rgba(255, 98, 0, 0.32);
+        background: #111827;
+        color: #fff;
+    }
+
+    .chat-messages {
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        min-height: 0;
+        padding: 0 20px 18px;
+        overflow-y: auto;
+    }
+
+    .prompt-grid {
+        max-width: 920px;
+        margin: 10px auto 22px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .chat-prompt {
+        border-radius: 14px !important;
+        min-height: 92px;
+        padding: 13px;
+        text-align: left;
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 11px;
+        background: rgba(255, 255, 255, 0.84);
+    }
+
+    .chat-prompt i {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: var(--orange);
+    }
+
+    .chat-prompt strong {
+        display: block;
+        color: var(--txt);
+        font-size: 0.82rem;
+        margin-bottom: 4px;
+    }
+
+    .chat-prompt span {
+        color: var(--txt-3);
+        font-size: 0.74rem;
+        line-height: 1.4;
+    }
+
+    .message-stack {
+        max-width: 920px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .chat-message {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr);
+        gap: 11px;
+        align-items: flex-start;
+        animation: messageIn 0.22s ease both;
+    }
+
+    .chat-message.user {
+        grid-template-columns: minmax(0, 1fr) 36px;
+    }
+
+    @keyframes messageIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 11px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, #111827, #ff6200);
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+    }
+
+    .chat-message.user .message-avatar {
+        grid-column: 2;
+        background: #111827;
+    }
+
+    .message-bubble {
+        min-width: 0;
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 15px;
+        padding: 13px 14px;
+        background: #fff;
+        color: var(--txt-2);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.055);
+    }
+
+    .chat-message.user .message-bubble {
+        grid-column: 1;
+        grid-row: 1;
+        background: #111827;
+        border-color: #111827;
+        color: #fff;
+    }
+
+    .message-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 7px;
+    }
+
+    .message-meta {
+        color: var(--txt);
+        font-size: 0.7rem;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .chat-message.user .message-meta {
+        color: rgba(255, 255, 255, 0.72);
+    }
+
+    .chat-copy {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+    }
+
+    .chat-message.user .chat-copy {
+        display: none;
+    }
+
+    .message-content {
+        display: block;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+        font-size: 0.88rem;
+        line-height: 1.65;
+    }
+
+    .typing-dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-height: 20px;
+    }
+
+    .typing-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--orange);
+        animation: typingPulse 1s ease-in-out infinite;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: 0.12s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.24s; }
+
+    @keyframes typingPulse {
+        0%, 80%, 100% { opacity: 0.28; transform: translateY(0); }
+        40% { opacity: 1; transform: translateY(-4px); }
+    }
+
+    .chat-composer-area {
+        position: relative;
+        z-index: 1;
+        padding: 14px 20px 18px;
+        border-top: 1px solid rgba(226, 232, 240, 0.76);
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.4), rgba(255, 255, 255, 0.95));
+    }
+
+    .chat-composer {
+        max-width: 920px;
+        margin: 0 auto;
+        border: 1px solid rgba(148, 163, 184, 0.38);
+        background: #fff;
+        border-radius: 16px;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: end;
+        padding: 9px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+    }
+
+    .chat-composer textarea {
+        width: 100%;
+        min-height: 44px;
+        max-height: 130px;
+        border: 0;
+        outline: 0;
+        resize: none;
+        padding: 12px 4px;
+        color: var(--txt);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .chat-send {
+        border: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        background: linear-gradient(135deg, #111827, #ff6200);
+        box-shadow: 0 12px 24px rgba(255, 98, 0, 0.22);
+        cursor: pointer;
+    }
+
+    .chat-send:disabled {
+        opacity: 0.62;
+        cursor: wait;
+        box-shadow: none;
+    }
+
+    .chat-note {
+        max-width: 920px;
+        margin: 8px auto 0;
+        color: var(--txt-3);
+        font-size: 0.7rem;
+        text-align: center;
+    }
+
+    .slash-commands {
+        max-width: 920px;
+        margin: 0 auto 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .slash-commands-label {
+        color: var(--txt-3);
+        font-size: 0.68rem;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .slash-badge {
+        border: 1px solid rgba(226, 232, 240, 0.98);
+        background: #fff;
+        color: var(--txt-2);
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .slash-badge:hover {
+        border-color: rgba(255, 98, 0, 0.32);
+        background: #fff7ed;
+        color: var(--txt);
+    }
+
+    .source-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 0.62rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .source-badge.fastpath {
+        color: #047857;
+        background: #ecfdf5;
+        border: 1px solid #bbf7d0;
+    }
+
+    .source-badge.database {
+        color: #1d4ed8;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+    }
+
+    .source-badge.ollama {
+        color: #7c2d12;
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+    }
+
+    .source-badge.fallback,
+    .source-badge.local {
+        color: #b45309;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+    }
+
+    .chat-stop {
+        border: 1px solid rgba(248, 113, 113, 0.45);
+        background: #fff;
+        color: #b91c1c;
+        min-height: 44px;
+        border-radius: 12px !important;
+        padding: 0 12px;
+        font-size: 0.74rem;
+        font-weight: 900;
+        cursor: pointer;
+        display: none;
+    }
+
+    .chat-stop.visible {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .chat-composer-actions {
+        display: flex;
+        align-items: end;
+        gap: 8px;
+    }
+
+    .dynamic-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+        max-width: 920px;
+    }
+
+    .message-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+    }
+
+    .message-topline {
+        flex-wrap: wrap;
+    }
+
+    .message-raw-data {
+        margin-top: 10px;
+        border-top: 1px dashed #e2e8f0;
+        padding-top: 8px;
+        font-size: 0.72rem;
+        color: var(--txt-3);
+    }
+
+    .message-raw-data pre {
+        margin: 8px 0 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 220px;
+        overflow: auto;
+        background: #f8fafc;
+        padding: 8px;
+        border-radius: 8px;
+        font-size: 0.68rem;
+    }
+
+    /* ════════════════════════════════════════
+       DASHBOARD REPORT CARD — design system
+       ════════════════════════════════════════ */
+    .report-card {
+        margin-top: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        background: #fff;
+        overflow: hidden;
+        font-size: 0.8rem;
+        box-shadow: 0 4px 20px rgba(15,23,42,.07);
+    }
+
+    /* Header */
+    .report-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 13px 16px;
+        border-bottom: 2px solid #ff6200;
+        background: linear-gradient(120deg, #fff7ed 0%, #fffbf7 60%, #fff 100%);
+        flex-wrap: wrap;
+    }
+    .report-header-left { display: flex; align-items: center; gap: 10px; }
+    .report-icon { color: #ff6200; font-size: 1.15rem; flex-shrink: 0; }
+    .report-title { display: block; font-size: 0.85rem; font-weight: 900; color: #111827; }
+    .report-meta  { display: block; font-size: 0.66rem; color: #64748b; margin-top: 2px; }
+    .report-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    .report-pdf-btn, .report-csv-btn {
+        display: inline-flex; align-items: center; gap: 5px;
+        border: none; border-radius: 8px; padding: 6px 12px;
+        font-size: 0.7rem; font-weight: 800; cursor: pointer;
+        white-space: nowrap; transition: filter .15s;
+    }
+    .report-pdf-btn { background: #ff6200; color: #fff; }
+    .report-csv-btn { background: #16a34a; color: #fff; }
+    .report-pdf-btn:hover, .report-csv-btn:hover { filter: brightness(.88); }
+
+    /* Section wrapper */
+    .report-section { border-top: 1px solid #f1f5f9; padding: 13px 16px; }
+    .report-section.report-tickets { background: #f8fffd; }
+
+    .report-section-title {
+        margin: 0 0 12px;
+        font-size: 0.7rem; font-weight: 900;
+        text-transform: uppercase; letter-spacing: .06em;
+        color: #374151; display: flex; align-items: center; gap: 7px;
+    }
+    .report-section-title i { color: #ff6200; }
+
+    /* ── KPI cards with mini progress bar ── */
+    .dash-kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+    .dash-kpi-row--tickets {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    .dash-kpi {
+        border-radius: 10px; padding: 11px 10px 9px;
+        border-top: 3px solid transparent; text-align: center;
+    }
+    .dash-kpi-val  { font-size: 1.55rem; font-weight: 900; line-height: 1; }
+    .dash-kpi-label {
+        font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .04em; color: #64748b; margin: 4px 0 6px;
+    }
+    .dash-kpi-pct  { font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; }
+    .dash-kpi-track {
+        height: 4px; background: rgba(0,0,0,.08);
+        border-radius: 99px; overflow: hidden;
+    }
+    .dash-kpi-fill { height: 4px; border-radius: 99px; transition: width .4s; }
+
+    /* ── Criticité + donuts side-by-side ── */
+    .dash-two-col {
+        display: grid;
+        grid-template-columns: 1fr 1.6fr;
+        gap: 10px;
+        align-items: start;
+    }
+    .dash-stat-col { display: flex; flex-direction: column; gap: 8px; }
+    .dash-chart-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .dash-donut-box {
+        background: #f8fafc; border-radius: 10px; padding: 8px 6px 6px;
+        text-align: center;
+    }
+    .dash-donut-label {
+        font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+        letter-spacing: .05em; color: #64748b; margin-bottom: 4px;
+    }
+
+    /* ── Chart canvas wrapper ── */
+    .report-chart-wrap { padding: 0; max-height: 260px; }
+
+    /* ── Legend strip ── */
+    .dash-legend {
+        display: flex; gap: 10px; flex-wrap: wrap;
+        padding: 6px 0 10px;
+        font-size: 0.62rem; font-weight: 600; color: #64748b;
+    }
+
+    /* ── Gouvernorat visual grid ── */
+    .dash-gov-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-top: 10px;
+    }
+    .dash-gov-card {
+        border-radius: 10px; padding: 10px 12px;
+        border-left: 4px solid transparent;
+    }
+    .dash-gov-head {
+        display: flex; justify-content: space-between;
+        align-items: center; margin-bottom: 4px;
+    }
+    .dash-gov-name { font-size: 0.75rem; font-weight: 800; color: #1e293b; }
+    .dash-gov-badge {
+        font-size: 0.58rem; font-weight: 700;
+        border: 1px solid; padding: 1px 6px; border-radius: 99px;
+    }
+    .dash-gov-count { font-size: 0.62rem; color: #64748b; margin-bottom: 8px; }
+    .dash-gov-bars  { display: flex; flex-direction: column; gap: 5px; }
+    .dash-gov-bar-row { display: flex; align-items: center; gap: 6px; }
+    .dash-gov-bar-lbl {
+        font-size: 0.58rem; font-weight: 700; width: 70px;
+        white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* ── Shared progress bar ── */
+    .dash-bar-track {
+        flex: 1; height: 5px; background: rgba(0,0,0,.08);
+        border-radius: 99px; overflow: hidden;
+    }
+    .dash-bar-fill { height: 5px; border-radius: 99px; transition: width .4s; }
+
+    /* ── Action type pills ── */
+    .dash-action-row {
+        display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+    }
+    .dash-action-pill {
+        flex: 1; min-width: 100px; border-radius: 10px;
+        padding: 10px 10px 8px; text-align: center;
+        border-top: 3px solid transparent;
+        background: #f8fafc;
+    }
+    .dash-action-val   { font-size: 1.4rem; font-weight: 900; line-height: 1; }
+    .dash-action-label {
+        font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .03em; color: #64748b; margin: 4px 0 8px;
+    }
+    .dash-action-pct   { font-size: 0.62rem; font-weight: 700; margin-top: 4px; }
+
+    /* Executive summary */
+    .report-executive {
+        margin: 0 16px 4px;
+        background: linear-gradient(120deg,#fff7ed,#fff);
+        border-left: 3px solid #ff6200;
+        border-radius: 0 8px 8px 0;
+        padding: 10px 14px;
+    }
+    .report-exec-label {
+        display: block; font-size: 0.63rem; font-weight: 900;
+        text-transform: uppercase; letter-spacing: .05em;
+        color: #ff6200; margin-bottom: 5px;
+    }
+    .report-exec-text { margin: 0; font-size: 0.75rem; color: #374151; line-height: 1.6; }
+
+    /* Footer */
+    .report-total {
+        padding: 8px 16px 12px; color: #94a3b8;
+        font-size: 0.68rem; text-align: right; margin: 0;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    #netwon-print-report { display: none; }
+
+    @media print {
+        body > * { display: none !important; }
+        #netwon-print-report { display: block !important; }
+    }
+
+    .chat-insights {
+        border-radius: 18px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow: hidden;
+    }
+
+    .chat-insight-card,
+    .chat-quality-card {
+        border: 1px solid rgba(226, 232, 240, 0.98);
+        border-radius: 14px;
+        background: #fff;
+        padding: 13px;
+    }
+
+    .chat-insight-card strong {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--txt);
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+    }
+
+    .chat-insight-card p {
+        margin: 0;
+        color: var(--txt-3);
+        font-size: 0.74rem;
+        line-height: 1.48;
+    }
+
+    .quality-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+        margin-top: 9px;
+        color: var(--txt-2);
+        font-size: 0.74rem;
+        font-weight: 800;
+    }
+
+    .quality-bar {
+        height: 7px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: #edf2f7;
+    }
+
+    .quality-bar span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--orange), #0891b2, #059669);
+    }
+
+    .chat-clear {
+        min-height: 36px;
+        border-radius: 11px !important;
+        padding: 8px 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: #b91c1c;
+        background: #fff;
+        font-size: 0.74rem;
+        font-weight: 900;
+    }
+
+    @media (max-width: 1280px) {
+        .chat-workspace {
+            grid-template-columns: 240px minmax(0, 1fr);
+        }
+
+        .chat-insights {
+            display: none;
+        }
+    }
+
+    @media (max-width: 980px) {
+        .chat-workspace {
+            grid-template-columns: 1fr;
+        }
+
+        .chat-panel {
+            max-height: 270px;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .chat-console-head {
+            grid-template-columns: 1fr;
+        }
+
+        .chat-status-row {
+            justify-content: flex-start;
+        }
+
+        .prompt-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chat-hero,
+        .chat-messages,
+        .chat-composer-area {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+
+        .chat-brand {
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+    <div class="chat-workspace">
+        <aside class="chat-panel" aria-label="Historique des conversations">
+            <div class="chat-panel-head">
+                <div>
+                    <span class="chat-panel-title">{% if report_only %}Rapports sauvegardés{% else %}Conversations{% endif %}</span>
+                    <span class="chat-panel-subtitle">Synchronise avec le serveur</span>
+                </div>
+                <button class="icon-button primary" id="newConversationBtn" type="button" aria-label="Nouveau rapport" title="Nouveau rapport">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+
+            <div class="chat-search-wrap">
+                <i class="fas fa-search"></i>
+                <input class="chat-search" id="conversationSearch" type="search" placeholder="Rechercher">
+            </div>
+
+            <div class="chat-history-list" id="conversationList">
+                <div class="chat-empty-state">Aucun rapport pour le moment. Utilisez <strong>/rapport</strong> pour en générer un.</div>
+            </div>
+
+            <div class="chat-mini-metrics" aria-label="Indicateurs chatbot">
+                <div class="chat-mini-metric">
+                    <strong id="conversationCount">0</strong>
+                    <span>{% if report_only %}Rapports{% else %}Sessions{% endif %}</span>
+                </div>
+                <div class="chat-mini-metric">
+                    <strong id="messageCount">0</strong>
+                    <span>Messages</span>
+                </div>
+            </div>
+
+            <button class="chat-clear" id="exportConversationBtn" type="button" style="color:#1d4ed8;border-color:#bfdbfe;">
+                <i class="fas fa-file-pdf"></i>
+                Télécharger PDF
+            </button>
+            {% if not report_only %}
+            <button class="chat-clear" id="clearConversationsBtn" type="button">
+                <i class="fas fa-trash-can"></i>
+                Vider l'historique
+            </button>
+            {% endif %}
+
+            {% if report_only %}
+            <div style="margin-top:8px;padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:.72rem;color:#9a3412;line-height:1.45;">
+                <i class="fas fa-circle-info" style="color:#ff6200;margin-right:5px;"></i>
+                Générez un rapport avec <strong>/rapport</strong>, puis téléchargez-le en <strong>PDF</strong> ou <strong>Excel</strong> via les boutons dans le rapport.
+            </div>
+            {% endif %}
+        </aside>
+
+        <section class="chat-console" aria-label="{% if report_only %}Génération de rapports{% else %}Assistant NetWON{% endif %}">
+            <header class="chat-console-head">
+                <div class="chat-brand">
+                    <div class="chat-bot-mark">
+                        <i class="fas fa-{% if report_only %}file-chart-pie{% else %}wand-magic-sparkles{% endif %}"></i>
+                    </div>
+                    <div>
+                        <h1 id="conversationTitle">{% if report_only %}Générateur de rapports{% else %}Nouvelle conversation{% endif %}</h1>
+                        <p>{% if report_only %}Générez des rapports réseau complets téléchargeables en PDF et Excel.{% else %}Assistant RAG pour supervision reseau, capacite, trafic, alertes et tickets.{% endif %}</p>
+                    </div>
+                </div>
+                <div class="chat-status-row">
+                    <span class="chat-status online">Connecte</span>
+                    {% if report_only %}
+                    <span class="chat-pill" style="color:#9a3412;background:#fff7ed;border-color:#fed7aa;"><i class="fas fa-file-lines"></i> Mode Rapport</span>
+                    {% else %}
+                    <span class="chat-pill"><i class="fas fa-database"></i> RAG NetWON</span>
+                    <span class="chat-pill"><i class="fas fa-microchip"></i> Qwen2.5:7B</span>
+                    {% endif %}
+                </div>
+            </header>
+
+            <main class="chat-messages" id="chatScrollArea">
+                {% if report_only %}
+                <section class="chat-hero" aria-label="Suggestions">
+                    <span class="chat-hero-label"><i class="fas fa-file-chart-pie"></i> Génération de rapports réseau</span>
+                    <h2>Générez un rapport complet, téléchargez-le en PDF ou Excel.</h2>
+                    <p>Cliquez sur <strong>/rapport</strong> pour obtenir un rapport réseau global avec KPIs, gouvernorats, tickets et résumé exécutif prêt à télécharger.</p>
+                    <div class="chat-chip-row" aria-label="Types de rapports">
+                        <button class="chat-mode active" type="button" data-mode="Rapport operationnel">
+                            <i class="fas fa-file-lines"></i> Rapport
+                        </button>
+                        <button class="chat-mode" type="button" data-mode="Rapport statistiques">
+                            <i class="fas fa-chart-bar"></i> Statistiques
+                        </button>
+                        <button class="chat-mode" type="button" data-mode="Rapport tickets">
+                            <i class="fas fa-ticket"></i> Tickets
+                        </button>
+                    </div>
+                </section>
+                {% endif %}
+
+                {% if report_only %}
+                <div class="prompt-grid">
+                    <button class="chat-prompt" type="button" data-prompt="/rapport">
+                        <i class="fas fa-chart-pie"></i>
+                        <span><strong>Rapport global</strong><span>Rapport complet : KPIs, gouvernorats, tickets, résumé exécutif. PDF + Excel.</span></span>
+                    </button>
+                    <button class="chat-prompt" type="button" data-prompt="/stats">
+                        <i class="fas fa-chart-bar"></i>
+                        <span><strong>Statistiques réseau</strong><span>Répartition des états, taux de criticité, tendances par type.</span></span>
+                    </button>
+                    <button class="chat-prompt" type="button" data-prompt="/tickets">
+                        <i class="fas fa-ticket"></i>
+                        <span><strong>État des tickets</strong><span>Tickets ouverts, en cours, urgents et workflow en attente.</span></span>
+                    </button>
+                    <button class="chat-prompt" type="button" data-prompt="Donne un résumé exécutif de l'état du réseau avec les indicateurs clés et les actions prioritaires.">
+                        <i class="fas fa-file-signature"></i>
+                        <span><strong>Résumé exécutif</strong><span>Synthèse courte avec constats, impacts et priorités d'action.</span></span>
+                    </button>
+                </div>
+                {% endif %}
+
+                <div class="message-stack" id="ragChatMessages"></div>
+            </main>
+
+            <footer class="chat-composer-area">
+                <div class="slash-commands" aria-label="Commandes rapides">
+                    <span class="slash-commands-label">Commandes</span>
+                    {% if report_only %}
+                    <button type="button" class="slash-badge" data-slash="/rapport">/rapport</button>
+                    <button type="button" class="slash-badge" data-slash="/stats">/stats</button>
+                    <button type="button" class="slash-badge" data-slash="/tickets">/tickets</button>
+                    {% else %}
+                    <button type="button" class="slash-badge" data-slash="/top">/top</button>
+                    <button type="button" class="slash-badge" data-slash="/stats">/stats</button>
+                    <button type="button" class="slash-badge" data-slash="/tickets">/tickets</button>
+                    <button type="button" class="slash-badge" data-slash="/rapport">/rapport</button>
+                    <button type="button" class="slash-badge" data-slash="/aide">/aide</button>
+                    {% endif %}
+                </div>
+                <form class="chat-composer" id="ragChatForm">
+                    {% if not report_only %}
+                    <button class="icon-button" type="button" id="insertContextBtn" aria-label="Ajouter contexte supervision" title="Ajouter contexte supervision">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                    {% endif %}
+                    <textarea id="ragChatInput" rows="1" placeholder="{% if report_only %}Tapez /rapport pour générer un rapport complet...{% else %}Demander un diagnostic, une synthese ou un plan d'action...{% endif %}"></textarea>
+                    <div class="chat-composer-actions">
+                        <button class="chat-stop" id="stopGenerationBtn" type="button">
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                        <button class="chat-send" type="submit" aria-label="Envoyer">
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </form>
+                <p class="chat-note">{% if report_only %}Rapport généré → boutons <strong>PDF</strong> et <strong>Excel</strong> apparaissent directement dans la réponse.{% else %}Badge vert = reponse directe fiable. Badge bleu = donnees base. Badge orange = synthese IA.{% endif %}</p>
+            </footer>
+        </section>
+
+        <aside class="chat-insights" aria-label="Panneau d'aide">
+            <div class="chat-insights-head">
+                <div>
+                    <span class="chat-insights-title">{% if report_only %}Guide rapport{% else %}Aide rapide{% endif %}</span>
+                    <span class="chat-insights-subtitle">{% if report_only %}PDF · Excel · Résumé exécutif{% else %}Prompts plus precis, meilleurs resultats{% endif %}</span>
+                </div>
+                <span class="icon-button" aria-hidden="true"><i class="fas fa-{% if report_only %}file-arrow-down{% else %}wand-magic-sparkles{% endif %}"></i></span>
+            </div>
+
+            {% if report_only %}
+            <div class="chat-insight-card">
+                <strong><i class="fas fa-file-pdf text-orange"></i> Téléchargement PDF</strong>
+                <p>Après génération du rapport, cliquez sur le bouton <strong>PDF</strong> dans la carte de rapport pour télécharger une version imprimable.</p>
+            </div>
+            <div class="chat-insight-card">
+                <strong><i class="fas fa-file-excel text-orange"></i> Export Excel</strong>
+                <p>Le bouton <strong>Excel</strong> exporte les données KPI, gouvernorats et tickets dans un fichier CSV compatible Excel.</p>
+            </div>
+            <div class="chat-insight-card">
+                <strong><i class="fas fa-floppy-disk text-orange"></i> Sauvegarder</strong>
+                <p>Le rapport est automatiquement sauvegardé dans <strong>Rapports sauvegardés</strong>. Cliquez sur <strong>Télécharger PDF</strong> pour le rééxporter.</p>
+            </div>
+            {% else %}
+            <div class="chat-insight-card">
+                <strong><i class="fas fa-bullseye text-orange"></i> Question efficace</strong>
+                <p>Citez le site, la zone, la periode ou le type de probleme. Exemple : capacite, trafic, alerte, ticket ou gouvernorat.</p>
+            </div>
+            <div class="chat-insight-card">
+                <strong><i class="fas fa-layer-group text-orange"></i> Format attendu</strong>
+                <p>Demandez explicitement une liste priorisee, un tableau, une synthese executive ou un plan d'action terrain.</p>
+            </div>
+            <div class="chat-quality-card">
+                <div class="quality-row"><span>Contexte RAG</span><span>92%</span></div>
+                <div class="quality-bar"><span style="width: 92%"></span></div>
+                <div class="quality-row"><span>Lisibilite</span><span>88%</span></div>
+                <div class="quality-bar"><span style="width: 88%"></span></div>
+                <div class="quality-row"><span>Actionnable</span><span>95%</span></div>
+                <div class="quality-bar"><span style="width: 95%"></span></div>
+            </div>
+            {% endif %}
+        </aside>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    window.NetwonChatConfig = {
+        endpoint: '{{ path('assistant_ask') }}',
+        streamEndpoint: '{{ path('assistant_stream') }}',
+        suggestionsUrl: '{{ path('assistant_suggestions') }}',
+        conversationsListUrl: '{{ path('assistant_conversations_list') }}',
+        conversationsSaveUrl: '{{ path('assistant_conversations_save') }}',
+        conversationsClearUrl: '{{ path('assistant_conversations_clear') }}',
+        exportUrlTemplate: '{{ path('assistant_conversation_export', { publicId: '__ID__' }) }}',
+        welcomeMessage: 'Bonjour. Je suis pret a analyser les donnees NetWON. Donnez-moi un site, une zone, une alerte ou un objectif operationnel.',
+        userId: {{ app.user.id }},
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script src="{{ asset('js/chatbot-rag.js') }}?v=7" defer></script>
+{% endblock %}

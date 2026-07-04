@@ -66,7 +66,7 @@ class WorkflowApiController extends AbstractController
     #[Route('/notifications/unread', name: 'api_workflow_unread_notifications')]
     public function unreadNotifications(TicketNotificationRepository $notificationRepository): JsonResponse
     {
-        $notifications = $notificationRepository->findUnreadByUser($this->getUser());
+        $notifications = $notificationRepository->findUnreadByUser($this->getUser(), 8);
         $count = $notificationRepository->countUnreadByUser($this->getUser());
         
         return $this->json([
@@ -76,7 +76,8 @@ class WorkflowApiController extends AbstractController
                 'title' => $n->getTitle(),
                 'message' => $n->getMessage(),
                 'type' => $n->getType(),
-                'ticketId' => $n->getTicket()->getId(),
+                'ticketId' => $n->getTicket()?->getId(),
+                'ticketUrl' => $n->getTicket() ? $this->generateUrl('workflow_show', ['id' => $n->getTicket()->getId()]) : null,
                 'createdAt' => $n->getCreatedAt()->format('d/m/Y H:i'),
             ], $notifications),
         ]);

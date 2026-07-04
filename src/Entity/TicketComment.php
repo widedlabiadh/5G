@@ -25,6 +25,9 @@ class TicketComment
     #[ORM\Column(type: 'text')]
     private ?string $message = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $filePath = null;
+
     #[ORM\Column(type: 'datetime')]
     private \DateTimeInterface $createdAt;
 
@@ -40,5 +43,7 @@ class TicketComment
     public function setUser(?User $user): static { $this->user = $user; return $this; }
     public function getMessage(): ?string { return $this->message; }
     public function setMessage(string $message): static { $this->message = $message; return $this; }
+    public function getFilePath(): ?string { return $this->filePath; }
+    public function setFilePath(?string $filePath): static { $this->filePath = $filePath; return $this; }
     public function getCreatedAt(): \DateTimeInterface { return $this->createdAt; }
 }

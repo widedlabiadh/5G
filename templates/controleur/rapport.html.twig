@@ -1,0 +1,893 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Rapport Réseau — Contrôleur{% endblock %}
+
+{% block stylesheets %}
+<style>
+/* ── Layout ── */
+.ctrl-workspace {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 16px;
+    min-height: calc(100vh - var(--navbar-height) - 48px);
+}
+
+/* ── Panneau gauche ── */
+.ctrl-sidebar {
+    border-radius: 18px;
+    border: 1px solid rgba(226,232,240,.9);
+    background: #fff;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 2px 12px rgba(15,23,42,.06);
+}
+.ctrl-sidebar-title {
+    font-size: .72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--txt);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ctrl-sidebar-title i { color: #ff6200; }
+
+.ctrl-info-box {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: .75rem;
+    color: #9a3412;
+    line-height: 1.55;
+}
+.ctrl-info-box i { color: #ff6200; margin-right: 5px; }
+
+.ctrl-cmd-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.ctrl-cmd-btn {
+    width: 100%;
+    text-align: left;
+    border: 1px solid rgba(226,232,240,.9);
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: .8rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--txt);
+    transition: border-color .15s, background .15s, color .15s;
+}
+.ctrl-cmd-btn i { color: #ff6200; width: 16px; text-align: center; }
+.ctrl-cmd-btn:hover { border-color: rgba(255,98,0,.3); background: #fff7ed; color: #ff6200; }
+.ctrl-cmd-btn small { display: block; font-size: .66rem; font-weight: 500; color: #94a3b8; margin-top: 1px; }
+
+.ctrl-guide {
+    border: 1px solid rgba(226,232,240,.9);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: .73rem;
+    color: var(--txt-2);
+    line-height: 1.55;
+}
+.ctrl-guide strong { color: var(--txt); display: block; margin-bottom: 5px; font-size: .76rem; }
+
+.ctrl-dl-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+}
+.ctrl-dl-btn {
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: .78rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: filter .15s, opacity .15s;
+}
+.ctrl-dl-btn:disabled { opacity: .45; cursor: not-allowed; }
+.ctrl-dl-btn.pdf  { background: #ff6200; color: #fff; box-shadow: 0 4px 12px rgba(255,98,0,.25); }
+.ctrl-dl-btn.excel { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.2); }
+.ctrl-dl-btn:not(:disabled):hover { filter: brightness(.88); }
+
+/* ── Zone de chat ── */
+.ctrl-chat {
+    border-radius: 18px;
+    border: 1px solid rgba(226,232,240,.9);
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(15,23,42,.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+.ctrl-chat::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(90deg, rgba(255,98,0,.03) 1px, transparent 1px),
+        linear-gradient(rgba(8,145,178,.025) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(180deg, rgba(0,0,0,.6), transparent 50%);
+}
+
+/* Header */
+.ctrl-chat-head {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid rgba(226,232,240,.8);
+    background: rgba(255,255,255,.85);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.ctrl-chat-brand { display: flex; align-items: center; gap: 12px; }
+.ctrl-bot-mark {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg,#111827,#ff6200);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    flex-shrink: 0;
+    box-shadow: 0 8px 22px rgba(255,98,0,.22);
+}
+.ctrl-chat-head h1 { margin: 0; font-size: 1rem; font-weight: 900; color: var(--txt); }
+.ctrl-chat-head p  { margin: 3px 0 0; font-size: .73rem; color: var(--txt-3); }
+.ctrl-mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: .68rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+/* Messages */
+.ctrl-messages {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ctrl-welcome {
+    text-align: center;
+    padding: 28px 20px;
+    color: var(--txt-3);
+}
+.ctrl-welcome-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg,#111827,#ff6200);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px;
+    font-size: 1.2rem;
+    box-shadow: 0 8px 24px rgba(255,98,0,.22);
+}
+.ctrl-welcome h2 { font-size: 1rem; font-weight: 900; color: var(--txt); margin: 0 0 8px; }
+.ctrl-welcome p  { font-size: .82rem; line-height: 1.55; margin: 0; max-width: 420px; margin: 0 auto; }
+
+/* Message bubbles */
+.ctrl-msg { display: flex; }
+.ctrl-msg--user      { justify-content: flex-end; }
+.ctrl-msg--assistant { justify-content: flex-start; }
+.ctrl-bubble {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: .85rem;
+    line-height: 1.6;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+.ctrl-msg--user .ctrl-bubble {
+    background: #111827;
+    color: #fff;
+    border-radius: 16px 16px 3px 16px;
+}
+.ctrl-msg--assistant .ctrl-bubble {
+    background: #f8fafc;
+    color: var(--txt);
+    border: 1px solid rgba(226,232,240,.9);
+    border-radius: 16px 16px 16px 3px;
+}
+.ctrl-bubble--restricted { background: #fff7ed !important; color: #9a3412 !important; border-color: #fed7aa !important; }
+
+/* Typing dots */
+.typing-dots { display: inline-flex; align-items: center; gap: 5px; min-height: 20px; }
+.typing-dots span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #ff6200;
+    animation: dotPulse 1s ease-in-out infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: .12s; }
+.typing-dots span:nth-child(3) { animation-delay: .24s; }
+@keyframes dotPulse {
+    0%,80%,100% { opacity: .28; transform: translateY(0); }
+    40%         { opacity: 1;   transform: translateY(-4px); }
+}
+
+/* Composer */
+.ctrl-composer-area {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid rgba(226,232,240,.8);
+    padding: 12px 16px 16px;
+    background: linear-gradient(180deg, rgba(248,250,252,.4), #fff 60%);
+}
+.ctrl-slash-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.ctrl-slash-label { font-size: .66rem; font-weight: 900; text-transform: uppercase; color: var(--txt-3); }
+.ctrl-slash-badge {
+    border: 1px solid rgba(226,232,240,.9);
+    background: #fff;
+    color: var(--txt-2);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: .7rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.ctrl-slash-badge:hover { border-color: rgba(255,98,0,.3); background: #fff7ed; color: #ff6200; }
+
+.ctrl-composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    border: 1px solid rgba(148,163,184,.35);
+    border-radius: 16px;
+    background: #fff;
+    padding: 8px;
+    box-shadow: 0 4px 14px rgba(15,23,42,.07);
+}
+.ctrl-composer textarea {
+    flex: 1;
+    border: none;
+    outline: none;
+    resize: none;
+    min-height: 42px;
+    max-height: 120px;
+    font-size: .88rem;
+    line-height: 1.45;
+    padding: 10px 6px;
+    background: transparent;
+    color: var(--txt);
+    font-family: inherit;
+}
+.ctrl-composer textarea::placeholder { color: #94a3b8; }
+.ctrl-send {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg,#111827,#ff6200);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(255,98,0,.25);
+    transition: transform .15s, opacity .15s;
+}
+.ctrl-send:hover:not(:disabled)  { transform: scale(1.05); }
+.ctrl-send:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+.ctrl-note {
+    text-align: center;
+    font-size: .68rem;
+    color: var(--txt-3);
+    margin-top: 6px;
+}
+
+/* ── Report card (réutilise les classes communes de app.css) ── */
+/* (déjà définies dans chatbot.html.twig — disponibles via le extend base) */
+
+/* ── Dark mode ── */
+[data-theme="dark"] .ctrl-sidebar,
+[data-theme="dark"] .ctrl-chat {
+    background: #111318;
+    border-color: rgba(255,255,255,.07);
+}
+[data-theme="dark"] .ctrl-info-box {
+    background: rgba(255,98,0,.07);
+    border-color: rgba(255,98,0,.2);
+    color: #ff9d62;
+}
+[data-theme="dark"] .ctrl-cmd-btn {
+    background: #16191f;
+    border-color: rgba(255,255,255,.08);
+    color: #fff;
+}
+[data-theme="dark"] .ctrl-cmd-btn:hover { background: rgba(255,98,0,.1); color: #ff6200; }
+[data-theme="dark"] .ctrl-cmd-btn small { color: rgba(255,255,255,.35); }
+[data-theme="dark"] .ctrl-guide {
+    background: #16191f;
+    border-color: rgba(255,255,255,.07);
+    color: rgba(255,255,255,.6);
+}
+[data-theme="dark"] .ctrl-guide strong { color: #fff; }
+[data-theme="dark"] .ctrl-chat-head {
+    background: rgba(17,19,24,.85);
+    border-bottom-color: rgba(255,255,255,.07);
+}
+[data-theme="dark"] .ctrl-chat-head h1 { color: #fff; }
+[data-theme="dark"] .ctrl-msg--assistant .ctrl-bubble {
+    background: #16191f;
+    color: #fff;
+    border-color: rgba(255,255,255,.07);
+}
+[data-theme="dark"] .ctrl-msg--user .ctrl-bubble { background: #ff6200; }
+[data-theme="dark"] .ctrl-composer-area { background: #0d0f15; border-top-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .ctrl-composer {
+    background: #16191f;
+    border-color: rgba(255,255,255,.1);
+}
+[data-theme="dark"] .ctrl-composer textarea { color: #fff; }
+[data-theme="dark"] .ctrl-slash-badge { background: #16191f; border-color: rgba(255,255,255,.08); color: rgba(255,255,255,.6); }
+[data-theme="dark"] .ctrl-slash-badge:hover { background: rgba(255,98,0,.1); color: #ff6200; }
+[data-theme="dark"] .ctrl-welcome-icon { background: linear-gradient(135deg,#1a1d28,#ff6200); }
+
+@media (max-width: 900px) {
+    .ctrl-workspace { grid-template-columns: 1fr; }
+    .ctrl-sidebar { order: 2; }
+    .ctrl-chat    { min-height: 60vh; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="ctrl-workspace">
+
+    {# ── Panneau gauche ── #}
+    <aside class="ctrl-sidebar">
+        <div class="ctrl-sidebar-title">
+            <i class="fas fa-file-chart-pie"></i>
+            Rapport Réseau IA
+        </div>
+
+        <div class="ctrl-info-box">
+            <i class="fas fa-circle-info"></i>
+            Utilisez les commandes ci-dessous pour générer des rapports. Les questions sur des sites spécifiques ne sont pas accessibles depuis ce profil.
+        </div>
+
+        <div class="ctrl-cmd-list">
+            <button type="button" class="ctrl-cmd-btn" data-cmd="/rapport">
+                <i class="fas fa-chart-pie"></i>
+                <div>
+                    /rapport
+                    <small>Rapport complet réseau • PDF + Excel</small>
+                </div>
+            </button>
+            <button type="button" class="ctrl-cmd-btn" data-cmd="/stats">
+                <i class="fas fa-chart-bar"></i>
+                <div>
+                    /stats
+                    <small>Statistiques réseau globales</small>
+                </div>
+            </button>
+            <button type="button" class="ctrl-cmd-btn" data-cmd="/tickets">
+                <i class="fas fa-ticket"></i>
+                <div>
+                    /tickets
+                    <small>État des tickets & workflow</small>
+                </div>
+            </button>
+        </div>
+
+        <div class="ctrl-guide">
+            <strong><i class="fas fa-file-pdf" style="color:#ff6200;"></i> Téléchargement PDF</strong>
+            Après génération du rapport, cliquez sur le bouton <strong>PDF</strong> dans la carte de rapport pour imprimer/télécharger.
+        </div>
+        <div class="ctrl-guide">
+            <strong><i class="fas fa-file-excel" style="color:#16a34a;"></i> Export Excel</strong>
+            Le bouton <strong>Excel</strong> exporte les KPIs, gouvernorats et tickets dans un fichier CSV compatible Excel.
+        </div>
+
+        <div class="ctrl-dl-buttons">
+            <button type="button" class="ctrl-dl-btn pdf" id="ctrlPdfBtn" disabled>
+                <i class="fas fa-file-pdf"></i>
+                Télécharger PDF
+            </button>
+            <button type="button" class="ctrl-dl-btn excel" id="ctrlExcelBtn" disabled>
+                <i class="fas fa-file-excel"></i>
+                Exporter Excel (CSV)
+            </button>
+        </div>
+    </aside>
+
+    {# ── Zone de chat ── #}
+    <section class="ctrl-chat">
+        <header class="ctrl-chat-head">
+            <div class="ctrl-chat-brand">
+                <div class="ctrl-bot-mark"><i class="fas fa-file-chart-pie"></i></div>
+                <div>
+                    <h1>Génération de rapports réseau</h1>
+                    <p>RAG NetWON · Orange Tunisie · Données en temps réel</p>
+                </div>
+            </div>
+            <span class="ctrl-mode-pill">
+                <i class="fas fa-shield-halved"></i> Mode Contrôleur
+            </span>
+        </header>
+
+        <div class="ctrl-messages" id="ctrlMessages">
+            <div class="ctrl-welcome" id="ctrlWelcome">
+                <div class="ctrl-welcome-icon"><i class="fas fa-robot"></i></div>
+                <h2>Bienvenue dans le générateur de rapports</h2>
+                <p>
+                    Utilisez <strong>/rapport</strong> pour obtenir un rapport réseau complet avec KPIs, analyse par gouvernorat, état des tickets et résumé exécutif.
+                    Les boutons <strong>PDF</strong> et <strong>Excel</strong> apparaissent directement dans le rapport généré.
+                </p>
+            </div>
+        </div>
+
+        <footer class="ctrl-composer-area">
+            <div class="ctrl-slash-row">
+                <span class="ctrl-slash-label">Commandes</span>
+                <button type="button" class="ctrl-slash-badge" data-slash="/rapport">/rapport</button>
+                <button type="button" class="ctrl-slash-badge" data-slash="/stats">/stats</button>
+                <button type="button" class="ctrl-slash-badge" data-slash="/tickets">/tickets</button>
+            </div>
+            <div class="ctrl-composer">
+                <textarea id="ctrlInput" rows="1" placeholder="Tapez /rapport pour générer un rapport complet..." maxlength="500"></textarea>
+                <button type="button" class="ctrl-send" id="ctrlSend" aria-label="Envoyer">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+            </div>
+            <p class="ctrl-note">Rapport généré → boutons <strong>PDF</strong> et <strong>Excel</strong> apparaissent dans la réponse · et dans le panneau gauche.</p>
+        </footer>
+    </section>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    /* ── Config ── */
+    var ASK_URL = '{{ ask_url }}';
+
+    /* ── DOM refs ── */
+    var MSGS      = document.getElementById('ctrlMessages');
+    var INPUT     = document.getElementById('ctrlInput');
+    var SEND      = document.getElementById('ctrlSend');
+    var PDF_BTN   = document.getElementById('ctrlPdfBtn');
+    var EXCEL_BTN = document.getElementById('ctrlExcelBtn');
+    var WELCOME   = document.getElementById('ctrlWelcome');
+
+    var busy         = false;
+    var lastReport   = null;   // stocke les données du dernier rapport généré
+
+    /* ── Commandes sidebar ── */
+    document.querySelectorAll('.ctrl-cmd-btn[data-cmd]').forEach(function (btn) {
+        btn.addEventListener('click', function () { INPUT.value = btn.dataset.cmd; INPUT.focus(); });
+    });
+    document.querySelectorAll('.ctrl-slash-badge[data-slash]').forEach(function (btn) {
+        btn.addEventListener('click', function () { INPUT.value = btn.dataset.slash; INPUT.focus(); });
+    });
+
+    /* ── Boutons téléchargement du panneau gauche ── */
+    PDF_BTN.addEventListener('click', function () {
+        if (lastReport) { printReport(lastReport); }
+    });
+    EXCEL_BTN.addEventListener('click', function () {
+        if (lastReport) { downloadCsv(lastReport); }
+    });
+
+    /* ── Keyboard ── */
+    INPUT.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+    });
+    INPUT.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    SEND.addEventListener('click', submit);
+
+    function submit() {
+        var text = INPUT.value.trim();
+        if (!text || busy) return;
+        INPUT.value = '';
+        INPUT.style.height = 'auto';
+        sendMessage(text);
+    }
+
+    /* ── Helpers ── */
+    function scrollBottom() { MSGS.scrollTop = MSGS.scrollHeight; }
+
+    function esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g, function (c) {
+            return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'": '&#039;' }[c];
+        });
+    }
+
+    function createId() { return Date.now() + '-' + Math.random().toString(16).slice(2); }
+
+    function removeWelcome() {
+        if (WELCOME) { WELCOME.remove(); }
+    }
+
+    function addMsg(role, text, extraClass) {
+        removeWelcome();
+        var div    = document.createElement('div');
+        div.className = 'ctrl-msg ctrl-msg--' + role;
+        var bubble = document.createElement('div');
+        bubble.className = 'ctrl-bubble' + (extraClass ? ' ' + extraClass : '');
+        bubble.innerHTML = esc(text).replace(/\n/g, '<br>');
+        div.appendChild(bubble);
+        MSGS.appendChild(div);
+        scrollBottom();
+        return bubble;
+    }
+
+    function showTyping() {
+        removeWelcome();
+        var div = document.createElement('div');
+        div.className = 'ctrl-msg ctrl-msg--assistant';
+        div.id = 'ctrlTyping';
+        div.innerHTML = '<div class="ctrl-bubble"><span class="typing-dots"><span></span><span></span><span></span></span></div>';
+        MSGS.appendChild(div);
+        scrollBottom();
+    }
+
+    function hideTyping() {
+        var el = document.getElementById('ctrlTyping');
+        if (el) el.remove();
+    }
+
+    /* ── govLevel helper ── */
+    function govLevel(pct) {
+        if (pct > 5)  return { bg:'#fef2f2', border:'#fca5a5', dot:'#dc2626', label:'Critique' };
+        if (pct >= 3) return { bg:'#fff7ed', border:'#fed7aa', dot:'#d97706', label:'Élevé'   };
+        if (pct >= 1) return { bg:'#fefce8', border:'#fde68a', dot:'#ca8a04', label:'Modéré'  };
+        return           { bg:'#f0fdf4', border:'#bbf7d0', dot:'#16a34a', label:'Normal'   };
+    }
+
+    /* ── renderReportCard ── (copie de chatbot-rag.js) */
+    function renderReportCard(bubble, data) {
+        if (!bubble || !data || !data.gouvernorats) return;
+
+        var id        = createId();
+        var etatId    = 'etat-' + id;
+        var statutId  = 'stat-' + id;
+        var govId     = 'gov-' + id;
+        var ticketsId = 'tick-' + id;
+        data._charts  = { etatId: etatId, statutId: statutId, govId: govId, ticketsId: ticketsId };
+
+        var sum        = data.summary  || {};
+        var status     = data.status   || {};
+        var tickets    = data.tickets  || {};
+        var byAction   = tickets.by_action || {};
+        var actionLabels = { swap_10g:'Swap 10G', tf_balancing:'TF Balancing', upgrade_capacite:'Upgrade capacité', intervention_urgence:'Intervention urgence' };
+        var actionColors = ['#3b82f6','#f59e0b','#10b981','#ef4444'];
+
+        var bar = function (pct, color) {
+            return '<div class="dash-bar-track"><div class="dash-bar-fill" style="width:' + Math.min(100, pct) + '%;background:' + color + ';"></div></div>';
+        };
+
+        var kpiCard = function (val, label, pct, color, bg) {
+            return '<div class="dash-kpi" style="border-top-color:' + color + ';background:' + bg + ';">' +
+                '<div class="dash-kpi-val" style="color:' + color + ';">' + val + '</div>' +
+                '<div class="dash-kpi-label">' + label + '</div>' +
+                (pct !== null ? '<div class="dash-kpi-pct" style="color:' + color + ';">' + pct + '%</div><div class="dash-kpi-track"><div class="dash-kpi-fill" style="width:' + Math.min(100,pct) + '%;background:' + color + ';"></div></div>' : '') +
+                '</div>';
+        };
+
+        var govCard = function (g) {
+            var lv = govLevel(g.congestion_pct);
+            return '<div class="dash-gov-card" style="border-left-color:' + lv.dot + ';background:' + lv.bg + ';">' +
+                '<div class="dash-gov-head"><span class="dash-gov-name">' + esc(g.name) + '</span>' +
+                '<span class="dash-gov-badge" style="color:' + lv.dot + ';border-color:' + lv.border + ';">' + lv.label + '</span></div>' +
+                '<div class="dash-gov-count">' + g.total + ' sites</div>' +
+                '<div class="dash-gov-bars">' +
+                '<div class="dash-gov-bar-row"><span class="dash-gov-bar-lbl" style="color:#059669;">OK ' + g.ok_pct + '%</span>' + bar(g.ok_pct,'#10b981') + '</div>' +
+                '<div class="dash-gov-bar-row"><span class="dash-gov-bar-lbl" style="color:#d97706;">Cong ' + g.congestion_pct + '%</span>' + bar(g.congestion_pct,'#f59e0b') + '</div>' +
+                '<div class="dash-gov-bar-row"><span class="dash-gov-bar-lbl" style="color:#dc2626;">Brid ' + g.bridage_pct + '%</span>' + bar(g.bridage_pct,'#ef4444') + '</div>' +
+                '</div></div>';
+        };
+
+        var total = Math.max(1, tickets.total || 1);
+        var actionPill = function (k, v, color) {
+            return '<div class="dash-action-pill" style="border-top-color:' + color + ';">' +
+                '<div class="dash-action-val" style="color:' + color + ';">' + v + '</div>' +
+                '<div class="dash-action-label">' + esc(actionLabels[k] || k) + '</div>' +
+                '<div class="dash-bar-track" style="margin-top:6px;"><div class="dash-bar-fill" style="width:' + Math.round(v/total*100) + '%;background:' + color + ';"></div></div>' +
+                '<div class="dash-action-pct" style="color:' + color + ';">' + Math.round(v/total*100) + '%</div></div>';
+        };
+
+        var govCards    = data.gouvernorats.slice(0,10).map(govCard).join('');
+        var actionPills = Object.entries(byAction).map(function (e, i) { return actionPill(e[0], e[1], actionColors[i % actionColors.length]); }).join('');
+
+        var card = document.createElement('div');
+        card.className = 'report-card';
+        card.innerHTML =
+            '<div class="report-header">' +
+              '<div class="report-header-left"><i class="fas fa-chart-pie report-icon"></i><div>' +
+              '<strong class="report-title">' + esc(data.title) + '</strong>' +
+              '<span class="report-meta">' + esc(data.date) + ' · ' + esc(data.periode) + '</span>' +
+              '</div></div>' +
+              '<div class="report-actions">' +
+              '<button type="button" class="report-pdf-btn"><i class="fas fa-file-pdf"></i> PDF</button>' +
+              '<button type="button" class="report-csv-btn"><i class="fas fa-file-excel"></i> Excel</button>' +
+              '</div></div>' +
+
+            '<div class="report-section"><h3 class="report-section-title"><i class="fas fa-tower-broadcast"></i> État des sites</h3>' +
+            '<div class="dash-kpi-row">' +
+            kpiCard(sum.ok?.count ?? 0,        'OK',        sum.ok?.pct        ?? 0,'#059669','#ecfdf5') +
+            kpiCard(sum.congestion?.count ?? 0,'Congestion',sum.congestion?.pct ?? 0,'#d97706','#fffbeb') +
+            kpiCard(sum.bridage?.count ?? 0,   'Bridage',   sum.bridage?.pct    ?? 0,'#dc2626','#fef2f2') +
+            kpiCard(sum.a_verifier?.count ?? 0,'À vérifier',sum.a_verifier?.pct ?? 0,'#7c3aed','#faf5ff') +
+            '</div></div>' +
+
+            '<div class="report-section"><h3 class="report-section-title"><i class="fas fa-shield-halved"></i> Criticité &amp; répartition</h3>' +
+            '<div class="dash-two-col"><div class="dash-stat-col">' +
+            kpiCard(status.critique         ?? 0,'Critique',         null,'#dc2626','#fef2f2') +
+            kpiCard(status.sous_observation ?? 0,'Sous observation',  null,'#d97706','#fffbeb') +
+            kpiCard(status.securise         ?? 0,'Sécurisé',          null,'#059669','#ecfdf5') +
+            '</div><div class="dash-chart-col">' +
+            '<div class="dash-donut-box"><div class="dash-donut-label">État</div><canvas id="' + esc(etatId) + '" height="160"></canvas></div>' +
+            '<div class="dash-donut-box"><div class="dash-donut-label">Criticité</div><canvas id="' + esc(statutId) + '" height="160"></canvas></div>' +
+            '</div></div></div>' +
+
+            (data.executive_summary ? '<div class="report-executive"><span class="report-exec-label"><i class="fas fa-brain"></i> Résumé exécutif</span><p class="report-exec-text">' + esc(data.executive_summary) + '</p></div>' : '') +
+
+            '<div class="report-section"><h3 class="report-section-title"><i class="fas fa-map-location-dot"></i> Gouvernorats (' + data.gouvernorats.length + ' zones)</h3>' +
+            '<div class="report-chart-wrap"><canvas id="' + esc(govId) + '" height="210"></canvas></div>' +
+            '<div class="dash-gov-grid">' + govCards + '</div></div>' +
+
+            '<div class="report-section report-tickets"><h3 class="report-section-title"><i class="fas fa-ticket"></i> Tickets &amp; Workflow</h3>' +
+            '<div class="dash-kpi-row dash-kpi-row--tickets">' +
+            kpiCard(tickets.total          ?? 0,'Total',          null,'#1e40af','#eff6ff') +
+            kpiCard(tickets.open           ?? 0,'Ouverts',        null,'#f59e0b','#fffbeb') +
+            kpiCard(tickets.in_progress    ?? 0,'En cours',       null,'#0ea5e9','#f0f9ff') +
+            kpiCard(tickets.pending        ?? 0,'En attente',     null,'#7c3aed','#faf5ff') +
+            kpiCard(tickets.closed         ?? 0,'Clôturés',       null,'#059669','#ecfdf5') +
+            kpiCard(tickets.overdue        ?? 0,'En retard',      null,'#dc2626','#fef2f2') +
+            '</div>' +
+            '<div class="report-chart-wrap" style="margin-top:10px;"><canvas id="' + esc(ticketsId) + '" height="140"></canvas></div>' +
+            (actionPills ? '<div class="dash-action-row">' + actionPills + '</div>' : '') +
+            '</div>' +
+
+            '<p class="report-total"><strong>' + data.total_sites + '</strong> sites analysés &ensp;·&ensp; ' + esc(data.periode) + '</p>';
+
+        bubble.appendChild(card);
+        data._chartInstances = {};
+
+        if (window.Chart) {
+            var noAnim = { animation: false };
+            var donutCfg = function (labels, values, colors) {
+                return { type:'doughnut', data:{ labels:labels, datasets:[{ data:values, backgroundColor:colors, borderWidth:2, hoverOffset:6 }] },
+                    options:{ ...noAnim, responsive:true, cutout:'64%', plugins:{ legend:{ position:'bottom', labels:{ font:{ size:9 }, boxWidth:10, padding:8 } } } } };
+            };
+            var etatCtx = card.querySelector('#' + etatId);
+            if (etatCtx) data._chartInstances.etat = new window.Chart(etatCtx, donutCfg(
+                ['OK','Congestion','Bridage','À vérifier'],
+                [sum.ok?.count??0, sum.congestion?.count??0, sum.bridage?.count??0, sum.a_verifier?.count??0],
+                ['#10b981','#f59e0b','#ef4444','#8b5cf6']
+            ));
+            var statutCtx = card.querySelector('#' + statutId);
+            if (statutCtx) data._chartInstances.statut = new window.Chart(statutCtx, donutCfg(
+                ['Critique','Sous observation','Sécurisé'],
+                [status.critique??0, status.sous_observation??0, status.securise??0],
+                ['#ef4444','#f59e0b','#10b981']
+            ));
+            var govs = data.gouvernorats.slice(0,16);
+            var govCtx = card.querySelector('#' + govId);
+            if (govCtx) data._chartInstances.gov = new window.Chart(govCtx, {
+                type:'bar',
+                data:{ labels:govs.map(function(g){return g.name;}),
+                    datasets:[
+                        { label:'OK',         data:govs.map(function(g){return g.ok;}),         backgroundColor:'#10b981', borderRadius:4 },
+                        { label:'Congestion', data:govs.map(function(g){return g.congestion;}), backgroundColor:'#f59e0b', borderRadius:4 },
+                        { label:'Bridage',    data:govs.map(function(g){return g.bridage;}),    backgroundColor:'#ef4444', borderRadius:4 },
+                    ]},
+                options:{ ...noAnim, responsive:true, plugins:{ legend:{ display:false } },
+                    scales:{ x:{ grid:{ display:false }, ticks:{ font:{ size:9 }, maxRotation:40 } }, y:{ beginAtZero:true, grid:{ color:'#f1f5f9' }, ticks:{ font:{ size:9 } } } } }
+            });
+            var actionKeys = Object.keys(byAction);
+            var ticketsCtx = card.querySelector('#' + ticketsId);
+            if (ticketsCtx && actionKeys.length) data._chartInstances.tickets = new window.Chart(ticketsCtx, {
+                type:'bar',
+                data:{ labels:actionKeys.map(function(k){return actionLabels[k]||k;}),
+                    datasets:[{ data:actionKeys.map(function(k){return byAction[k];}), backgroundColor:actionColors.slice(0,actionKeys.length), borderRadius:6 }] },
+                options:{ ...noAnim, indexAxis:'y', responsive:true, plugins:{ legend:{ display:false } },
+                    scales:{ x:{ beginAtZero:true, grid:{ color:'#f1f5f9' }, ticks:{ font:{ size:9 } } }, y:{ grid:{ display:false }, ticks:{ font:{ size:9 } } } } }
+            });
+        }
+
+        card.querySelector('.report-pdf-btn')?.addEventListener('click', function () { printReport(data); });
+        card.querySelector('.report-csv-btn')?.addEventListener('click', function () { downloadCsv(data); });
+        setTimeout(function () { card.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 80);
+    }
+
+    /* ── printReport ── */
+    function printReport(data) {
+        var ci = data._chartInstances || {};
+        var getB64 = function (inst) { if (!inst) return null; try { return inst.toBase64Image('image/png',1); } catch(e) { return null; } };
+        var charts = { etat:getB64(ci.etat), statut:getB64(ci.statut), gov:getB64(ci.gov), tickets:getB64(ci.tickets) };
+
+        var sum     = data.summary  || {};
+        var status  = data.status   || {};
+        var tickets = data.tickets  || {};
+
+        var coverPage = '<div style="page-break-after:always;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#fff7ed 0%,#fff 60%);text-align:center;padding:48px;">' +
+            '<div style="background:#ff6200;color:#fff;font-size:2rem;font-weight:900;padding:16px 40px;border-radius:12px;margin-bottom:36px;">Orange</div>' +
+            '<h1 style="font-size:1.8rem;color:#111827;margin:0 0 6px;font-weight:900;">Rapport Réseau Complet</h1>' +
+            '<p style="color:#64748b;margin:0 0 36px;">NetWON · Orange Tunisie · ' + esc(data.date) + '</p>' +
+            '<p style="font-size:.8rem;color:#94a3b8;background:#f8fafc;padding:10px 20px;border-radius:8px;">' + data.total_sites + ' sites analysés · ' + esc(data.periode) + '</p>' +
+            '</div>';
+
+        var imgTag = function (b64, alt) { return b64 ? '<img src="' + b64 + '" style="width:100%;border-radius:8px;" alt="' + alt + '">' : ''; };
+
+        var body = '<div style="padding:32px 40px;max-width:800px;margin:0 auto;font-family:\'Segoe UI\',system-ui,sans-serif;font-size:.8rem;color:#1e293b;">' +
+            (data.executive_summary ? '<div style="background:#fff7ed;border-left:4px solid #ff6200;padding:14px 16px;border-radius:0 10px 10px 0;margin-bottom:24px;"><strong style="display:block;color:#ff6200;font-size:.65rem;text-transform:uppercase;margin-bottom:5px;">Résumé exécutif</strong><p style="margin:0;line-height:1.65;">' + esc(data.executive_summary) + '</p></div>' : '') +
+            '<h2 style="border-bottom:2px solid #ff6200;padding-bottom:6px;margin:0 0 14px;">État des sites</h2>' +
+            imgTag(charts.etat, 'État') + imgTag(charts.statut, 'Criticité') +
+            '<h2 style="border-bottom:2px solid #ff6200;padding-bottom:6px;margin:20px 0 14px;">Gouvernorats</h2>' +
+            imgTag(charts.gov, 'Gouvernorats') +
+            '<h2 style="border-bottom:2px solid #ff6200;padding-bottom:6px;margin:20px 0 14px;">Tickets</h2>' +
+            imgTag(charts.tickets, 'Tickets') +
+            '<p style="margin-top:28px;font-size:.62rem;color:#94a3b8;text-align:center;border-top:1px solid #f1f5f9;padding-top:12px;">NetWON · Orange Tunisie · ' + data.total_sites + ' sites · ' + esc(data.date) + '</p>' +
+            '</div>';
+
+        document.getElementById('netwon-print-report-ctrl')?.remove();
+        var printDiv = document.createElement('div');
+        printDiv.id = 'netwon-print-report-ctrl';
+        printDiv.innerHTML = coverPage + body;
+        document.body.appendChild(printDiv);
+        window.addEventListener('afterprint', function () { printDiv.remove(); }, { once: true });
+        window.print();
+    }
+
+    /* ── downloadCsv ── */
+    function downloadCsv(data) {
+        var BOM = '﻿';
+        var sep = ';';
+        var sum     = data.summary  || {};
+        var status  = data.status   || {};
+        var tickets = data.tickets  || {};
+        var byAction = tickets.by_action || {};
+        var actionLabels = { swap_10g:'Swap 10G', tf_balancing:'TF Balancing', upgrade_capacite:'Upgrade capacité', intervention_urgence:'Intervention urgence' };
+
+        var rows = [
+            ['RAPPORT RÉSEAU NETWON · Orange Tunisie'],
+            ['Date', data.date, 'Période', data.periode, 'Sites analysés', data.total_sites],
+            [],
+            ['=== ÉTAT DES SITES ==='],
+            ['Métrique','Valeur','Pourcentage'],
+            ['OK',         sum.ok?.count??0,        (sum.ok?.pct??0)+'%'],
+            ['Congestion', sum.congestion?.count??0, (sum.congestion?.pct??0)+'%'],
+            ['Bridage',    sum.bridage?.count??0,    (sum.bridage?.pct??0)+'%'],
+            ['À vérifier', sum.a_verifier?.count??0, (sum.a_verifier?.pct??0)+'%'],
+            [],
+            ['=== CRITICITÉ ==='],
+            ['Critique',         status.critique??0],
+            ['Sous observation', status.sous_observation??0],
+            ['Sécurisé',         status.securise??0],
+            [],
+            ['=== TICKETS ==='],
+            ['Total',tickets.total??0],['Ouverts',tickets.open??0],['En cours',tickets.in_progress??0],
+            ['En attente',tickets.pending??0],['Clôturés',tickets.closed??0],['En retard',tickets.overdue??0],['Sites corrigés',tickets.sites_corriges??0],
+            [],
+            ['=== GOUVERNORATS ==='],
+            ['Gouvernorat','Total','OK','OK%','Congestion','Cong%','Bridage','Brid%','Niveau'],
+        ].concat((data.gouvernorats||[]).map(function(g){
+            return [g.name,g.total,g.ok,g.ok_pct,g.congestion,g.congestion_pct,g.bridage,g.bridage_pct,govLevel(g.congestion_pct).label];
+        }));
+
+        var csv  = rows.map(function(r){return r.join(sep);}).join('\n');
+        var blob = new Blob([BOM+csv],{type:'text/csv;charset=utf-8'});
+        var url  = URL.createObjectURL(blob);
+        var a    = document.createElement('a');
+        a.href = url;
+        a.download = 'rapport-reseau-' + (data.date||'').replace(/[/:]/g,'-').replace(/ /g,'_') + '.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    /* ── Envoi message ── */
+    async function sendMessage(text) {
+        busy = true;
+        SEND.disabled = true;
+        addMsg('user', text);
+        showTyping();
+
+        try {
+            var resp = await fetch(ASK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type':'application/json', 'X-Requested-With':'XMLHttpRequest' },
+                body: JSON.stringify({ message: text, history: [], expert: false })
+            });
+
+            hideTyping();
+
+            if (resp.status === 429) {
+                addMsg('assistant','Trop de requêtes. Patientez une minute.');
+                busy = false; SEND.disabled = false; return;
+            }
+            if (!resp.ok) {
+                addMsg('assistant','Erreur serveur (' + resp.status + '). Veuillez réessayer.');
+                busy = false; SEND.disabled = false; return;
+            }
+
+            var data = await resp.json();
+            var answer = data.answer || 'Aucune réponse disponible.';
+            var cls = data.source_type === 'restricted' ? 'ctrl-bubble--restricted' : '';
+            var bubble = addMsg('assistant', answer, cls);
+
+            /* Si le serveur renvoie des données de rapport → les rendre */
+            if (data.report && data.report.gouvernorats) {
+                lastReport = data.report;
+                /* Vider le texte de la bubble et remplacer par la carte */
+                bubble.innerHTML = '';
+                renderReportCard(bubble, data.report);
+                PDF_BTN.disabled   = false;
+                EXCEL_BTN.disabled = false;
+            }
+
+        } catch (e) {
+            hideTyping();
+            addMsg('assistant','Erreur de connexion. Vérifiez que le serveur est disponible.');
+        }
+
+        busy = false;
+        SEND.disabled = false;
+    }
+
+    /* ── Impression (masquer tout sauf le rapport) ── */
+    var printStyle = document.createElement('style');
+    printStyle.innerHTML = '#netwon-print-report-ctrl { display:none; } @media print { body > * { display:none !important; } #netwon-print-report-ctrl { display:block !important; } }';
+    document.head.appendChild(printStyle);
+
+}());
+</script>
+{% endblock %}

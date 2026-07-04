@@ -9,6 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'trafic_historique')]
 #[ORM\Index(columns: ['site'], name: 'idx_site')]
 #[ORM\Index(columns: ['date_heure'], name: 'idx_date_heure')]
+#[ORM\Index(columns: ['site', 'date_heure'], name: 'idx_trafic_site_date_heure')]
 class TraficHistorique
 {
     #[ORM\Id]

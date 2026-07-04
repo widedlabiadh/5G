@@ -1,304 +1,235 @@
-{# templates/workflow/show.html.twig #}
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Ticket #{{ ticket.id }} - NetWON</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
-        
-        .sidebar {
-            width: 260px; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-            height: 100vh; position: fixed; left: 0; top: 0;
-            display: flex; flex-direction: column; padding: 1.5rem;
-            z-index: 100;
-        }
-        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
-        .logo-circle {
-            width: 45px; height: 45px; background: linear-gradient(135deg, #f97316, #ea580c);
-            border-radius: 12px; display: flex; align-items: center;
-            justify-content: center; font-weight: 700; color: white; font-size: 20px;
-        }
-        .logo-text { color: white; font-size: 18px; font-weight: bold; }
-        .logo-sub { color: #f97316; font-size: 10px; font-style: italic; }
-        .nav-section {
-            font-size: 11px; color: #64748b;
-            text-transform: uppercase; letter-spacing: 1px;
-            margin: 1.5rem 0 0.8rem;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 12px;
-            padding: 0.7rem 1rem; border-radius: 10px;
-            color: #cbd5e1; text-decoration: none; font-size: 13px;
-            margin-bottom: 4px;
-        }
-        .nav-item:hover, .nav-item.active { background: rgba(249,115,22,0.2); color: #f97316; }
-        .logout-btn {
-            margin-top: auto; display: flex; align-items: center; gap: 12px;
-            padding: 0.7rem 1rem; border-radius: 10px;
-            color: #cbd5e1; text-decoration: none;
-        }
-        .logout-btn:hover { background: rgba(220,38,38,0.2); color: #ef4444; }
-        
-        .main { margin-left: 260px; padding: 1.5rem; }
-        .topbar {
-            display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 1.5rem;
-        }
-        .topbar h1 { font-size: 22px; font-weight: 600; color: #1e293b; }
-        .user-badge {
-            display: flex; align-items: center; gap: 12px;
-            background: white; padding: 0.5rem 1rem;
-            border-radius: 40px;
-        }
-        
-        .page-header {
-            margin-bottom: 1.5rem;
-        }
-        .page-title {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1e293b;
-        }
-        .page-desc {
-            font-size: 13px;
-            color: #64748b;
-            margin-top: 4px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 20px;
-            border: 1px solid #e2e8f0;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .panel-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #f97316;
-            display: inline-block;
-        }
-        .table-like {
-            display: flex;
-            flex-direction: column;
-        }
-        .table-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .table-row:last-child {
-            border-bottom: none;
-        }
-        .badge {
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            display: inline-block;
-        }
-        .badge-open { background: #fff3e0; color: #f97316; }
-        .badge-progress { background: #dbeafe; color: #3b82f6; }
-        .badge-closed { background: #d1fae5; color: #10b981; }
-        .badge-pending { background: #fef3c7; color: #d97706; }
-        .badge-done { background: #d1fae5; color: #10b981; }
-        
-        .btn {
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            border: none;
-        }
-        .btn-sm { padding: 4px 12px; font-size: 11px; }
-        .btn-primary { background: #f97316; color: white; }
-        .btn-success { background: #22c55e; color: white; }
-        .btn-warning { background: #f59e0b; color: white; }
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 0.5rem;
-        }
-        .form-control {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 14px;
-        }
-        .form-control:focus {
-            outline: none;
-            border-color: #f97316;
-        }
-        .muted {
-            font-size: 11px;
-            color: #64748b;
-        }
-    </style>
-</head>
-<body>
-<div class="sidebar">
-    <div class="logo">
-        <div class="logo-circle">N</div>
-        <div><div class="logo-text">NetWON</div><div class="logo-sub">Workflow</div></div>
+{% extends 'base.html.twig' %}
+
+{% block title %}Ticket #{{ ticket.id }} - NetWON{% endblock %}
+
+{% block stylesheets %}
+<style>
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px}.page-title{font-size:30px;font-weight:800;color:#0f172a;margin:0}.page-desc{font-size:14px;color:#64748b;margin-top:7px;max-width:900px}.card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:22px;margin-bottom:22px;box-shadow:0 8px 24px rgba(15,23,42,.05)}.panel-title{font-size:18px;font-weight:800;color:#1e293b;margin:0 0 16px}.table-like{display:flex;flex-direction:column}.table-row{display:grid;grid-template-columns:1.2fr 1.5fr 1fr 1fr;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid #f1f5f9}.site-table-row{grid-template-columns:1.1fr .8fr .9fr .8fr .8fr 1.5fr}.table-row:last-child{border-bottom:none}.table-head{font-size:12px;text-transform:uppercase;color:#64748b;font-weight:800;background:#f8fafc;padding:12px;border-radius:10px}.muted{font-size:12px;color:#64748b;margin-top:4px}.empty-state{text-align:center;padding:28px 18px;background:#f8fafc;border:2px dashed #cbd5e1;border-radius:14px;color:#64748b}.badge{display:inline-block;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:800}.badge.mauve{background:#ede9fe;color:#7c3aed}.badge.blue{background:#dbeafe;color:#2563eb}.badge.green{background:#dcfce7;color:#16a34a}.badge.red{background:#fee2e2;color:#dc2626}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 14px;border-radius:10px;border:none;text-decoration:none;font-weight:800;font-size:12px;background:#f1f5f9;color:#334155;cursor:pointer}.btn-primary{background:#3b82f6;color:white}.btn-success{background:#10b981;color:white}.btn-sm{padding:7px 11px}.form-control,textarea,input[type=file]{width:100%;padding:11px 13px;border:1px solid #cbd5e1;border-radius:10px;background:white;font-size:14px}textarea{min-height:100px;resize:vertical}.comment-form{display:grid;gap:12px;margin-top:18px}.progress-bar{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}.progress-fill{height:100%;background:#3b82f6;border-radius:999px}@media(max-width:900px){.table-row,.site-table-row{grid-template-columns:1fr}.page-header{flex-direction:column}.btn{width:100%}}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">{{ ticket.title }}</h2>
+        <div class="page-desc">{{ ticket.description ?: 'Aucune description.' }}</div>
     </div>
-    <span class="nav-section">Workflow</span>
-    <a href="{{ path('workflow_index') }}" class="nav-item">📋 Liste</a>
-    <a href="{{ path('workflow_new') }}" class="nav-item">➕ Nouveau</a>
-    <a href="{{ path('app_dashboard') }}" class="nav-item">🏠 Dashboard</a>
-    <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
 </div>
 
-<div class="main">
-    <div class="topbar">
-        <h1>Ticket #{{ ticket.id }}</h1>
-        <div class="user-badge">
-            <span>👤 {{ user.fullName ?? user.email }}</span>
+<div class="card">
+    <h3 class="panel-title">Informations générales</h3>
+    <div class="table-like">
+        <div class="table-row">
+            <div><strong>Action</strong></div>
+            <div>{{ ticket.actionTypeLabel|raw }}</div>
         </div>
-    </div>
-
-    <div class="page-header">
-        <div>
-            <h2 class="page-title">{{ ticket.title }}</h2>
-            <div class="page-desc">{{ ticket.description ?: 'Aucune description.' }}</div>
-        </div>
-    </div>
-
-    <!-- Informations générales -->
-    <div class="card">
-        <h3 class="panel-title">Informations générales</h3>
-        <div class="table-like">
-            <div class="table-row">
-                <div><strong>Type d'action</strong></div>
-                <div>{{ ticket.actionTypeLabel|raw }}</div>
-            </div>
-            <div class="table-row">
-                <div><strong>Statut</strong></div>
-                <div>
-                    {% if ticket.status == 'open' %}
-                        <span class="badge badge-open">📋 Ouvert</span>
-                    {% elseif ticket.status == 'in_progress' %}
-                        <span class="badge badge-progress">⚙️ En cours</span>
-                    {% elseif ticket.status == 'closed' %}
-                        <span class="badge badge-closed">✔️ Clôturé</span>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="table-row">
-                <div><strong>Progression</strong></div>
-                <div>{{ ticket.progress }}%</div>
-            </div>
-            <div class="table-row">
-                <div><strong>Date limite</strong></div>
-                <div>{{ ticket.deadlineAt ? ticket.deadlineAt|date('d/m/Y H:i') : '-' }}</div>
-            </div>
-            <div class="table-row">
-                <div><strong>Créé par</strong></div>
-                <div>{{ ticket.createdBy.fullName ?? ticket.createdBy.email ?? 'Utilisateur' }}</div>
-            </div>
-            <div class="table-row">
-                <div><strong>Site concerné</strong></div>
-                <div>{{ ticket.site ? ticket.site.site : 'Non spécifié' }}</div>
+        <div class="table-row">
+            <div><strong>Statut</strong></div>
+            <div>
+                {% if ticket.status == 'open' %}
+                    <span class="badge mauve">Ouvert</span>
+                {% elseif ticket.status == 'in_progress' %}
+                    <span class="badge blue">En cours</span>
+                {% elseif ticket.status == 'pending_validation' %}
+                    <span class="badge green">En validation</span>
+                {% elseif ticket.status == 'closed' %}
+                    <span class="badge green">Clôturé</span>
+                {% else %}
+                    <span class="badge red">{{ ticket.status }}</span>
+                {% endif %}
             </div>
         </div>
-    </div>
-
-    <!-- Tâches -->
-    <div class="card">
-        <h3 class="panel-title">Tâches</h3>
-        {% if ticket.tasks is empty %}
-            <div class="muted">Aucune tâche assignée.</div>
-        {% else %}
-            <div class="table-like">
+        <div class="table-row">
+            <div><strong>Progression</strong></div>
+            <div>
+                {{ ticket.progress }}%
+                <div class="progress-bar"><div class="progress-fill" style="width:{{ ticket.progress }}%"></div></div>
+            </div>
+        </div>
+        <div class="table-row">
+            <div><strong>Bloqué chez</strong></div>
+            <div>
+                {% set blocker = null %}
                 {% for task in ticket.tasks %}
-                    <div class="table-row">
+                    {% if blocker is null and task.status != 'done' %}
+                        {% set blocker = task.assignedTo.fullName ?? task.assignedTo.email %}
+                    {% endif %}
+                {% endfor %}
+                {% if blocker %}
+                    <span class="badge red">{{ blocker }}</span>
+                {% else %}
+                    <span class="badge green">Aucun blocage</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="table-row">
+            <div><strong>Date limite</strong></div>
+            <div>{{ ticket.deadlineAt ? ticket.deadlineAt|date('d/m/Y H:i') : '-' }}</div>
+        </div>
+        <div class="table-row">
+            <div><strong>Créé par</strong></div>
+            <div>{{ ticket.createdBy.fullName ?? ticket.createdBy.email ?? 'Utilisateur' }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 class="panel-title">Sites concernés</h3>
+    {% if ticket.ticketSites is empty and ticket.site is empty %}
+        <div class="empty-state">Aucun site lié.</div>
+    {% else %}
+        <div class="table-like">
+            <div class="table-row table-head site-table-row"><div>Site</div><div>Type Trans</div><div>Classification</div><div>Trafic max</div><div>Carte UMPT</div><div>Commentaire IP</div></div>
+            {% if ticket.ticketSites is not empty %}
+                {% for ticketSite in ticket.ticketSites %}
+                    <div class="table-row site-table-row">
+                        <div><strong>{{ ticketSite.siteName|clean_site }}</strong></div>
+                        <div>{{ ticketSite.typeTrans ?: '-' }}</div>
+                        <div>{{ ticketSite.serviceName ?: '-' }}</div>
+                        <div>{{ ticketSite.maxTrafic ?: '-' }}</div>
                         <div>
-                            <strong>{{ task.title }}</strong>
-                            <div class="muted">{{ task.description ?: '-' }}</div>
-                            <div class="muted">Assigné à: {{ task.assignedTo.fullName ?? task.assignedTo.email }}</div>
-                            {% if task.comment %}
-                                <div class="muted">Commentaire: {{ task.comment }}</div>
+                            {% if ticketSite.umptType %}
+                                {% if ticketSite.swapRequired %}
+                                    <span class="badge red">{{ ticketSite.umptType }}</span>
+                                {% else %}
+                                    <span class="badge green">{{ ticketSite.umptType }}</span>
+                                {% endif %}
+                            {% else %}
+                                -
                             {% endif %}
                         </div>
-                        <div>
-                            {% if task.status == 'pending' %}
-                                <span class="badge badge-pending">⏳ En attente</span>
-                            {% elseif task.status == 'in_progress' %}
-                                <span class="badge badge-progress">⚙️ En cours</span>
-                            {% elseif task.status == 'done' %}
-                                <span class="badge badge-done">✅ Terminée</span>
-                            {% endif %}
-                            {% if user.id == task.assignedTo.id and task.status != 'done' %}
-                                <div style="margin-top: 8px;">
-                                    <form method="post" action="{{ path('workflow_task_complete', {id: task.id}) }}">
-                                        <button class="btn btn-success btn-sm">Terminer</button>
-                                    </form>
-                                </div>
-                            {% endif %}
-                        </div>
+                        <div>{{ ticketSite.swapComment ?: '-' }}</div>
                     </div>
                 {% endfor %}
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Ajouter un commentaire -->
-    <div class="card">
-        <h3 class="panel-title">Ajouter un commentaire</h3>
-        <form method="POST" action="{{ path('workflow_comment_add', {id: ticket.id}) }}">
-            <div class="form-group">
-                <textarea name="message" class="form-control" rows="3" placeholder="Votre commentaire..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Ajouter commentaire</button>
-        </form>
-    </div>
-
-    <!-- Historique -->
-    <div class="card">
-        <h3 class="panel-title">Historique</h3>
-        {% if ticket.history is empty %}
-            <div class="muted">Aucun historique.</div>
-        {% else %}
-            <div class="table-like">
-                {% for item in ticket.history %}
-                    <div class="table-row">
-                        <div>{{ item.createdAt|date('d/m/Y H:i') }}</div>
-                        <div>{{ item.action }}</div>
-                        <div>{{ item.details ?: '-' }}</div>
-                        <div>{{ item.user ? (item.user.fullName ?? item.user.email) : 'Système' }}</div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Clôturer le ticket -->
-    {% if ticket.progress == 100 and ticket.status != 'closed' and user.role == 'superuser' %}
-    <div class="card">
-        <form method="post" action="{{ path('workflow_close', {id: ticket.id}) }}">
-            <button class="btn btn-warning">Clôturer le ticket</button>
-        </form>
-    </div>
+            {% else %}
+                <div class="table-row site-table-row">
+                    <div><strong>{{ ticket.site.site|clean_site }}</strong></div>
+                    <div>{{ ticket.site.typeTrans ?: '-' }}</div>
+                    <div>{{ ticket.site.classification ?: '-' }}</div>
+                    <div>{{ ticket.site.maxTrafic ?: '-' }}</div>
+                    <div>-</div>
+                    <div>-</div>
+                </div>
+            {% endif %}
+        </div>
     {% endif %}
 </div>
-</body>
-</html>
+
+<div class="card">
+    <h3 class="panel-title">Tâches</h3>
+    {% if ticket.tasks is empty %}
+        <div class="empty-state">Aucune tâche.</div>
+    {% else %}
+        <div class="table-like">
+            {% for task in ticket.tasks %}
+                <div class="table-row">
+                    <div>
+                        <strong>{{ task.assignedTo.fullName ?? task.assignedTo.email }}</strong>
+                        <div>{{ task.title }}</div>
+                        <div class="muted">{{ task.description ?: '-' }}</div>
+                    </div>
+                    <div>
+                        {% if task.status == 'pending' %}
+                            <span class="badge mauve">En attente</span>
+                        {% elseif task.status == 'in_progress' %}
+                            <span class="badge blue">En cours</span>
+                        {% elseif task.status == 'done' %}
+                            <span class="badge green">Terminée</span>
+                        {% elseif task.status == 'blocked' %}
+                            <span class="badge red">Bloquée</span>
+                        {% else %}
+                            <span class="badge red">{{ task.status }}</span>
+                        {% endif %}
+                    </div>
+                    <div>{{ task.stepCode ? task.stepCode|replace({'_': ' '}) : '-' }}</div>
+                    <div>
+                        {% if app.user and app.user.id == task.assignedTo.id %}
+                            {% if task.status == 'pending' %}
+                                <form method="post" action="{{ path('workflow_task_start', {id: task.id}) }}" style="margin-bottom:8px;">
+                                    <button type="submit" class="btn btn-primary btn-sm">Démarrer</button>
+                                </form>
+                            {% endif %}
+                            {% if task.status != 'done' %}
+                                <a href="{{ path('team_workflow_task_show', {id: task.id}) }}" class="btn btn-success btn-sm">Terminer</a>
+                            {% else %}
+                                <span class="badge green">Terminée</span>
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+                {% if task.comment or task.proofFile %}
+                    <div class="table-row">
+                        <div><strong>Preuve</strong></div>
+                        <div>
+                            <div>{{ task.comment ?: '-' }}</div>
+                            {% if task.proofFile %}
+                                <a href="{{ asset('uploads/ticket_proofs/' ~ task.proofFile) }}" target="_blank">Voir fichier</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3 class="panel-title">Commentaires</h3>
+    {% if ticket.comments is empty %}
+        <div class="empty-state">Aucun commentaire.</div>
+    {% else %}
+        <div class="table-like">
+            {% for comment in ticket.comments %}
+                <div class="table-row">
+                    <div>
+                        <strong>{{ comment.user.fullName ?? comment.user.email }}</strong>
+                        <div class="muted">{{ comment.createdAt|date('d/m/Y H:i') }}</div>
+                    </div>
+                    <div>{{ comment.message }}</div>
+                    <div>
+                        {% if comment.filePath %}
+                            <a href="{{ asset('uploads/ticket_comments/' ~ comment.filePath) }}" target="_blank">Pièce jointe</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" action="{{ path('workflow_comment_add', {id: ticket.id}) }}" enctype="multipart/form-data" class="comment-form">
+        <textarea name="message" class="form-control" placeholder="Ajouter un commentaire..."></textarea>
+        <input type="file" name="filePath" class="form-control">
+        <button class="btn btn-primary">Ajouter commentaire</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3 class="panel-title">Historique</h3>
+    {% if ticket.history is empty %}
+        <div class="empty-state">Aucun historique.</div>
+    {% else %}
+        <div class="table-like">
+            {% for item in ticket.history %}
+                <div class="table-row">
+                    <div>{{ item.createdAt|date('d/m/Y H:i') }}</div>
+                    <div>{{ item.action }}</div>
+                    <div>{{ item.details ?: '-' }}</div>
+                    <div>{{ item.user ? (item.user.fullName ?? item.user.email) : 'Système' }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+{% if ticket.progress == 100 and ticket.status != 'closed' and app.user.role in ['superuser', 'admin'] %}
+<div class="card">
+    <form method="post" action="{{ path('workflow_close', {id: ticket.id}) }}">
+        <button class="btn btn-primary">Clôturer le ticket</button>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

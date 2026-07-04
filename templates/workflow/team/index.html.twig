@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes tâches workflow - NetWON{% endblock %}
+
+{% block stylesheets %}
+<style>
+.workflow-header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:32px;border-radius:16px;margin-bottom:28px}
+.workflow-header h2{margin:0;font-size:30px;font-weight:700}.workflow-header p{margin:8px 0 0;opacity:.95}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-top:18px}
+.stat-card{background:rgba(255,255,255,.15);padding:15px;border-radius:12px;text-align:center}.stat-number{font-size:28px;font-weight:700;display:block}.stat-label{font-size:12px;opacity:.9}
+.tasks-section{margin-bottom:36px}.section-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #e2e8f0}
+.section-title{font-size:22px;font-weight:700;color:#0f172a;margin:0}.section-count{background:#3b82f6;color:white;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600}
+.tasks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}.task-card{background:white;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;transition:.2s;display:flex;flex-direction:column}
+.task-card:hover{transform:translateY(-3px);box-shadow:0 12px 24px rgba(15,23,42,.1)}.task-card-header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:16px;display:flex;justify-content:space-between;gap:12px}
+.task-status-badge{padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(255,255,255,.25)}.task-body{padding:18px;flex-grow:1}.task-title{font-size:16px;font-weight:700;margin:0}.task-desc{font-size:13px;color:#64748b;line-height:1.5;margin-bottom:14px}
+.task-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;font-size:12px;margin-bottom:14px}.meta-item{color:#475569}.task-actions{display:flex;gap:8px;padding-top:14px;border-top:1px solid #e2e8f0}
+.btn-action{flex:1;padding:10px;border-radius:8px;font-weight:600;font-size:12px;text-align:center;text-decoration:none}.btn-treat{background:#3b82f6;color:white}.btn-view{background:#f3f4f6;color:#1f2937}
+.empty-state{text-align:center;padding:44px 20px;background:#f8fafc;border-radius:14px;border:2px dashed #cbd5e1;color:#64748b}.workflow-table{width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden}.workflow-table th,.workflow-table td{padding:12px;border-bottom:1px solid #e2e8f0;font-size:13px;text-align:left}.workflow-table thead tr{background:#f8fafc}
+@media(max-width:768px){.tasks-grid,.task-meta{grid-template-columns:1fr}.task-actions{flex-direction:column}}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="workflow-header">
+    <h2>Mes tâches</h2>
+    <p>Tickets assignés à votre profil ({{ serviceName }})</p>
+    <div class="stats-row">
+        <div class="stat-card"><span class="stat-number">{{ tasks|length }}</span><span class="stat-label">En attente</span></div>
+        <div class="stat-card"><span class="stat-number">{{ doneTasks|length }}</span><span class="stat-label">Complétées</span></div>
+    </div>
+</div>
+
+<div class="tasks-section">
+    <div class="section-header">
+        <h3 class="section-title">Tâches en attente</h3>
+        <span class="section-count">{{ tasks|length }}</span>
+    </div>
+
+    {% if tasks is empty %}
+        <div class="empty-state">
+            <div style="font-size:42px;margin-bottom:12px;">✅</div>
+            <strong>Aucune tâche en attente</strong>
+            <p>Vous n'avez pas de tâche à traiter pour le moment.</p>
+        </div>
+    {% else %}
+        <div class="tasks-grid">
+            {% for task in tasks %}
+                <div class="task-card">
+                    <div class="task-card-header">
+                        <h4 class="task-title">{{ task.title }}</h4>
+                        <span class="task-status-badge">{{ task.status|upper }}</span>
+                    </div>
+                    <div class="task-body">
+                        <p class="task-desc">{{ task.description|default('')|slice(0, 120) }}{% if task.description|default('')|length > 120 %}...{% endif %}</p>
+                        <div class="task-meta">
+                            <div class="meta-item"><a href="{{ path('workflow_show', {id: task.ticket.id}) }}">Ticket #{{ task.ticket.id }}</a></div>
+                            <div class="meta-item">{{ task.ticket.progress }}% progression</div>
+                            {% if task.ticket.deadlineAt %}
+                                <div class="meta-item" style="{% if task.ticket.deadlineAt < date() %}color:#dc2626;{% endif %}">⏰ {{ task.ticket.deadlineAt|date('d/m/Y') }}</div>
+                            {% endif %}
+                            <div class="meta-item">{{ task.ticket.createdBy.fullName ?? task.ticket.createdBy.email }}</div>
+                        </div>
+                        <div class="task-actions">
+                            <a href="{{ path('team_workflow_task_show', {id: task.id}) }}" class="btn-action btn-treat">✓ Traiter</a>
+                            <a href="{{ path('workflow_show', {id: task.ticket.id}) }}" class="btn-action btn-view">Voir</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+{% if doneTasks is not empty %}
+<div class="tasks-section">
+    <div class="section-header">
+        <h3 class="section-title">Tâches complétées</h3>
+        <span class="section-count">{{ doneTasks|length }}</span>
+    </div>
+    <table class="workflow-table">
+        <thead><tr><th>Titre</th><th>Ticket</th><th>Complétée le</th><th>Décision</th></tr></thead>
+        <tbody>
+        {% for task in doneTasks|slice(0, 15) %}
+            <tr>
+                <td><a href="{{ path('workflow_show', {id: task.ticket.id}) }}">{{ task.title|slice(0, 50) }}</a></td>
+                <td>#{{ task.ticket.id }}</td>
+                <td>{{ task.completedAt ? task.completedAt|date('d/m/Y H:i') : '-' }}</td>
+                <td>{{ task.decision ? task.decision|upper : '-' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

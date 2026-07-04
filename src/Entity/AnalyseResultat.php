@@ -32,6 +32,12 @@ class AnalyseResultat
     #[ORM\Column]
     private ?int $nombreOccurrences = 0;
 
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private ?int $nombreOccurrencesTdd = 0;
+
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private ?int $nombreOccurrencesFdd = 0;
+
     #[ORM\Column]
     private ?int $totalMeasures = 0;
 
@@ -50,6 +56,9 @@ class AnalyseResultat
     #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $dateAnalyse = null;
 
+    #[ORM\Column(type: 'integer', options: ['default' => 7])]
+    private int $dureeJours = 7;
+
     // ============================================================
     // PROPRIÉTÉS POUR LA CARTE GPS
     // ============================================================
@@ -66,6 +75,11 @@ class AnalyseResultat
     
     #[ORM\Column(type: 'decimal', precision: 15, scale: 4, nullable: true)]
     private ?float $capaciteMbps = null;
+
+    #[ORM\Column(name: 'drop_cong_kpi', type: 'boolean', options: ['default' => false])]
+    private bool $dropcongKpi = false;
+
+    private ?float $tauxUtilisation = null;
 
     // ============================================================
     // GETTERS ET SETTERS
@@ -90,6 +104,12 @@ class AnalyseResultat
     
     public function getNombreOccurrences(): ?int { return $this->nombreOccurrences; }
     public function setNombreOccurrences(int $nombreOccurrences): self { $this->nombreOccurrences = $nombreOccurrences; return $this; }
+
+    public function getNombreOccurrencesTdd(): ?int { return $this->nombreOccurrencesTdd; }
+    public function setNombreOccurrencesTdd(int $nombreOccurrencesTdd): self { $this->nombreOccurrencesTdd = $nombreOccurrencesTdd; return $this; }
+
+    public function getNombreOccurrencesFdd(): ?int { return $this->nombreOccurrencesFdd; }
+    public function setNombreOccurrencesFdd(int $nombreOccurrencesFdd): self { $this->nombreOccurrencesFdd = $nombreOccurrencesFdd; return $this; }
     
     public function getTotalMeasures(): ?int { return $this->totalMeasures; }
     public function setTotalMeasures(int $totalMeasures): self { $this->totalMeasures = $totalMeasures; return $this; }
@@ -108,6 +128,17 @@ class AnalyseResultat
     
     public function getDateAnalyse(): ?\DateTimeInterface { return $this->dateAnalyse; }
     public function setDateAnalyse(\DateTimeInterface $dateAnalyse): self { $this->dateAnalyse = $dateAnalyse; return $this; }
+
+    public function getDureeJours(): int
+    {
+        return $this->dureeJours;
+    }
+
+    public function setDureeJours(int $dureeJours): self
+    {
+        $this->dureeJours = $dureeJours;
+        return $this;
+    }
 
     // ============================================================
     // GETTERS ET SETTERS POUR GPS
@@ -147,6 +178,34 @@ class AnalyseResultat
     public function setCapaciteMbps(?float $capaciteMbps): self
     {
         $this->capaciteMbps = $capaciteMbps;
+        return $this;
+    }
+
+    public function getDropcongKpi(): string
+    {
+        return $this->dropcongKpi ? 'oui' : 'non';
+    }
+
+    public function setDropcongKpi(bool|string|null $dropcongKpi): self
+    {
+        if (is_bool($dropcongKpi)) {
+            $this->dropcongKpi = $dropcongKpi;
+            return $this;
+        }
+
+        $value = strtolower(trim((string) $dropcongKpi));
+        $this->dropcongKpi = in_array($value, ['1', 'true', 'oui', 'yes'], true);
+        return $this;
+    }
+
+    public function getTauxUtilisation(): ?float
+    {
+        return $this->tauxUtilisation;
+    }
+
+    public function setTauxUtilisation(?float $tauxUtilisation): self
+    {
+        $this->tauxUtilisation = $tauxUtilisation;
         return $this;
     }
 }

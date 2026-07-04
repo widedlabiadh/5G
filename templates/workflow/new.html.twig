@@ -1,315 +1,148 @@
-{# templates/workflow/new.html.twig #}
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Créer un workflow - NetWON</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
-        
-        .sidebar {
-            width: 260px; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-            height: 100vh; position: fixed; left: 0; top: 0;
-            display: flex; flex-direction: column; padding: 1.5rem;
-            z-index: 100;
-        }
-        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
-        .logo-circle {
-            width: 45px; height: 45px; background: linear-gradient(135deg, #f97316, #ea580c);
-            border-radius: 12px; display: flex; align-items: center;
-            justify-content: center; font-weight: 700; color: white; font-size: 20px;
-        }
-        .logo-text { color: white; font-size: 18px; font-weight: bold; }
-        .logo-sub { color: #f97316; font-size: 10px; font-style: italic; }
-        .nav-section {
-            font-size: 11px; color: #64748b;
-            text-transform: uppercase; letter-spacing: 1px;
-            margin: 1.5rem 0 0.8rem;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 12px;
-            padding: 0.7rem 1rem; border-radius: 10px;
-            color: #cbd5e1; text-decoration: none; font-size: 13px;
-            margin-bottom: 4px;
-        }
-        .nav-item:hover, .nav-item.active { background: rgba(249,115,22,0.2); color: #f97316; }
-        .logout-btn {
-            margin-top: auto; display: flex; align-items: center; gap: 12px;
-            padding: 0.7rem 1rem; border-radius: 10px;
-            color: #cbd5e1; text-decoration: none;
-        }
-        .logout-btn:hover { background: rgba(220,38,38,0.2); color: #ef4444; }
-        
-        .main { margin-left: 260px; padding: 1.5rem; }
-        .topbar {
-            display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 1.5rem;
-        }
-        .topbar h1 { font-size: 22px; font-weight: 600; color: #1e293b; }
-        .user-badge {
-            display: flex; align-items: center; gap: 12px;
-            background: white; padding: 0.5rem 1rem;
-            border-radius: 40px;
-        }
-        
-        .page-header {
-            margin-bottom: 1.5rem;
-        }
-        .page-title {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1e293b;
-        }
-        .page-desc {
-            font-size: 13px;
-            color: #64748b;
-            margin-top: 4px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 20px;
-            border: 1px solid #e2e8f0;
-            padding: 2rem;
-            max-width: 800px;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-        .full-width {
-            grid-column: span 2;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 0.5rem;
-        }
-        .form-group label .required {
-            color: #f97316;
-        }
-        .form-control {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-        }
-        .form-control:focus {
-            outline: none;
-            border-color: #f97316;
-            box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
-        }
-        select.form-control {
-            cursor: pointer;
-        }
-        textarea.form-control {
-            resize: vertical;
-            min-height: 100px;
-        }
-        .form-actions {
-            margin-top: 2rem;
-            display: flex;
-            gap: 1rem;
-        }
-        .btn {
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            border: none;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #f97316, #ea580c);
-            color: white;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(249,115,22,0.3);
-        }
-        .btn-secondary {
-            background: #e2e8f0;
-            color: #1e293b;
-        }
-        .muted {
-            font-size: 11px;
-            color: #64748b;
-            margin-top: 4px;
-            display: block;
-        }
-        .flash-success {
-            background: #d4edda;
-            color: #155724;
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            border-left: 4px solid #28a745;
-        }
-        .flash-error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            border-left: 4px solid #dc3545;
-        }
-        
-        /* Style pour le select multiple */
-        select[multiple] {
-            min-height: 200px;
-        }
-        select[multiple] option {
-            padding: 8px 12px;
-            margin: 2px 0;
-            border-radius: 8px;
-        }
-        select[multiple] option:hover {
-            background-color: #fef3c7;
-        }
-    </style>
-</head>
-<body>
-<div class="sidebar">
-    <div class="logo">
-        <div class="logo-circle">N</div>
-        <div><div class="logo-text">NetWON</div><div class="logo-sub">Workflow</div></div>
-    </div>
-    <span class="nav-section">Workflow</span>
-    <a href="{{ path('workflow_index') }}" class="nav-item">📋 Liste</a>
-    <a href="{{ path('workflow_new') }}" class="nav-item active">➕ Nouveau</a>
-    <a href="{{ path('app_dashboard') }}" class="nav-item">🏠 Dashboard</a>
-    <a href="{{ path('app_logout') }}" class="logout-btn">🚪 Déconnexion</a>
-</div>
+{% extends 'base.html.twig' %}
 
-<div class="main">
-    <div class="topbar">
-        <h1>Créer un workflow</h1>
-        <div class="user-badge">
-            <span>👤 {{ user.fullName ?? user.email }}</span>
+{% block title %}Créer un workflow - NetWON{% endblock %}
+
+{% block stylesheets %}
+<style>
+.workflow-page{display:flex;flex-direction:column;gap:22px}.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.page-title{font-size:30px;font-weight:800;color:#0f172a;margin:0}.page-desc{font-size:14px;color:#64748b;margin-top:6px;max-width:900px}.card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 8px 24px rgba(15,23,42,.05)}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.full-width{grid-column:1/-1}label{display:block;font-weight:800;color:#1e293b;margin-bottom:8px;font-size:14px}.form-control,input[type=text],input[type=date],select,textarea{width:100%;padding:11px 13px;border:1px solid #cbd5e1;border-radius:10px;background:white;font-size:14px}.form-control:focus,input:focus,select:focus,textarea:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}textarea{min-height:120px;resize:vertical}.workflow-select-box{height:260px;max-height:260px;overflow-y:auto;border:1px solid #d7dde8;border-radius:16px;background:#fff;padding:10px;margin-top:10px}.workflow-check-row{display:flex;align-items:flex-start;gap:12px;padding:10px 12px;border-radius:12px;cursor:pointer;font-size:15px}.workflow-check-row:hover{background:#fff7ed}.workflow-check-row input{width:17px;height:17px;margin-top:3px}.workflow-check-row span{display:flex;flex-direction:column;gap:3px}.workflow-check-row small{color:#64748b;font-size:13px}.muted{font-size:12px;color:#64748b;margin-top:7px;display:block}.form-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:10px;border:none;text-decoration:none;font-weight:800;font-size:13px;background:#f1f5f9;color:#334155;cursor:pointer}.btn-primary{background:#3b82f6;color:white}.btn-primary:hover{background:#2563eb;color:white}.flash-error{padding:13px 16px;border-radius:12px;background:#fee2e2;color:#991b1b;font-weight:700}@media(max-width:800px){.form-grid{grid-template-columns:1fr}.form-actions{flex-direction:column}.btn{width:100%}}
+.workflow-select-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}.workflow-select-actions{display:flex;gap:8px}.workflow-selected-count{font-size:12px;color:#64748b;font-weight:800}.btn-sm{padding:7px 11px;font-size:12px}.btn:hover{background:#e2e8f0;color:#334155}.curve-link{display:inline-flex;align-items:center;gap:6px;width:max-content;margin-top:4px;color:#2563eb;text-decoration:none;font-size:12px;font-weight:800}.curve-link:hover{text-decoration:underline}.critical-count{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:8px 11px;border-radius:999px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:800}.empty-state{padding:18px;border:2px dashed #cbd5e1;border-radius:12px;color:#64748b;background:#f8fafc;text-align:center}@media(max-width:800px){.workflow-select-tools{flex-direction:column;align-items:stretch}.workflow-select-actions{flex-direction:column}}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="workflow-page">
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">Créer un workflow</h2>
+            <div class="page-desc">Choisissez les sites critiques à traiter. Les utilisateurs seront automatiquement assignés selon les services requis (FO, IP, Déploiement, Radio, etc.).</div>
+            <div class="critical-count">{{ availableSites|length }} site(s) critique(s)</div>
         </div>
     </div>
 
-    {% for msg in app.flashes('success') %}
-        <div class="flash-success">{{ msg }}</div>
-    {% endfor %}
-    {% for msg in app.flashes('error') %}
-        <div class="flash-error">{{ msg }}</div>
+    {% for message in app.flashes('error') %}
+        <div class="flash-error">{{ message }}</div>
     {% endfor %}
 
     <div class="card">
-        <form method="POST">
-            <div class="form-grid">
-                <div class="full-width">
-                    <div class="form-group">
-                        <label>Titre <span class="required">*</span></label>
-                        <input type="text" name="title" class="form-control" placeholder="Ex: Intervention site X" required>
-                    </div>
-                </div>
+        {{ form_start(form) }}
 
-                <div>
-                    <div class="form-group">
-                        <label>Type d'action <span class="required">*</span></label>
-                        <select name="actionType" class="form-control" required>
-                            <option value="swap_10g">🔄 Swap 10G</option>
-                            <option value="tf_balancing">⚖️ T+F Balancing</option>
-                            <option value="upgrade_capacite">📈 Upgrade capacité</option>
-                            <option value="intervention_urgence">🚨 Intervention urgence</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="form-group">
-                        <label>Date limite</label>
-                        <input type="date" name="deadlineAt" class="form-control">
-                    </div>
-                </div>
-
-                <div>
-                    <div class="form-group">
-                        <label>Site concerné</label>
-                        <select name="site" class="form-control">
-                            <option value="">-- Sélectionner un site --</option>
-                            {% for site in sites %}
-                                <option value="{{ site.id }}">{{ site.site }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="full-width">
-                    <div class="form-group">
-                        <label>Utilisateurs assignés <span class="required">*</span></label>
-                        <select name="assignedUsers[]" class="form-control" multiple required size="10">
-                            {% for user in users %}
-                                {% if user.role not in ['admin', 'superuser'] %}
-                                <option value="{{ user.id }}" 
-                                    style="
-                                        {% if user.role == 'support_fo' %}border-left: 3px solid #f97316; background: #fff7ed;
-                                        {% elseif user.role == 'support_fh' %}border-left: 3px solid #3b82f6; background: #eff6ff;
-                                        {% elseif user.role == 'ingenierie_fh' %}border-left: 3px solid #10b981; background: #ecfdf5;
-                                        {% elseif user.role == 'ingenierie_ip' %}border-left: 3px solid #8b5cf6; background: #f5f3ff;
-                                        {% elseif user.role == 'controleur' %}border-left: 3px solid #f59e0b; background: #fffbeb;
-                                        {% endif %}
-                                        padding: 8px 12px; margin: 2px 0; border-radius: 8px;
-                                    ">
-                                    <i class="fas 
-                                        {% if user.role == 'support_fo' %}fa-headset
-                                        {% elseif user.role == 'support_fh' %}fa-satellite-dish
-                                        {% elseif user.role == 'ingenierie_fh' %}fa-microchip
-                                        {% elseif user.role == 'ingenierie_ip' %}fa-network-wired
-                                        {% elseif user.role == 'controleur' %}fa-clipboard-list
-                                        {% endif %}"></i>
-                                    {{ user.fullName ?? user.email }}
-                                    <span style="font-size: 11px; color: #64748b; float: right;">
-                                        ({{ user.roleLabel }})
-                                    </span>
-                                </option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                        <small class="muted">
-                            <i class="fas fa-info-circle"></i> 
-                            Maintenez Ctrl (Cmd) pour sélectionner plusieurs utilisateurs.<br>
-                            <span style="color: #f97316;">🟠 Support FO</span> | 
-                            <span style="color: #3b82f6;">🔵 Support FH</span> | 
-                            <span style="color: #10b981;">🟢 Ingénierie FH</span> | 
-                            <span style="color: #8b5cf6;">🟣 Ingénierie IP</span> | 
-                            <span style="color: #f59e0b;">🟡 Contrôleur</span>
-                        </small>
-                    </div>
-                </div>
-
-                <div class="full-width">
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="description" class="form-control" placeholder="Description détaillée du workflow..."></textarea>
-                    </div>
-                </div>
+        <div class="form-grid">
+            <div>
+                {{ form_label(form.title) }}
+                {{ form_widget(form.title) }}
+                {{ form_errors(form.title) }}
             </div>
 
-            <div class="form-actions">
-                <a href="{{ path('workflow_index') }}" class="btn btn-secondary">Annuler</a>
-                <button type="submit" class="btn btn-primary">Créer le workflow</button>
+            <div>
+                {{ form_label(form.actionType) }}
+                {{ form_widget(form.actionType) }}
+                {{ form_errors(form.actionType) }}
             </div>
-        </form>
+
+            <div>
+                {{ form_label(form.deadlineAt) }}
+                {{ form_widget(form.deadlineAt) }}
+                {{ form_errors(form.deadlineAt) }}
+            </div>
+
+            <div class="full-width">
+                <label>Sites critiques concernés</label>
+                <input type="text" id="siteSearch" class="form-control" placeholder="Rechercher un site...">
+                <div class="workflow-select-tools">
+                    <div class="workflow-selected-count" id="selectedSiteCount">0 site sélectionné</div>
+                    <div class="workflow-select-actions">
+                        <button type="button" class="btn btn-sm" id="selectAllSites">Select All</button>
+                        <button type="button" class="btn btn-sm" id="clearAllSites">Désélectionner</button>
+                    </div>
+                </div>
+
+                <div class="workflow-select-box" id="siteList">
+                    {% for site in availableSites %}
+                        <label class="workflow-check-row">
+                            <input type="checkbox" name="site_ids[]" value="{{ site.id }}">
+                            <span>
+                                <strong>{{ site.site|clean_site }}</strong>
+                                <small>{{ site.typeTrans ?: '-' }} | Trafic {{ site.maxTrafic ?: '-' }} | Occurrences {{ site.nombreOccurrences ?: 0 }} | Seuil {{ site.seuilCritique ?: '-' }}</small>
+                                <small>UMPT: {{ site.umptType ?: 'non importé' }}{% if site.swapComment is defined and site.swapComment %} | {{ site.swapComment }}{% endif %}</small>
+                                <a class="curve-link" href="{{ path('courbe_trafic', {site: site.site}) }}" onclick="event.stopPropagation();">
+                                    <i class="fas fa-chart-line"></i> Voir courbe
+                                </a>
+                            </span>
+                        </label>
+                    {% else %}
+                        <div class="empty-state">Aucun site critique disponible pour la dernière analyse.</div>
+                    {% endfor %}
+                </div>
+
+                <small class="muted">Cochez un ou plusieurs sites critiques. Le lien “Voir courbe” ouvre la courbe trafic du site.</small>
+            </div>
+
+            <div class="full-width">
+                {{ form_label(form.description) }}
+                {{ form_widget(form.description) }}
+                {{ form_errors(form.description) }}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ path('workflow_index') }}" class="btn">Retour</a>
+            <button type="submit" class="btn btn-primary">Créer le workflow (auto-assign)</button>
+        </div>
+
+        {{ form_end(form) }}
     </div>
 </div>
-</body>
-</html>
+
+<script>
+function filterRows(inputId, listId) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+    if (!input || !list) return;
+    input.addEventListener('input', function () {
+        const q = input.value.toLowerCase();
+        list.querySelectorAll('.workflow-check-row').forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+        });
+    });
+}
+filterRows('siteSearch', 'siteList');
+
+const siteList = document.getElementById('siteList');
+const selectedSiteCount = document.getElementById('selectedSiteCount');
+const selectAllSites = document.getElementById('selectAllSites');
+const clearAllSites = document.getElementById('clearAllSites');
+
+function visibleSiteCheckboxes() {
+    if (!siteList) return [];
+    return Array.from(siteList.querySelectorAll('.workflow-check-row'))
+        .filter(row => row.style.display !== 'none')
+        .map(row => row.querySelector('input[type="checkbox"]'))
+        .filter(Boolean);
+}
+
+function updateSelectedSiteCount() {
+    if (!siteList || !selectedSiteCount) return;
+    const count = siteList.querySelectorAll('input[type="checkbox"]:checked').length;
+    selectedSiteCount.textContent = count + (count > 1 ? ' sites sélectionnés' : ' site sélectionné');
+}
+
+if (selectAllSites) {
+    selectAllSites.addEventListener('click', function () {
+        visibleSiteCheckboxes().forEach(checkbox => checkbox.checked = true);
+        updateSelectedSiteCount();
+    });
+}
+
+if (clearAllSites) {
+    clearAllSites.addEventListener('click', function () {
+        siteList.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+        updateSelectedSiteCount();
+    });
+}
+
+if (siteList) {
+    siteList.addEventListener('change', updateSelectedSiteCount);
+    updateSelectedSiteCount();
+}
+</script>
+{% endblock %}

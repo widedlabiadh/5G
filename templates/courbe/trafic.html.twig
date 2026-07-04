@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 .main {
-    margin-left: 260px;
+    margin-left: var(--sidebar-width);
     padding: 1.8rem 2rem !important;
 }
 /* ═══════════════════════════════════════════════
@@ -271,40 +271,6 @@
 
 .date-input:focus { border-color: var(--or); }
 
-.seuil-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.seuil-input {
-    width: 90px;
-    padding: 7px 12px;
-    border: 1px solid var(--border);
-    border-radius: 30px;
-    font-size: 12px;
-    background: white;
-}
-
-.seuil-toggle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.seuil-toggle.active {
-    background: #fef2f2;
-    border-color: #dc2626;
-    color: #dc2626;
-}
-
 .btn-afficher {
     background: var(--or);
     color: white;
@@ -345,7 +311,7 @@
 ═══════════════════════════════════════════════ */
 .stats-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin-bottom: 1.5rem;
 }
@@ -455,6 +421,18 @@
     min-height: 400px;
 }
 
+.chart-scroll {
+    display: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 10px;
+}
+
+.chart-canvas-wrap {
+    height: 420px;
+    min-width: 100%;
+}
+
 .chart-empty {
     display: flex;
     flex-direction: column;
@@ -507,6 +485,7 @@ canvas {
     display: none;
     max-height: 400px;
     width: 100%;
+    height: 400px;
 }
 
 /* Alerte */
@@ -541,7 +520,7 @@ canvas {
         <div class="hero-left">
             <div class="hero-tag"><i class="fas fa-chart-line"></i> Supervision réseau</div>
             <h1 class="hero-title">Courbes de <span>Trafic</span></h1>
-            <p class="hero-desc">Visualisez et analysez le trafic de chaque site réseau</p>
+            <p class="hero-desc">Visualisez le trafic actuel et l'historique par période</p>
         </div>
         <div class="hero-search-box">
             <input type="text" class="hero-search-input" id="siteSearchInput" placeholder="Rechercher un site… ex: ARI_0003" autocomplete="off">
@@ -579,12 +558,6 @@ canvas {
         <input type="date" class="date-input" id="dateEnd">
     </div>
 
-    <div class="seuil-group">
-        <span class="date-label">Seuil</span>
-        <input type="number" class="seuil-input" id="thresholdInput" placeholder="Mbps" min="0" step="10">
-        <button class="seuil-toggle" id="toggleThreshold" title="Afficher seuil"><i class="fas fa-ruler-horizontal"></i></button>
-    </div>
-
     <button class="btn-afficher" id="btnLoad"><i class="fas fa-bolt"></i> Afficher</button>
     <button class="btn-pdf" id="btnDownloadPDF" style="display:none" onclick="downloadPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
 </div>
@@ -604,11 +577,6 @@ canvas {
         <div class="s-label">Minimum</div>
         <div class="s-val" id="statMin">—</div>
         <div class="s-unit">Mbit/s</div>
-    </div>
-    <div class="s-card over">
-        <div class="s-label">Dépassements seuil</div>
-        <div class="s-val" id="statOver">—</div>
-        <div class="s-unit">occurrences</div>
     </div>
 </div>
 
@@ -633,7 +601,11 @@ canvas {
             <p>Aucune courbe affichée</p>
             <small>Recherchez un site et cliquez Afficher</small>
         </div>
-        <canvas id="traficChart"></canvas>
+        <div class="chart-scroll" id="chartScroll">
+            <div class="chart-canvas-wrap" id="chartCanvasWrap">
+                <canvas id="traficChart"></canvas>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -643,7 +615,6 @@ canvas {
 {{ parent() }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ═══════════════════════════════════════════
@@ -652,20 +623,58 @@ canvas {
 let chartInstance  = null;
 let currentMode    = null;
 let lastData       = null;
-let showThreshold  = false;
 let selectedSite   = null;
 let allSites       = [];
 let availableTypes = { hasTF: false, hasLM: false, hasTC: false, isPlain: false, defaultMode: null };
 let acIdx          = -1;
+let trafficDateBounds = { start: null, end: null };
+
+const chartWhiteBackground = {
+    id: 'chartWhiteBackground',
+    beforeDraw(chart) {
+        const { ctx, width, height } = chart;
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.restore();
+    }
+};
+Chart.register(chartWhiteBackground);
 
 /* INIT DATES */
-(function init() {
-    const end   = new Date();
-    const start = new Date(); start.setDate(start.getDate() - 30);
-    document.getElementById('dateEnd').value   = end.toISOString().slice(0,10);
-    document.getElementById('dateStart').value = start.toISOString().slice(0,10);
+(async function init() {
+    await initTrafficDateRange();
     fetchSites();
 })();
+
+async function initTrafficDateRange() {
+    const startInput = document.getElementById('dateStart');
+    const endInput = document.getElementById('dateEnd');
+
+    try {
+        const res = await fetch('{{ path('api_trafic_date_range') }}');
+        const range = await res.json();
+        if (range.start && range.end) {
+            trafficDateBounds = { start: range.start, end: range.end };
+            startInput.min = range.start;
+            startInput.max = range.end;
+            endInput.min = range.start;
+            endInput.max = range.end;
+            startInput.value = range.start;
+            endInput.value = range.end;
+            return;
+        }
+    } catch (e) {
+        console.warn(e);
+    }
+
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+    endInput.value = end.toISOString().slice(0,10);
+    startInput.value = start.toISOString().slice(0,10);
+}
 
 async function fetchSites() {
     try {
@@ -683,7 +692,7 @@ function resolveSiteName(site) {
     const normalized = String(site || '').trim().toUpperCase();
     const exact = allSites.find(s => s.toUpperCase() === normalized);
     if (exact) return exact;
-    const base = normalized.replace(/_(TF|LM|LMB|LM2|TC|TD|TDD|FDD|BH|BO|TR|OO|OR)(_[A-Z0-9]+)*$/i, '');
+    const base = normalized.replace(/_(TF|LM|LMB|LM2|TC|TD|TDD|FDD|BH|BO|TR|OO|OR|TT)(_[A-Z0-9]+)*$/i, '');
     const baseExact = allSites.find(s => s.toUpperCase() === base);
     if (baseExact) return baseExact;
     const suffixed = allSites.find(s => s.toUpperCase().startsWith(`${normalized}_`));
@@ -712,6 +721,168 @@ function escapeRegExp(value) {
     return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function cleanSiteLabel(site) {
+    return String(site || '')
+        .trim()
+        .replace(/_(LM2|LMB|LM|TC|TD|TDD|TF|FDD|00)$/i, '')
+        .replace(/_(BH|BO|TR|OO|OR|TT)(?:_[A-Z0-9]+)*$/i, '')
+        .trim();
+}
+
+function parseLocalDateTime(value) {
+    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
+    if (match) {
+        return new Date(
+            Number(match[1]),
+            Number(match[2]) - 1,
+            Number(match[3]),
+            Number(match[4]),
+            Number(match[5]),
+            Number(match[6])
+        ).getTime();
+    }
+
+    const fallback = Date.parse(value);
+    return Number.isNaN(fallback) ? null : fallback;
+}
+
+function dateInputToTimestamp(value, endOfDay = false) {
+    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return undefined;
+
+    return new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        endOfDay ? 23 : 0,
+        endOfDay ? 59 : 0,
+        endOfDay ? 59 : 0,
+        endOfDay ? 999 : 0
+    ).getTime();
+}
+
+function getDataTimeRange(datasets) {
+    const timestamps = datasets
+        .flatMap(dataset => dataset.data || [])
+        .map(point => point.x)
+        .filter(Number.isFinite);
+
+    if (!timestamps.length) {
+        return { min: undefined, max: undefined };
+    }
+
+    return { min: Math.min(...timestamps), max: Math.max(...timestamps) };
+}
+
+function getAxisTimeRange(start, end, datasets) {
+    const dataRange = getDataTimeRange(datasets);
+
+    return {
+        min: dateInputToTimestamp(start, false) ?? dataRange.min,
+        max: dateInputToTimestamp(end, true) ?? dataRange.max
+    };
+}
+
+function countAxisDays(min, max) {
+    if (!Number.isFinite(min) || !Number.isFinite(max) || max < min) {
+        return 1;
+    }
+
+    return Math.max(1, Math.ceil((max - min + 1) / (24 * 60 * 60 * 1000)));
+}
+
+function formatAxisTick(value) {
+    const numericValue = Number(value);
+    const timestamp = Number.isFinite(numericValue) ? numericValue : Date.parse(value);
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    const pad = number => String(number).padStart(2, '0');
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function trafficPoints(data) {
+    return data
+        .map(d => ({ x: parseLocalDateTime(d.datetime) ?? Number(d.timestamp), y: Number(d.max_speed || 0) }))
+        .filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
+}
+
+function getTimeScaleOptions(start, end, datasets) {
+    const { min, max } = getAxisTimeRange(start, end, datasets);
+    const dayCount = countAxisDays(min, max);
+
+    return {
+        min,
+        max,
+        time: {
+            unit: 'hour',
+            stepSize: 12,
+            tooltipFormat: 'dd/MM/yyyy HH:mm',
+            displayFormats: {
+                hour: 'dd/MM HH:mm',
+                day: 'dd/MM/yyyy',
+                month: 'MM/yyyy',
+                year: 'yyyy'
+            }
+        },
+        ticks: {
+            source: 'auto',
+            maxTicksLimit: dayCount * 2,
+            maxRotation: 0,
+            autoSkip: false,
+            callback: formatAxisTick
+        }
+    };
+}
+
+function resizeChartAxis(datasets, start, end) {
+    const scroll = document.getElementById('chartScroll');
+    const wrap = document.getElementById('chartCanvasWrap');
+    const body = document.getElementById('chartBody');
+    const minWidth = body ? body.clientWidth : 900;
+    const { min, max } = getAxisTimeRange(start, end, datasets);
+    const labelCount = countAxisDays(min, max) * 2;
+    const requiredWidth = Math.min(16000, Math.max(minWidth, labelCount * 95));
+
+    if (wrap) {
+        wrap.style.width = `${requiredWidth}px`;
+    }
+    if (scroll) {
+        scroll.style.display = 'block';
+        scroll.scrollLeft = 0;
+    }
+}
+
+function lineDataset(label, pts, borderColor, backgroundColor, fill = true, capacityMbps = 0, capacityLabel = null) {
+    return {
+        label,
+        data: pts,
+        borderColor,
+        backgroundColor,
+        borderWidth: 2.2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHitRadius: 12,
+        tension: 0.38,
+        cubicInterpolationMode: 'monotone',
+        borderCapStyle: 'round',
+        borderJoinStyle: 'round',
+        fill,
+        showLine: true,
+        capacityMbps: Number(capacityMbps || 0),
+        capacityLabel
+    };
+}
+
+function formatCapacityMbps(value) {
+    const capacity = Number(value || 0);
+    if (!Number.isFinite(capacity)) return '0';
+
+    return String(capacity).replace('.', ',');
+}
+
 searchInput.addEventListener('input', () => {
     const q = searchInput.value.trim().toUpperCase();
     acIdx = -1;
@@ -722,7 +893,7 @@ searchInput.addEventListener('input', () => {
         openAC(); return;
     }
     acList.innerHTML = matches.map((s, i) => {
-        const safeSite = escapeHtml(s);
+        const safeSite = escapeHtml(cleanSiteLabel(s));
         const safeMatch = safeSite.replace(new RegExp(escapeRegExp(q), 'gi'), m => `<strong style="color:#f97316">${m}</strong>`);
         return `
         <div class="autocomplete-item" data-val="${escapeHtml(s)}" data-idx="${i}" onmousedown="pickSite(${JSON.stringify(s).replace(/"/g, '&quot;')})">
@@ -740,15 +911,16 @@ function closeAC() { acList.classList.remove('open'); }
 
 async function pickSite(site) {
     selectedSite = site;
-    searchInput.value = site;
+    searchInput.value = cleanSiteLabel(site);
     closeAC();
-    document.getElementById('siteBadgeText').textContent = site;
+    document.getElementById('siteBadgeText').textContent = cleanSiteLabel(site);
     document.getElementById('siteBadge').classList.add('show');
     try {
         const res = await fetch(`/api/site/${encodeURIComponent(site)}/types`);
         const types = await res.json();
         availableTypes = types;
         updateModeTabs();
+        await syncDateRangeForCurrentSelection();
     } catch(e) { console.warn(e); }
 }
 
@@ -784,7 +956,14 @@ function updateModeTabs() {
 }
 
 document.querySelectorAll('.mode-tab').forEach(btn => {
-    btn.addEventListener('click', () => { if (!btn.disabled) setMode(btn.dataset.mode); });
+    btn.addEventListener('click', async () => {
+        if (btn.disabled) return;
+        setMode(btn.dataset.mode);
+        await syncDateRangeForCurrentSelection();
+        if (chartInstance) {
+            loadChart();
+        }
+    });
 });
 
 function setMode(m) {
@@ -792,15 +971,73 @@ function setMode(m) {
     document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
 }
 
-/* SEUIL */
-document.getElementById('toggleThreshold').addEventListener('click', () => {
-    showThreshold = !showThreshold;
-    document.getElementById('toggleThreshold').classList.toggle('active', showThreshold);
-    if (chartInstance && lastData) redrawChart(lastData);
+function currentTrafficSiteNames() {
+    if (!selectedSite) return [];
+
+    if (availableTypes.isPlain) {
+        return [availableTypes.sitePlain || selectedSite].filter(Boolean);
+    }
+
+    if (currentMode === 'TF') {
+        return [availableTypes.siteTF].filter(Boolean);
+    }
+
+    if (currentMode === 'both') {
+        return [availableTypes.siteLM, availableTypes.siteTC].filter(Boolean);
+    }
+
+    if (currentMode === 'LM') {
+        return [availableTypes.siteLM].filter(Boolean);
+    }
+
+    if (currentMode === 'TC') {
+        return [availableTypes.siteTC].filter(Boolean);
+    }
+
+    return [];
+}
+
+async function syncDateRangeForCurrentSelection() {
+    const siteNames = currentTrafficSiteNames();
+    if (!selectedSite || !siteNames.length) return;
+
+    try {
+        const baseParams = new URLSearchParams({ siteNames: siteNames.join(',') });
+        const latestParams = new URLSearchParams({ siteNames: siteNames.join(','), latest_import: '1' });
+        const [allRes, latestRes] = await Promise.all([
+            fetch(`/api/site/${encodeURIComponent(selectedSite)}/trafic-date-range?${baseParams.toString()}`),
+            fetch(`/api/site/${encodeURIComponent(selectedSite)}/trafic-date-range?${latestParams.toString()}`)
+        ]);
+
+        if (!allRes.ok || !latestRes.ok) return;
+
+        const allRange = await allRes.json();
+        const latestRange = await latestRes.json();
+        if (!allRange.start || !allRange.end || Number(allRange.points || 0) <= 0) return;
+
+        const startInput = document.getElementById('dateStart');
+        const endInput = document.getElementById('dateEnd');
+        startInput.min = allRange.start;
+        startInput.max = allRange.end;
+        endInput.min = allRange.start;
+        endInput.max = allRange.end;
+        startInput.value = latestRange.start || allRange.start;
+        endInput.value = latestRange.end || allRange.end;
+    } catch (e) {
+        console.warn(e);
+    }
+}
+
+document.getElementById('dateStart').addEventListener('change', () => {
+    if (selectedSite) {
+        loadChart();
+    }
 });
 
-document.getElementById('thresholdInput').addEventListener('change', () => {
-    if (lastData) { updateStats(lastData.allSpeeds); redrawChart(lastData); }
+document.getElementById('dateEnd').addEventListener('change', () => {
+    if (selectedSite) {
+        loadChart();
+    }
 });
 
 /* CHARGEMENT */
@@ -810,6 +1047,10 @@ async function loadChart() {
     if (!selectedSite) { showErr('Veuillez sélectionner un site.'); return; }
     const start = document.getElementById('dateStart').value;
     const end   = document.getElementById('dateEnd').value;
+    if (start && end && start > end) {
+        showErr('La date debut doit etre inferieure ou egale a la date fin.');
+        return;
+    }
     hideErr(); setLoading(true);
     try {
         let datasets = [], allSpeeds = [];
@@ -818,17 +1059,17 @@ async function loadChart() {
             const siteName = availableTypes.sitePlain || selectedSite;
             const data = await fetchTrafficSeries(siteName, start, end);
             if (!data.length) throw new Error('Aucune donnée');
-            const pts = data.map(d => ({ x: new Date(d.datetime), y: d.max_speed })).filter(p => !isNaN(p.x));
+            const pts = trafficPoints(data);
             allSpeeds = pts.map(p => p.y);
-            datasets.push({ label: siteName, data: pts, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.07)', borderWidth: 2, pointRadius: pts.length>500?0:2, tension: 0.3, fill: true });
+            datasets.push(lineDataset(siteName, pts, '#3b82f6', 'rgba(59,130,246,0.07)', true, availableTypes.capacityPlain, 'Capacite site'));
         }
         else if (currentMode === 'TF') {
             const siteName = availableTypes.siteTF;
             const data = await fetchTrafficSeries(siteName, start, end, 'TF');
             if (!data.length) throw new Error(`Aucune donnee pour ${siteName || selectedSite + '_TF'}`);
-            const pts = data.map(d => ({ x: new Date(d.datetime), y: d.max_speed })).filter(p => !isNaN(p.x));
+            const pts = trafficPoints(data);
             allSpeeds = pts.map(p => p.y);
-            datasets.push({ label: siteName || `${selectedSite}_TF`, data: pts, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.07)', borderWidth: 2, pointRadius: pts.length>500?0:2, tension: 0.3, fill: true });
+            datasets.push(lineDataset(siteName || `${selectedSite}_TF`, pts, '#16a34a', 'rgba(22,163,74,0.07)', true, availableTypes.capacityTF, 'Capacite TF'));
         }
         else if (currentMode === 'both') {
             const bothParams = new URLSearchParams({ start, end });
@@ -838,21 +1079,26 @@ async function loadChart() {
             ['LM','TC'].forEach((t,i) => {
                 const ser = both[t];
                 if (!ser?.data?.length) return;
-                const pts = ser.data.map(d => ({ x: new Date(d.datetime), y: d.max_speed })).filter(p => !isNaN(p.x));
+                const pts = trafficPoints(ser.data);
                 allSpeeds.push(...pts.map(p => p.y));
-                datasets.push({ label: ser.label, data: pts, borderColor: i===0?'#3b82f6':'#f97316', backgroundColor: i===0?'rgba(59,130,246,0.07)':'rgba(249,115,22,0.07)', borderWidth: 2, pointRadius: pts.length>500?0:2, tension: 0.3, fill: false });
+                const capacity = t === 'LM' ? availableTypes.capacityLM : availableTypes.capacityTC;
+                const capacityLabel = t === 'LM' ? 'Capacite FDD/LM' : 'Capacite TD/TC';
+                datasets.push(lineDataset(ser.label, pts, i===0?'#3b82f6':'#f97316', i===0?'rgba(59,130,246,0.07)':'rgba(249,115,22,0.07)', false, capacity, capacityLabel));
             });
         }
         else if (currentMode === 'LM' || currentMode === 'TC') {
             const siteName = currentMode === 'LM' ? availableTypes.siteLM : availableTypes.siteTC;
             const data = await fetchTrafficSeries(siteName, start, end, currentMode);
             if (!data.length) throw new Error(`Aucune donnée pour ${selectedSite}_${currentMode}`);
-            const pts = data.map(d => ({ x: new Date(d.datetime), y: d.max_speed })).filter(p => !isNaN(p.x));
+            const pts = trafficPoints(data);
             allSpeeds = pts.map(p => p.y);
-            datasets.push({ label: siteName || `${selectedSite}_${currentMode}`, data: pts, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.07)', borderWidth: 2, pointRadius: pts.length>500?0:2, tension: 0.3, fill: true });
+            const capacity = currentMode === 'LM' ? availableTypes.capacityLM : availableTypes.capacityTC;
+            const capacityLabel = currentMode === 'LM' ? 'Capacite FDD/LM' : 'Capacite TD/TC';
+            datasets.push(lineDataset(siteName || `${selectedSite}_${currentMode}`, pts, '#3b82f6', 'rgba(59,130,246,0.07)', true, capacity, capacityLabel));
         }
 
         if (!datasets.length) throw new Error('Aucune donnée disponible.');
+        addCapacityDataset(datasets);
         lastData = { datasets, allSpeeds };
         redrawChart(lastData);
         updateStats(allSpeeds);
@@ -868,26 +1114,71 @@ async function fetchTrafficSeries(siteName, start, end, type = null) {
     return await (await fetch(`/api/site/${encodeURIComponent(selectedSite)}/trafic?${params.toString()}`)).json();
 }
 
+function addCapacityDataset(datasets) {
+    if (!datasets.length) return;
+
+    const trafficDatasets = datasets.filter(dataset => (dataset.data || []).length && Number(dataset.capacityMbps || 0) > 0);
+    if (!trafficDatasets.length) return;
+
+    const timestamps = trafficDatasets
+        .flatMap(d => d.data || [])
+        .map(p => p.x)
+        .filter(Number.isFinite);
+
+    if (!timestamps.length) return;
+
+    const first = Math.min(...timestamps);
+    const last = Math.max(...timestamps);
+    trafficDatasets.forEach((dataset, index) => {
+        const capacity = Number(dataset.capacityMbps || 0);
+        const label = dataset.capacityLabel || 'Capacite';
+        datasets.push({
+            label: `${label} (${formatCapacityMbps(capacity)} Mbps)`,
+            data: [{ x: first, y: capacity }, { x: last, y: capacity }],
+            borderColor: dataset.borderColor || '#111827',
+            backgroundColor: 'rgba(17,24,39,0.04)',
+            borderWidth: 2,
+            borderDash: index % 2 === 0 ? [10, 5] : [4, 4],
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            tension: 0,
+            fill: false,
+            isCapacity: true
+        });
+    });
+    return;
+
+    datasets.push({
+        label: `Capacité (${formatCapacityMbps(capacity)} Mbps)`,
+        data: [{ x: first, y: capacity }, { x: last, y: capacity }],
+        borderColor: '#111827',
+        backgroundColor: 'rgba(17,24,39,0.04)',
+        borderWidth: 2,
+        borderDash: [10, 5],
+        pointRadius: 0,
+        tension: 0,
+        fill: false
+    });
+}
+
 function redrawChart({ datasets, allSpeeds }) {
     const canvas = document.getElementById('traficChart');
+    const start = document.getElementById('dateStart').value;
+    const end = document.getElementById('dateEnd').value;
     document.getElementById('chartEmpty').style.display = 'none';
+    resizeChartAxis(datasets, start, end);
     canvas.style.display = 'block';
     document.getElementById('chartDot').style.display = '';
 
     const final = [...datasets];
-    const thr = parseFloat(document.getElementById('thresholdInput').value);
-    if (showThreshold && !isNaN(thr) && thr>0 && datasets[0]?.data?.length) {
-        const f = datasets[0].data[0].x;
-        const l = datasets[0].data[datasets[0].data.length-1].x;
-        final.push({ label: `Seuil (${thr} Mbps)`, data: [{x:f,y:thr},{x:l,y:thr}], borderColor: '#dc2626', borderWidth: 2, borderDash: [6,4], pointRadius: 0, fill: false });
-    }
 
     const total = datasets.reduce((a,d) => a + d.data.length, 0);
     document.getElementById('metaPoints').innerText = total.toLocaleString('fr-FR');
-    document.getElementById('metaUpdate').innerText = new Date().toLocaleTimeString('fr-FR');
+    document.getElementById('metaUpdate').innerText = start && end ? `${start} -> ${end}` : new Date().toLocaleTimeString('fr-FR');
 
     const modeStr = availableTypes.isPlain ? '' : currentMode==='both' ? ' — LM + TC' : ` — ${currentMode}`;
-    document.getElementById('chartTitle').textContent = `${selectedSite}${modeStr} · VS.FEGE.RxMaxSpeed_Mbs (Mbit/s)`;
+    document.getElementById('chartTitle').textContent = `${cleanSiteLabel(selectedSite)}${modeStr} · VS.FEGE.RxMaxSpeed_Mbs (Mbit/s)`;
+    const timeScale = getTimeScaleOptions(start, end, datasets);
 
     if (chartInstance) chartInstance.destroy();
     chartInstance = new Chart(canvas, {
@@ -895,6 +1186,7 @@ function redrawChart({ datasets, allSpeeds }) {
         data: { datasets: final },
         options: {
             responsive: true,
+            resizeDelay: 0,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
@@ -902,8 +1194,14 @@ function redrawChart({ datasets, allSpeeds }) {
                 tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} Mbps` } }
             },
             scales: {
-                x: { type: 'time', time: { tooltipFormat: 'dd/MM/yyyy HH:mm', unit: 'hour', displayFormats: { hour: 'dd/MM HH:mm' } }, ticks: { maxRotation: 40, autoSkip: true } },
-                y: { title: { display: true, text: 'Débit (Mbps)' }, beginAtZero: false }
+                x: {
+                    type: 'time',
+                    min: timeScale.min,
+                    max: timeScale.max,
+                    time: timeScale.time,
+                    ticks: timeScale.ticks
+                },
+                y: { title: { display: true, text: 'Débit (Mbps)' }, beginAtZero: true }
             }
         }
     });
@@ -916,25 +1214,52 @@ function updateStats(speeds) {
     document.getElementById('statMax').textContent = Math.max(...speeds).toFixed(1);
     document.getElementById('statAvg').textContent = (speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(1);
     document.getElementById('statMin').textContent = Math.min(...speeds).toFixed(1);
-    const thr = parseFloat(document.getElementById('thresholdInput').value);
-    document.getElementById('statOver').textContent = isNaN(thr) ? '—' : speeds.filter(s=>s>=thr).length.toLocaleString('fr-FR');
     document.getElementById('statsRow').style.display = '';
 }
 
 async function downloadPDF() {
     if (!chartInstance) return;
     const { jsPDF } = window.jspdf;
-    setLoading(true);
     try {
-        const el = document.getElementById('pdfContainer');
-        const c = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' });
-        const img = c.toDataURL('image/png');
-        const w = 280, h = (c.height * w) / c.width;
-        const pdf = new jsPDF({ orientation: h > w ? 'portrait' : 'landscape', unit: 'mm', format: 'a4' });
-        pdf.addImage(img, 'PNG', (210-w)/2, 10, w, h);
-        pdf.save(`courbe_${selectedSite}_${new Date().toISOString().slice(0,10)}.pdf`);
+        chartInstance.update('none');
+        const img = chartInstance.toBase64Image('image/png', 1);
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const margin = 12;
+        const title = document.getElementById('chartTitle').textContent || `Courbe trafic - ${selectedSite}`;
+        const points = document.getElementById('metaPoints').textContent || '0';
+        const updatedAt = document.getElementById('metaUpdate').textContent || '';
+
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, pageW, pdf.internal.pageSize.getHeight(), 'F');
+        pdf.setTextColor(17, 24, 39);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(14);
+        pdf.text(title, margin, 15, { maxWidth: pageW - margin * 2 });
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(`Points: ${points}   Export: ${new Date().toLocaleString('fr-FR')}   Derniere MAJ: ${updatedAt}`, margin, 22);
+
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setFillColor(255, 255, 255);
+        pdf.roundedRect(margin, 28, pageW - margin * 2, 145, 2, 2, 'FD');
+        pdf.addImage(img, 'PNG', margin + 3, 31, pageW - margin * 2 - 6, 139);
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(10);
+        pdf.setTextColor(17, 24, 39);
+        pdf.text('Statistiques', margin, 184);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(51, 65, 85);
+        pdf.text(`Max: ${document.getElementById('statMax').textContent} Mbps`, margin, 192);
+        pdf.text(`Moyenne: ${document.getElementById('statAvg').textContent} Mbps`, margin + 45, 192);
+        pdf.text(`Min: ${document.getElementById('statMin').textContent} Mbps`, margin + 100, 192);
+
+        const cleanSite = String(selectedSite || 'site').replace(/[^a-z0-9_-]+/gi, '_');
+        pdf.save(`courbe_${cleanSite}_${new Date().toISOString().slice(0,10)}.pdf`);
     } catch(e) { showErr('Erreur PDF : ' + e.message); }
-    finally { setLoading(false); }
 }
 
 function setLoading(on) {

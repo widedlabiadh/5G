@@ -1,0 +1,745 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des sites{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+.main {
+    margin-left: var(--sidebar-width);
+    padding: calc(var(--navbar-height) + 0.75rem) 1rem 2rem !important;
+}
+    :root {
+        --site-bg: #f5f7fb;
+        --site-card: #ffffff;
+        --site-line: #eef2f6;
+        --site-text: #1a2c3e;
+        --site-muted: #6c7a8e;
+        --site-orange: #f97316;
+        --site-orange-dark: #ea580c;
+        --site-orange-light: #fff7ed;
+        --site-green: #10b981;
+        --site-green-light: #ecfdf5;
+        --site-amber: #f59e0b;
+        --site-amber-light: #fffbeb;
+        --site-red: #ef4444;
+        --site-red-light: #fef2f2;
+        --site-blue: #3b82f6;
+        --site-blue-light: #eff6ff;
+        --site-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+        --site-shadow-lg: 0 12px 30px rgba(0,0,0,0.08);
+        --radius: 20px;
+        --radius-sm: 12px;
+        --navbar-height: 64px;
+    }
+
+    body {
+        background: var(--site-bg);
+        color: var(--site-text);
+    }
+
+    /* ========== NAVBAR ========== */
+    .site-navbar {
+        background: white;
+        border-bottom: 1px solid var(--site-line);
+        padding: 0 32px;
+        height: var(--navbar-height);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(255,255,255,0.96);
+        backdrop-filter: blur(12px);
+        gap: 20px;
+    }
+
+    .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        font-size: 18px;
+        color: var(--site-text);
+        text-decoration: none;
+        flex-shrink: 0;
+    }
+
+    .nav-brand span {
+        background: linear-gradient(135deg, var(--site-orange), var(--site-orange-dark));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    /* Search dans navbar */
+    .nav-search {
+        flex: 1;
+        max-width: 400px;
+        margin: 0 20px;
+    }
+
+    .nav-search-form {
+        display: flex;
+        width: 100%;
+    }
+
+    .nav-search-input {
+        width: 100%;
+        padding: 8px 16px;
+        border-radius: 40px;
+        border: 1px solid var(--site-line);
+        background: #f8fafc;
+        outline: none;
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+
+    .nav-search-input:focus {
+        border-color: var(--site-orange);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(249,115,22,0.08);
+    }
+
+    .nav-search-btn {
+        display: none;
+    }
+
+    /* Navbar Actions (Boutons) */
+    .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+
+    .nav-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 40px;
+        padding: 8px 18px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .nav-btn-primary {
+        background: var(--site-orange);
+        color: white;
+    }
+
+    .nav-btn-primary:hover {
+        background: var(--site-orange-dark);
+        transform: translateY(-1px);
+    }
+
+    .nav-btn-secondary {
+        background: white;
+        color: var(--site-text);
+        border-color: var(--site-line);
+    }
+
+    .nav-btn-secondary:hover {
+        border-color: var(--site-orange);
+        color: var(--site-orange);
+    }
+
+    /* Import form dans navbar */
+    .nav-import-form {
+        display: inline-flex;
+        align-items: center;
+        position: relative;
+    }
+
+    .nav-file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+    }
+
+    .nav-file-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 40px;
+        padding: 8px 18px;
+        font-size: 12px;
+        font-weight: 600;
+        background: white;
+        color: var(--site-text);
+        border: 1px solid var(--site-line);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .nav-file-label:hover {
+        border-color: var(--site-orange);
+        color: var(--site-orange);
+    }
+
+    .sites-shell {
+        padding: 28px 32px;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    /* Panel Card */
+    .panel-card {
+        background: var(--site-card);
+        border-radius: var(--radius);
+        border: 1px solid var(--site-line);
+        padding: 24px;
+        box-shadow: var(--site-shadow);
+    }
+
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--site-line);
+    }
+
+    .toolbar h2 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0;
+        color: var(--site-text);
+    }
+
+    .toolbar p {
+        margin: 4px 0 0;
+        color: var(--site-muted);
+        font-size: 13px;
+    }
+
+    /* Table */
+    .sites-table-wrap {
+        overflow-x: auto;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--site-line);
+        background: white;
+    }
+
+    table.sites-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1620px;
+    }
+
+    .sites-table th {
+        text-align: left;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--site-muted);
+        background: #fafcff;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--site-line);
+        font-weight: 600;
+    }
+
+    .sites-table td {
+        padding: 16px;
+        border-bottom: 1px solid #f8fafc;
+        font-size: 13px;
+        vertical-align: top;
+    }
+
+    .sites-table tr:hover td { background: #fafcff; }
+
+    .site-name {
+        font-weight: 700;
+        color: var(--site-text);
+        text-decoration: none;
+        font-family: monospace;
+        font-size: 13px;
+    }
+
+    .site-name:hover { color: var(--site-orange); }
+
+    .site-sub {
+        margin-top: 4px;
+        color: var(--site-muted);
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    /* Pills */
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 12px;
+        border-radius: 30px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .pill-complete { background: var(--site-green-light); color: var(--site-green); }
+    .pill-partial { background: var(--site-amber-light); color: var(--site-amber); }
+    .pill-empty { background: var(--site-red-light); color: var(--site-red); }
+    .pill-orange { background: var(--site-orange-light); color: var(--site-orange); }
+    .pill-blue { background: var(--site-blue-light); color: var(--site-blue); }
+    .pill-red { background: var(--site-red-light); color: var(--site-red); }
+    .pill-amber { background: var(--site-amber-light); color: var(--site-amber); }
+    .utilization-badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .utilization-high { background: #fee2e2; color: #b91c1c; }
+    .utilization-med  { background: #fef3c7; color: #b45309; }
+    .utilization-low  { background: #dcfce7; color: #166534; }
+
+    /* Actions */
+    .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 30px;
+        border: 1px solid transparent;
+        font-size: 11px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover { transform: translateY(-1px); }
+
+    .action-edit {
+        background: var(--site-blue-light);
+        color: var(--site-blue);
+    }
+
+    .action-edit:hover {
+        background: var(--site-blue);
+        color: white;
+    }
+
+    .action-delete {
+        background: var(--site-red-light);
+        color: var(--site-red);
+    }
+
+    .action-delete:hover {
+        background: var(--site-red);
+        color: white;
+    }
+
+    /* More/Less Button */
+    .more-less-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid var(--site-line);
+    }
+
+    .btn-more-less {
+        background: white;
+        border: 1px solid var(--site-line);
+        padding: 10px 24px;
+        border-radius: 40px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--site-text);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-more-less:hover {
+        border-color: var(--site-orange);
+        color: var(--site-orange);
+        transform: translateY(-1px);
+    }
+
+    .hidden-row {
+        display: none;
+    }
+
+    /* Empty State */
+    .empty-state {
+        padding: 60px 24px;
+        text-align: center;
+        color: var(--site-muted);
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.4;
+    }
+
+    .empty-state div:first-of-type {
+        font-weight: 700;
+        color: var(--site-text);
+        margin-bottom: 8px;
+    }
+
+    /* Effacer btn */
+    .clear-search-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        color: var(--site-muted);
+        cursor: pointer;
+        margin-left: 8px;
+        transition: all 0.2s;
+    }
+
+    .clear-search-btn:hover {
+        background: var(--site-red-light);
+        color: var(--site-red);
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+        .sites-shell { padding: 20px; }
+        .site-navbar { padding: 0 20px; gap: 12px; flex-wrap: wrap; height: auto; padding: 12px 20px; }
+        .nav-search { order: 3; max-width: 100%; margin: 8px 0; flex-basis: 100%; }
+        .nav-actions { flex-wrap: wrap; }
+    }
+
+    @media (max-width: 900px) {
+        .site-navbar { flex-direction: column; }
+        .nav-actions { justify-content: center; }
+        .toolbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="sites-shell">
+    <!-- Panel Table -->
+    <section class="panel-card">
+        <div class="toolbar">
+            <div>
+                <h2><i class="fas fa-table-list" style="color: var(--site-orange);"></i> Tableau des sites</h2>
+                <p>Cliquez sur le nom d'un site pour compléter ses informations</p>
+            </div>
+        </div>
+
+        <div class="sites-table-wrap">
+            <table class="sites-table" id="sitesTable">
+                <thead>
+                    <tr>
+                        <th>Site</th>
+                        <th>Classification</th>
+                        <th>Type</th>
+                        <th class="text-end">Max TDD</th>
+                        <th class="text-end">Max FDD</th>
+                        <th class="text-end">Trafic Max</th>
+                        <th class="text-end">Capacite TDD (Mbps)</th>
+                        <th class="text-end">Capacite FDD (Mbps)</th>
+                        <th class="text-end">Taux Util.</th>
+                        <th class="text-end">Taux TDD</th>
+                        <th class="text-end">Taux FDD</th>
+                        <th class="text-center">Occurrences</th>
+                        <th class="text-center">Occurrence TDD</th>
+                        <th class="text-center">Occurrence FDD</th>
+                        <th class="text-center">Statut</th>
+                        <th class="text-center">Etat</th>
+                        <th class="text-center">Modifier</th>
+                    </tr>
+                </thead>
+                <tbody id="sitesTableBody">
+                    {% for site in sites %}
+                        {% set statutValue = site.statut|default('OK') %}
+                        {% set etatValue = site.etat|default('OK') %}
+                        {% set statutClass = 'RISQUE' in statutValue ? 'pill-amber' : ('CONGESTION' in statutValue or statutValue == 'A_VERIFIER_CAPACITE' ? 'pill-red' : ('BRIDAGE' in statutValue ? 'pill-amber' : 'pill-complete')) %}
+                        {% set etatClass = 'RISQUE' in etatValue ? 'pill-amber' : ('CONGESTION' in etatValue or etatValue == 'A_VERIFIER_CAPACITE' ? 'pill-red' : ('BRIDAGE' in etatValue ? 'pill-amber' : 'pill-complete')) %}
+                        <tr class="site-row" data-index="{{ loop.index0 }}">
+                            <td><a href="{{ path('superuser_sites_edit_by_site', {site: site.name}) }}" class="site-name">{{ site.name }}</a></td>
+                            <td>
+                                {% if site.classification %}
+                                    <span class="pill pill-blue" style="padding: 4px 10px;">{{ site.classification }}</span>
+                                {% else %}
+                                    <span class="text-muted" style="color: var(--site-muted);">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if site.typeTrans %}
+                                    <span class="pill pill-orange" style="padding: 4px 10px;">{{ site.typeTrans }}</span>
+                                {% else %}
+                                    <span class="text-muted" style="color: var(--site-muted);">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">{{ site.maxTdd is not null ? site.maxTdd|number_format(2, ',', ' ') : '-' }}</td>
+                            <td class="text-end">{{ site.maxFdd is not null ? site.maxFdd|number_format(2, ',', ' ') : '-' }}</td>
+                            <td class="text-end">{{ site.maxTrafic is not null ? site.maxTrafic|number_format(4, ',', ' ') : '-' }}</td>
+                            <td class="text-end">{{ site.capaciteTddMbps > 0 ? site.capaciteTddMbps|number_format(0, ',', ' ') : '-' }}</td>
+                            <td class="text-end">{{ site.capaciteFddMbps > 0 ? site.capaciteFddMbps|number_format(0, ',', ' ') : '-' }}</td>
+                            {% set clsS = site.classification|default('')|upper|replace({' ': '', '\t': ''}) %}
+                            {% set isCotransS = 'COTRANS' in clsS %}
+                            <td class="text-end">
+                                {% if not isCotransS and site.tauxUtilisation is not null %}
+                                    {% set tv = site.tauxUtilisation + 0 %}
+                                    <span class="utilization-badge {% if tv > 90 %}utilization-high{% elseif tv > 70 %}utilization-med{% else %}utilization-low{% endif %}">{{ tv|number_format(2, ',', ' ') }}%</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if site.tauxUtilisationTdd is not null %}
+                                    {% set tvt = site.tauxUtilisationTdd + 0 %}
+                                    <span class="utilization-badge {% if tvt > 90 %}utilization-high{% elseif tvt > 70 %}utilization-med{% else %}utilization-low{% endif %}">{{ tvt|number_format(2, ',', ' ') }}%</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if site.tauxUtilisationFdd is not null %}
+                                    {% set tvf = site.tauxUtilisationFdd + 0 %}
+                                    <span class="utilization-badge {% if tvf > 90 %}utilization-high{% elseif tvf > 70 %}utilization-med{% else %}utilization-low{% endif %}">{{ tvf|number_format(2, ',', ' ') }}%</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">{{ site.nombreOccurrences|default(0) }}</td>
+                            <td class="text-center">{{ site.nombreOccurrencesTdd|default(0) }}</td>
+                            <td class="text-center">{{ site.nombreOccurrencesFdd|default(0) }}</td>
+                            <td class="text-center"><span class="pill {{ statutClass }}">{{ statutValue }}</span></td>
+                            <td class="text-center"><span class="pill {{ etatClass }}">{{ etatValue }}</span></td>
+                            <td class="text-center">
+                                <div class="actions" style="justify-content: center;">
+                                    <a href="{{ path('superuser_sites_edit_by_site', {site: site.name}) }}" class="action-btn action-edit">
+                                        <i class="fas fa-pen"></i> Modifier
+                                    </a>
+                                    {% if site.id %}
+                                        <form method="post" action="{{ path('superuser_sites_delete', {id: site.id}) }}" onsubmit="return confirmSiteDelete('{{ site.name|e('js') }}')" style="display: inline;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_site_' ~ site.id) }}">
+                                            <button type="submit" class="action-btn action-delete" title="Supprimer">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="17">
+                                <div class="empty-state">
+                                    <i class="fas fa-sitemap"></i>
+                                    <div>Aucun site enregistre</div>
+                                    <div style="font-size: 12px; margin-bottom: 16px;">Lancez une analyse ou creez une fiche manuelle.</div>
+                                    <a href="{{ path('superuser_sites_new') }}" class="site-btn site-btn-primary"><i class="fas fa-plus"></i> Creer un site</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <table class="sites-table" id="legacySitesTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Site</th>
+                        <th>Classification</th>
+                        <th>Type</th>
+                        <th class="text-end">Max TDD</th>
+                        <th class="text-end">Max FDD</th>
+                        <th class="text-end">Trafic Max</th>
+                        <th class="text-end">Capacite TDD (Mbps)</th>
+                        <th class="text-end">Capacite FDD (Mbps)</th>
+                        <th class="text-end">Taux Util.</th>
+                        <th class="text-center">Occurrences</th>
+                        <th class="text-center">Occurrence TDD</th>
+                        <th class="text-center">Occurrence FDD</th>
+                        <th class="text-center">Statut</th>
+                        <th class="text-center">Etat</th>
+                    </tr>
+                </thead>
+                <tbody id="legacySitesTableBody">
+                    {% for site in sites %}
+                        {% set isComplete = site.maxTrafic is not null and site.typeTrans and site.classification and site.latitude is not null and site.longitude is not null %}
+                        {% set hasType = site.typeTrans is not empty %}
+                        {% set hasClass = site.classification is not empty %}
+                        {% set hasCoords = site.latitude is not null and site.longitude is not null %}
+                        
+                        {% set completenessClass = 'pill-empty' %}
+                        {% set completenessText = '⚠️ Incomplet' %}
+                        {% if isComplete %}
+                            {% set completenessClass = 'pill-complete' %}
+                            {% set completenessText = '✅ Complet' %}
+                        {% elseif hasType or hasClass or hasCoords %}
+                            {% set completenessClass = 'pill-partial' %}
+                            {% set completenessText = '🟡 Partiel' %}
+                        {% endif %}
+                        
+                        <tr class="site-row" data-index="{{ loop.index0 }}">
+                            <td>
+                                <a href="{{ path('superuser_sites_edit_by_site', {site: site.name}) }}" class="site-name">{{ site.name }}</a>
+                                <div class="site-sub">
+                                    {% if site.id %}
+                                        <span class="pill {{ completenessClass }}" style="padding: 2px 8px; font-size: 10px;">{{ completenessText }}</span>
+                                    {% else %}
+                                        <span class="pill pill-orange" style="padding: 2px 8px; font-size: 10px;">📊 Données analyse</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {{ site.maxTrafic is not null ? (site.maxTrafic|number_format(2, ',', ' ') ~ ' Mbps') : '—' }}
+                            </td>
+                            <td>
+                                {% if hasType %}
+                                    <span class="pill pill-orange" style="padding: 4px 10px;">{{ site.typeTrans }}</span>
+                                {% else %}
+                                    <span class="text-muted" style="color: var(--site-muted);">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if hasClass %}
+                                    <span class="pill pill-blue" style="padding: 4px 10px;">{{ site.classification }}</span>
+                                {% else %}
+                                    <span class="text-muted" style="color: var(--site-muted);">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if hasCoords %}
+                                    <div style="font-family: monospace; font-size: 11px;">{{ site.latitude|number_format(6, '.', ' ') }}</div>
+                                    <div style="font-family: monospace; font-size: 11px; color: var(--site-muted);">{{ site.longitude|number_format(6, '.', ' ') }}</div>
+                                {% else %}
+                                    <span style="color: var(--site-muted);">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if site.id %}
+                                    <span class="pill pill-complete"><i class="fas fa-shield-halved"></i> Superuser</span>
+                                {% else %}
+                                    <span class="pill pill-orange"><i class="fas fa-chart-line"></i> Analyse</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="actions">
+                                    <a href="{{ path('superuser_sites_edit_by_site', {site: site.name}) }}" class="action-btn action-edit">
+                                        <i class="fas fa-pen"></i> Modifier
+                                    </a>
+                                    {% if site.id %}
+                                        <form method="post" action="{{ path('superuser_sites_delete', {id: site.id}) }}" onsubmit="return confirmSiteDelete('{{ site.name|e('js') }}')" style="display: inline;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_site_' ~ site.id) }}">
+                                            <button type="submit" class="action-btn action-delete">
+                                                <i class="fas fa-trash-alt"></i> Supprimer
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <i class="fas fa-sitemap"></i>
+                                    <div>Aucun site enregistré</div>
+                                    <div style="font-size: 12px; margin-bottom: 16px;">Lancez une analyse ou créez une fiche manuelle.</div>
+                                    <a href="{{ path('superuser_sites_new') }}" class="site-btn site-btn-primary"><i class="fas fa-plus"></i> Créer un site</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- More / Less Button -->
+        {% if sites|length > 10 %}
+        <div class="more-less-container">
+            <button class="btn-more-less" id="toggleMoreLessBtn">
+                <i class="fas fa-chevron-down"></i> Afficher plus ({{ sites|length - 10 }} sites masqués)
+            </button>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+function confirmSiteDelete(siteName) {
+    return confirm(`Supprimer le site "${siteName}" ? Cette action est irréversible.`);
+}
+
+// Import file handler dans navbar
+document.getElementById('navSitesImportFile')?.addEventListener('change', function () {
+    if (this.files.length > 0) {
+        document.getElementById('navSitesImportForm')?.submit();
+    }
+});
+
+// Auto-submit search on input change
+document.querySelector('.nav-search-input')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        this.closest('form').submit();
+    }
+});
+
+// More/Less functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('#sitesTableBody .site-row');
+    const totalRows = rows.length;
+    const DEFAULT_LIMIT = 10;
+    let showAll = false;
+    const toggleBtn = document.getElementById('toggleMoreLessBtn');
+    
+    if (!toggleBtn) return;
+    
+    function updateDisplay() {
+        rows.forEach((row, index) => {
+            if (showAll || index < DEFAULT_LIMIT) {
+                row.classList.remove('hidden-row');
+                row.style.display = '';
+            } else {
+                row.classList.add('hidden-row');
+                row.style.display = 'none';
+            }
+        });
+        
+        const hiddenCount = totalRows - DEFAULT_LIMIT;
+        if (showAll) {
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-up"></i> Afficher moins (' + totalRows + ' sites affichés)';
+        } else {
+            if (hiddenCount > 0) {
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-down"></i> Afficher plus (' + hiddenCount + ' sites masqués)';
+            } else {
+                toggleBtn.style.display = 'none';
+            }
+        }
+    }
+    
+    toggleBtn.addEventListener('click', function() {
+        showAll = !showAll;
+        updateDisplay();
+    });
+    
+    // Initial display
+    updateDisplay();
+});
+</script>
+{% endblock %}

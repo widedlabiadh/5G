@@ -59,6 +59,9 @@ class Ticket
     #[ORM\OneToMany(mappedBy: 'ticket', targetEntity: TicketTask::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $tasks;
 
+    #[ORM\OneToMany(mappedBy: 'ticket', targetEntity: TicketSite::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $ticketSites;
+
     #[ORM\OneToMany(mappedBy: 'ticket', targetEntity: TicketComment::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $comments;
 
@@ -71,6 +74,7 @@ class Ticket
     public function __construct()
     {
         $this->tasks = new ArrayCollection();
+        $this->ticketSites = new ArrayCollection();
         $this->comments = new ArrayCollection();
         $this->history = new ArrayCollection();
         $this->notifications = new ArrayCollection();
@@ -97,6 +101,7 @@ class Ticket
     public function getCreatedBy(): ?User { return $this->createdBy; }
     public function getSite(): ?AnalyseResultat { return $this->site; }
     public function getTasks(): Collection { return $this->tasks; }
+    public function getTicketSites(): Collection { return $this->ticketSites; }
     public function getComments(): Collection { return $this->comments; }
     public function getHistory(): Collection { return $this->history; }
     public function getNotifications(): Collection { return $this->notifications; }

@@ -17,15 +17,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // ============================================================
 
     const ROLE_LABELS = [
-        'admin'         => 'Administrateur',
-        'superuser'     => 'Super Utilisateur',
-        'support_fo'    => 'Support FO',
-        'support_fh'    => 'Support FH',
-        'ingenierie_fh' => 'Ingénierie FH',
-        'ingenierie_ip' => 'Ingénierie IP',
-        'gc'            => 'Département GC',
-        'deploiement'   => 'Déploiement',
-        'controleur'    => 'Contrôleur',
+        'admin'                 => 'Administrateur',
+        'superuser'             => 'Super Utilisateur',
+        'support_fo'            => 'Support FO',
+        'support_fh'            => 'Support FH',
+        'support_radio'         => 'Support Radio',
+        'ingenierie_fh'         => 'Ingénierie FH',
+        'ingenierie_ip'         => 'Ingénierie IP',
+        'ingenierie_backbone'   => 'Ingénierie Backhaul Sharing',
+        'gc'                    => 'Département GC',
+        'deploiement'           => 'Déploiement',
+        'controleur'            => 'Contrôleur',
     ];
 
     // ============================================================

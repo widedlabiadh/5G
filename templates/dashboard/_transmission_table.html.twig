@@ -1,5 +1,5 @@
 {# templates/dashboard/_transmission_table.html.twig #}
-{# Template partagé par FO, FH, Backbone et TOUS #}
+{# Template partagé par FO, FH, Backhaul Sharing et TOUS #}
 
 {% extends 'base.html.twig' %}
 
@@ -9,7 +9,7 @@
 {{ parent() }}
 <style>
 .main {
-    margin-left: 260px;
+    margin-left: var(--sidebar-width);
     padding: 1.8rem 2rem !important;
 }
     /* STATS CARTES STYLE IMAGE */
@@ -85,7 +85,8 @@
     .class-badge.cotrans { background: #d1fae5; color: #065f46; }
     .class-badge.nocotrans { background: #dbeafe; color: #1e40af; }
     .class-badge.nontdd { background: #f1f5f9; color: #475569; }
-    .class-badge.fdd { background: #e0f2fe; color: #0369a1; }
+    .class-badge.fdd,
+    .class-badge.onlyfdd { background: #e0f2fe; color: #0369a1; }
 
     /* STATUT BADGES */
     .statut-badge {
@@ -110,9 +111,14 @@
         font-weight: 700;
         text-align: center;
     }
-    .etat-badge.congestion { background: #fee2e2; color: #dc2626; }
-    .etat-badge.bridage { background: #fef3c7; color: #d97706; }
-    .etat-badge.ok { background: #dcfce7; color: #16a34a; }
+    .etat-badge.congestion     { background: #fee2e2; color: #dc2626; }
+    .etat-badge.congestion-fdd { background: #fee2e2; color: #b91c1c; }
+    .etat-badge.congestion-tdd { background: #fee2e2; color: #b91c1c; }
+    .etat-badge.risque         { background: #fef3c7; color: #b45309; }
+    .etat-badge.bridage        { background: #fef3c7; color: #d97706; }
+    .etat-badge.bridage-fdd    { background: #fef3c7; color: #b45309; }
+    .etat-badge.bridage-tdd    { background: #fef3c7; color: #b45309; }
+    .etat-badge.ok             { background: #dcfce7; color: #16a34a; }
 
     /* FILTRES */
     .filters-bar {
@@ -322,13 +328,14 @@
             <option value="TF" {{ classFilter == 'TF' ? 'selected' : '' }}>TF</option>
             <option value="COTRANS" {{ classFilter == 'COTRANS' ? 'selected' : '' }}>COTRANS</option>
             <option value="NO_COTRANS" {{ classFilter == 'NO_COTRANS' ? 'selected' : '' }}>NO_COTRANS</option>
-            <option value="FDD" {{ classFilter == 'FDD' ? 'selected' : '' }}>FDD</option>
+            <option value="ONLY_FDD" {{ classFilter == 'ONLY_FDD' ? 'selected' : '' }}>Only FDD</option>
         </select>
         
         <a href="{{ app.request.pathInfo }}" class="btn btn-sm btn-light border">Réinitialiser</a>
         
-        <span class="text-muted small ms-auto">{{ sites|length }} site(s)</span>
+        <span class="text-muted small ms-auto">{{ total|default(sites|length) }} site(s)</span>
     </form>
+
 
     <!-- TABLEAU -->
     <div class="table-wrapper">
@@ -364,11 +371,19 @@
                         <th class="text-end">Max TDD</th>
                         <th class="text-end">Max FDD</th>
                         <th class="text-end">Trafic Max</th>
-                        <th class="text-end">Capacité</th>
+                        <th class="text-end">Capacité TDD (Mbps)</th>
+                        <th class="text-end">Capacité FDD (Mbps)</th>
                         <th class="text-end">Taux Util.</th>
+                        <th class="text-end">Taux TDD</th>
+                        <th class="text-end">Taux FDD</th>
                         <th class="text-center">Occurrences</th>
+                        <th class="text-center">Occurrence TDD</th>
+                        <th class="text-center">Occurrence FDD</th>
                         <th class="text-center">Statut</th>
                         <th class="text-center">État</th>
+                        <th class="text-center">DropCong (tdd)</th>
+                        <th class="text-center">DropCong (fdd)</th>
+                        <th class="text-center">DropCong (tf)</th>
                         <th>Date Max</th>
                     </tr>
                 </thead>
@@ -378,12 +393,51 @@
                     {% set maxFdd = s.max_fdd|default(0) %}
                     {% set maxTrafic = s.max_trafic|default(0) %}
                     {% set occurrences = s.nombre_occurrences|default(0) %}
-                    {% set statut = s.statut|default('AUCUNE OCCURRENCE') %}
+                    {% set occurrencesTdd = s.nombre_occurrences_tdd|default(0) %}
+                    {% set occurrencesFdd = s.nombre_occurrences_fdd|default(0) %}
+                    {% set capacityTdd = s.capacite_tdd_mbps|default(0) %}
+                    {% set capacityFdd = s.capacite_fdd_mbps|default(0) %}
+                    {% set capacityTotal = s.capacite_mbps|default(0) %}
+                    {% if capacityTotal <= 0 %}
+                        {% set capacityTotal = capacityFdd > 0 ? capacityFdd : (capacityTdd + capacityFdd) %}
+                    {% endif %}
+                    {% set dureeSite = s.duree_jours|default(7) %}
+                    {% set seuilObservation = s.seuil_observation|default(((20 * dureeSite) / 7)|round(0, 'ceil')) %}
+                    {% set seuilCritique = s.seuil_critique|default(((50 * dureeSite) / 7)|round(0, 'ceil')) %}
+                    {% set statut = s.statut|default('OK') %}
+                    {% set statutLabel = s.statut_label|default(statut == 'SOUS_OBSERVATION' ? 'SOUS OBSERVATION' : statut) %}
                     {% set etat = s.etat|default('OK') %}
+                    {% set dropcongTdd = s.dropcong_tdd|default(0) %}
+                    {% set dropcongFdd = s.dropcong_fdd|default(0) %}
+                    {% set dropcongTf = s.dropcong_tf|default(0) %}
+                    
+                    {# Taux d'utilisation #}
+                    {% set clsForTaux = s.classification|default('')|upper|replace({' ': '', '\t': ''}) %}
+                    {% set isCotrans = 'COTRANS' in clsForTaux %}
+                    {# COTRANS/NO_COTRANS : taux global toujours vide — seuls taux TDD et FDD sont affichés #}
+                    {% if isCotrans %}
+                        {% set tauxGlobal = null %}
+                    {% else %}
+                        {% set tauxGlobal = s.taux_utilisation is defined and s.taux_utilisation is not null ? s.taux_utilisation + 0 : null %}
+                        {% if tauxGlobal is null and capacityTotal > 0 and maxTrafic > 0 %}
+                            {% set tauxGlobal = (maxTrafic / capacityTotal) * 100 %}
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% set tauxTdd = s.taux_utilisation_tdd is defined and s.taux_utilisation_tdd is not null ? s.taux_utilisation_tdd + 0 : null %}
+                    {% if tauxTdd is null and capacityTdd > 0 and maxTdd > 0 %}
+                        {% set tauxTdd = (maxTdd / capacityTdd) * 100 %}
+                    {% endif %}
+                    
+                    {% set tauxFdd = s.taux_utilisation_fdd is defined and s.taux_utilisation_fdd is not null ? s.taux_utilisation_fdd + 0 : null %}
+                    {% if tauxFdd is null and capacityFdd > 0 and maxFdd > 0 %}
+                        {% set tauxFdd = (maxFdd / capacityFdd) * 100 %}
+                    {% endif %}
+                    
                     {% set statutClass = '' %}
                     {% if statut == 'CRITIQUE' %}
                         {% set statutClass = 'critique' %}
-                    {% elseif statut == 'SURVEILLANCE' %}
+                    {% elseif statut in ['SOUS_OBSERVATION', 'SURVEILLANCE'] %}
                         {% set statutClass = 'surveillance' %}
                     {% elseif statut == 'OK' %}
                         {% set statutClass = 'ok' %}
@@ -394,35 +448,40 @@
                     {% set etatClass = '' %}
                     {% if etat == 'CONGESTION' %}
                         {% set etatClass = 'congestion' %}
+                    {% elseif etat == 'CONGESTION(FDD)' %}
+                        {% set etatClass = 'congestion-fdd' %}
+                    {% elseif etat == 'CONGESTION(TDD)' %}
+                        {% set etatClass = 'congestion-tdd' %}
+                    {% elseif etat == 'RISQUE_DE_CONGESTION' %}
+                        {% set etatClass = 'risque' %}
                     {% elseif etat == 'BRIDAGE' %}
                         {% set etatClass = 'bridage' %}
+                    {% elseif etat == 'BRIDAGE(FDD)' %}
+                        {% set etatClass = 'bridage-fdd' %}
+                    {% elseif etat == 'BRIDAGE(TDD)' %}
+                        {% set etatClass = 'bridage-tdd' %}
                     {% else %}
                         {% set etatClass = 'ok' %}
                     {% endif %}
                     
                     <tr>
-                        <td class="text-muted">{{ loop.index }}</td>
-                        {# ⭐ NETTOYAGE DU NOM DE SITE (supprime _LM, _TC, _TD, _TDD, _TF, _BO, _BH) #}
+                        <td class="text-muted">{{ ((page|default(1) - 1) * limit|default(50)) + loop.index }}</td>
                         <td>
                             <strong class="site-name">
-                                {{ s.site|replace({
-                                    '_LM': '', '_LMB': '', '_LM2': '',
-                                    '_TC': '', '_TD': '', '_TDD': '',
-                                    '_TF': '', '_BO': '', '_BH': '',
-                                    '_FDD': ''
-                                })|trim }}
+                                {{ s.site|clean_site }}
                             </strong>
                         </td>
                         <td>
-                            {% set cls = s.classification|upper %}
-                            <span class="class-badge {{ cls|lower|replace({'_':''}) }}">{{ cls }}</span>
+                            {% set clsRaw = s.classification_display|default(s.classification)|upper|trim %}
+                            {% set cls = clsRaw in ['ONLY FDD', 'ONLY_FDD', 'FDD', '-'] ? 'ONLY_FDD' : clsRaw %}
+                            {% set clsLabel = cls == 'ONLY_FDD' ? 'ONLY FDD' : cls|replace({'_': ' '}) %}
+                            <span class="class-badge {{ cls|lower|replace({'_':''}) }}">{{ clsLabel }}</span>
                         </td>
                         <td>
                             <span class="badge bg-light text-dark fw-semibold">
-                                {{ s.type_trans ?? '—' }}
+                                {{ s.type_trans|default('only FDD') == '-' ? 'only FDD' : s.type_trans|default('only FDD') }}
                             </span>
                         </td>
-                        {# Max TDD - affichage exact sans arrondi #}
                         <td class="text-end value-exact">
                             {% if maxTdd > 0 %}
                                 {{ maxTdd|replace({'.': ','}) }}
@@ -430,7 +489,6 @@
                                 0
                             {% endif %}
                         </td>
-                        {# Max FDD - affichage exact sans arrondi (108.8752 → 108,8752) #}
                         <td class="text-end value-exact">
                             {% if maxFdd > 0 %}
                                 {{ maxFdd|replace({'.': ','}) }}
@@ -438,7 +496,6 @@
                                 0
                             {% endif %}
                         </td>
-                        {# Trafic Max - affichage exact sans arrondi #}
                         <td class="text-end fw-bold value-exact">
                             {% if maxTrafic > 0 %}
                                 {{ maxTrafic|replace({'.': ','}) }}
@@ -446,40 +503,80 @@
                                 0
                             {% endif %}
                         </td>
-                        {# Capacité - affichage exact #}
                         <td class="text-end">
-                            {% if s.capacite_mbps is defined and s.capacite_mbps > 0 %}
-                                <span class="capacity-badge">{{ s.capacite_mbps|replace({'.': ','}) }} Mbps</span>
+                            {% if capacityTdd > 0 %}
+                                <span class="capacity-badge">{{ (capacityTdd + 0)|replace({'.': ','}) }}</span>
                             {% else %}
                                 <span class="text-muted">—</span>
                             {% endif %}
                         </td>
-                        {# Taux Utilisation - calculé à partir des valeurs exactes #}
                         <td class="text-end">
-                            {% if s.capacite_mbps is defined and s.capacite_mbps > 0 and maxTrafic > 0 %}
-                                {% set utilisation = (maxTrafic / s.capacite_mbps) * 100 %}
-                                {% if utilisation > 90 %}
-                                    <span class="utilization-badge utilization-high">{{ utilisation|number_format(2, ',', ' ') }}%</span>
-                                {% elseif utilisation > 70 %}
-                                    <span class="utilization-badge utilization-med">{{ utilisation|number_format(2, ',', ' ') }}%</span>
+                            {% if capacityFdd > 0 %}
+                                <span class="capacity-badge">{{ (capacityFdd + 0)|replace({'.': ','}) }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if tauxGlobal is not null and not isCotrans %}
+                                {% if tauxGlobal > 90 %}
+                                    <span class="utilization-badge utilization-high">{{ tauxGlobal|number_format(2, ',', ' ') }}%</span>
+                                {% elseif tauxGlobal > 70 %}
+                                    <span class="utilization-badge utilization-med">{{ tauxGlobal|number_format(2, ',', ' ') }}%</span>
                                 {% else %}
-                                    <span class="utilization-badge utilization-low">{{ utilisation|number_format(2, ',', ' ') }}%</span>
+                                    <span class="utilization-badge utilization-low">{{ tauxGlobal|number_format(2, ',', ' ') }}%</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if tauxTdd is not null %}
+                                {% if tauxTdd > 90 %}
+                                    <span class="utilization-badge utilization-high">{{ tauxTdd|number_format(2, ',', ' ') }}%</span>
+                                {% elseif tauxTdd > 70 %}
+                                    <span class="utilization-badge utilization-med">{{ tauxTdd|number_format(2, ',', ' ') }}%</span>
+                                {% else %}
+                                    <span class="utilization-badge utilization-low">{{ tauxTdd|number_format(2, ',', ' ') }}%</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if tauxFdd is not null %}
+                                {% if tauxFdd > 90 %}
+                                    <span class="utilization-badge utilization-high">{{ tauxFdd|number_format(2, ',', ' ') }}%</span>
+                                {% elseif tauxFdd > 70 %}
+                                    <span class="utilization-badge utilization-med">{{ tauxFdd|number_format(2, ',', ' ') }}%</span>
+                                {% else %}
+                                    <span class="utilization-badge utilization-low">{{ tauxFdd|number_format(2, ',', ' ') }}%</span>
                                 {% endif %}
                             {% else %}
                                 <span class="text-muted">—</span>
                             {% endif %}
                         </td>
                         <td class="text-center">
-                            <span class="{% if occurrences > 50 %}occurrence-high{% elseif occurrences > 10 %}occurrence-med{% else %}occurrence-ok{% endif %}">
+                            <span class="{% if occurrences >= seuilCritique %}occurrence-high{% elseif occurrences >= seuilObservation %}occurrence-med{% else %}occurrence-ok{% endif %}">
                                 {{ occurrences }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="{% if occurrencesTdd >= seuilCritique %}occurrence-high{% elseif occurrencesTdd >= seuilObservation %}occurrence-med{% else %}occurrence-ok{% endif %}">
+                                {{ occurrencesTdd }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="{% if occurrencesFdd >= seuilCritique %}occurrence-high{% elseif occurrencesFdd >= seuilObservation %}occurrence-med{% else %}occurrence-ok{% endif %}">
+                                {{ occurrencesFdd }}
                             </span>
                         </td>
                         <td class="text-center">
                             <span class="statut-badge {{ statutClass }}">
                                 {% if statut == 'CRITIQUE' %}
-                                    🔴 CRITIQUE
-                                {% elseif statut == 'SURVEILLANCE' %}
-                                    🟠 SURVEILLANCE
+                                    🔴 {{ statutLabel }}
+                                {% elseif statut in ['SOUS_OBSERVATION', 'SURVEILLANCE'] %}
+                                    🟠 {{ statutLabel }}
                                 {% elseif statut == 'OK' %}
                                     🟢 OK
                                 {% else %}
@@ -487,18 +584,30 @@
                                 {% endif %}
                             </span>
                         </td>
-                        {# ✅ NOUVELLE COLONNE ÉTAT #}
                         <td class="text-center">
                             <span class="etat-badge {{ etatClass }}">
                                 {% if etat == 'CONGESTION' %}
                                     🔴 CONGESTION
+                                {% elseif etat == 'CONGESTION(FDD)' %}
+                                    🔴 CONGESTION (FDD)
+                                {% elseif etat == 'CONGESTION(TDD)' %}
+                                    🔴 CONGESTION (TDD)
+                                {% elseif etat == 'RISQUE_DE_CONGESTION' %}
+                                    RISQUE DE CONGESTION
                                 {% elseif etat == 'BRIDAGE' %}
                                     🟠 BRIDAGE
+                                {% elseif etat == 'BRIDAGE(FDD)' %}
+                                    🟠 BRIDAGE (FDD)
+                                {% elseif etat == 'BRIDAGE(TDD)' %}
+                                    🟠 BRIDAGE (TDD)
                                 {% else %}
                                     🟢 OK
                                 {% endif %}
                             </span>
                         </td>
+                        <td class="text-center">{{ dropcongTdd }}</td>
+                        <td class="text-center">{{ dropcongFdd }}</td>
+                        <td class="text-center">{{ dropcongTf }}</td>
                         <td class="small text-muted">{{ s.date_max ? s.date_max|date('d/m/Y H:i') : '—' }}</td>
                     </tr>
                 {% endfor %}

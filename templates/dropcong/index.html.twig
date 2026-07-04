@@ -1,0 +1,371 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}DropCong - NetWON{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+.main {
+    margin-left: var(--sidebar-width);
+    padding: calc(var(--navbar-height) + 1rem) 1.25rem 2rem !important;
+    background: #f6f8fb;
+    min-height: 100vh;
+}
+
+.dropcong-page {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.dropcong-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.dropcong-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+}
+
+.dropcong-subtitle {
+    color: #64748b;
+    font-size: 0.86rem;
+    margin-top: 0.25rem;
+}
+
+.dropcong-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.dropcong-stat {
+    background: white;
+    border: 1px solid #e7edf5;
+    border-radius: 8px;
+    padding: 0.9rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.dropcong-stat span {
+    display: block;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+}
+
+.dropcong-stat strong {
+    color: #111827;
+    font-size: 1.55rem;
+    line-height: 1;
+}
+
+.dropcong-stat.yes strong { color: #dc2626; }
+.dropcong-stat.no strong { color: #059669; }
+.dropcong-stat.date strong {
+    color: #334155;
+    font-size: 0.95rem;
+    line-height: 1.25;
+}
+
+.dropcong-rule {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    border-radius: 8px;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.dropcong-filters {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    background: white;
+    border: 1px solid #e7edf5;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.dropcong-input,
+.dropcong-select {
+    border: 1px solid #dbe3ee;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #111827;
+    font-size: 0.84rem;
+    min-height: 38px;
+    padding: 0.45rem 0.7rem;
+    outline: none;
+}
+
+.dropcong-input {
+    flex: 1;
+    min-width: 180px;
+}
+
+.dropcong-input:focus,
+.dropcong-select:focus {
+    background: white;
+    border-color: #ff6200;
+    box-shadow: 0 0 0 3px rgba(255, 98, 0, 0.1);
+}
+
+.dropcong-filter-btn,
+.dropcong-export-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: 0;
+    border-radius: 8px;
+    min-height: 38px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.dropcong-filter-btn {
+    background: #111827;
+    color: white;
+}
+
+.dropcong-export-btn {
+    background: #059669;
+    color: white;
+}
+
+.dropcong-export-btn:hover {
+    background: #047857;
+    color: white;
+}
+
+.dropcong-table-wrap {
+    background: white;
+    border: 1px solid #e7edf5;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.dropcong-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.dropcong-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e7edf5;
+}
+
+.dropcong-table td {
+    color: #1f2937;
+    font-size: 0.86rem;
+    padding: 0.72rem 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.dropcong-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.dropcong-site {
+    font-weight: 800;
+    color: #111827;
+}
+
+.dropcong-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    border-radius: 999px;
+    padding: 0.28rem 0.62rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.dropcong-badge.yes {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.dropcong-badge.no {
+    background: #dcfce7;
+    color: #047857;
+}
+
+.dropcong-empty {
+    text-align: center;
+    color: #64748b;
+    padding: 2rem 1rem;
+}
+
+.text-center { text-align: center; }
+.text-end { text-align: right; }
+
+@media (max-width: 900px) {
+    .dropcong-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .dropcong-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dropcong-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .main {
+        margin-left: 0;
+        padding: calc(var(--navbar-height) + 0.75rem) 0.75rem 1rem !important;
+    }
+
+    .dropcong-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .dropcong-table-wrap {
+        overflow-x: auto;
+    }
+
+    .dropcong-table {
+        min-width: 720px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="dropcong-page">
+    <div class="dropcong-head">
+        <div>
+            <h1 class="dropcong-title">Résultat DropCong</h1>
+            <div class="dropcong-subtitle">Sites marques oui quand un KPI DropCong depasse {{ threshold }}.</div>
+        </div>
+        <a href="{{ path('export_dropcong_excel', { search: search, dropcong: dropFilter, sort: sort }) }}" class="dropcong-export-btn">
+            <i class="fas fa-file-excel"></i>
+            Exporter Excel
+        </a>
+    </div>
+
+    <div class="dropcong-stats">
+        <div class="dropcong-stat">
+            <span>Total sites</span>
+            <strong>{{ stats.total }}</strong>
+        </div>
+        <div class="dropcong-stat yes">
+            <span>DropCong oui</span>
+            <strong>{{ stats.oui }}</strong>
+        </div>
+        <div class="dropcong-stat no">
+            <span>DropCong non</span>
+            <strong>{{ stats.non }}</strong>
+        </div>
+        <div class="dropcong-stat date">
+            <span>Dernier import</span>
+            <strong>
+                {% if stats.last_import %}
+                    {{ stats.last_import|date('d/m/Y H:i') }}
+                {% else %}
+                    -
+                {% endif %}
+            </strong>
+        </div>
+    </div>
+
+    <div class="dropcong-rule">
+        <i class="fas fa-filter"></i>
+        Règle appliquee : VS.IUB.FlowCtrol.DL.DropCong.DownBWNum.LgcPort1 > {{ threshold }}.
+    </div>
+
+    <form method="get" class="dropcong-filters">
+        <input class="dropcong-input" type="search" name="search" value="{{ search }}" placeholder="Rechercher un site">
+        <select class="dropcong-select" name="dropcong">
+            <option value="" {{ dropFilter == '' ? 'selected' : '' }}>Tous</option>
+            <option value="oui" {{ dropFilter == 'oui' ? 'selected' : '' }}>Oui</option>
+            <option value="non" {{ dropFilter == 'non' ? 'selected' : '' }}>Non</option>
+        </select>
+      
+        <button type="submit" class="dropcong-filter-btn">
+            <i class="fas fa-magnifying-glass"></i>
+            Filtrer
+        </button>
+    </form>
+
+    <div class="dropcong-table-wrap">
+        <table class="dropcong-table">
+            <thead>
+                <tr>
+                    <th>Site</th>
+                    <th class="text-center">DropCong</th>
+                    <th class="text-end">Max IUB</th>
+                    <th>Import</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td class="dropcong-site">{{ row.site }}</td>
+                    <td class="text-center">
+                        <span class="dropcong-badge {{ row.dropcong == 'oui' ? 'yes' : 'no' }}">
+                            {{ row.dropcong }}
+                        </span>
+                    </td>
+                    <td class="text-end">{{ row.max_iub|number_format(0, ',', ' ') }}</td>
+                    <td>
+                        {% if row.date_import %}
+                            {{ row.date_import|date('d/m/Y H:i') }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4" class="dropcong-empty">
+                        {% if tableExists %}
+                            Aucun site ne correspond aux filtres.
+                        {% else %}
+                            Aucun resultat DropCong importe.
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

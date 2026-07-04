@@ -16,18 +16,23 @@ class SiteCleanerExtension extends AbstractExtension
     }
 
     /**
-     * Supprime les suffixes courants d'un nom de site :
-     * - _LM, _TC, _TD, _TDD, _tf, _BO_, _BH_, etc.
-     * Exemple: "ARI_0003_LM" -> "ARI_0003"
+     * Supprime les suffixes techniques courants d'un nom de site.
+     * Exemple: "ARI_0140_00" -> "ARI_0140"
      */
     public function cleanSiteName(?string $name): string
     {
         if (empty($name)) {
-            return '—';
+            return 'â€”';
         }
 
-        // Supprime tout ce qui suit un suffixe connu (insensible à la casse)
-        $cleaned = preg_replace('/_(LM|TC|TD|TDD|tf|BO_.*|BH_.*)$/i', '', $name);
+        $cleaned = trim($name);
+
+        do {
+            $previous = $cleaned;
+            $cleaned = preg_replace('/_(LM2|LMB|LM|TC|TD|TDD|TF|FDD|00)$/i', '', $cleaned);
+            $cleaned = preg_replace('/_(BH|BO|TR|OO|OR|TT)(?:_[A-Z0-9]+)*$/i', '', $cleaned);
+            $cleaned = trim((string) $cleaned);
+        } while ($cleaned !== $previous);
 
         return $cleaned ?: $name;
     }

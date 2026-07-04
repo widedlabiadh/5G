@@ -58,7 +58,18 @@ class TicketSummaryDTO
             $dto->createdAt = 'N/A';
         }
         
-        $dto->siteName = $ticket->getSite()?->getSite() ?? 'Non spécifié';
+        if (method_exists($ticket, 'getTicketSites') && !$ticket->getTicketSites()->isEmpty()) {
+            $names = [];
+            foreach ($ticket->getTicketSites() as $ticketSite) {
+                $names[] = $ticketSite->getSiteName();
+            }
+            $dto->siteName = implode(', ', array_slice($names, 0, 3));
+            if (count($names) > 3) {
+                $dto->siteName .= sprintf(' +%d', count($names) - 3);
+            }
+        } else {
+            $dto->siteName = $ticket->getSite()?->getSite() ?? 'Non spécifié';
+        }
         $dto->tasksCount = $ticket->getTasks()->count();
         $dto->tasksDoneCount = 0;
         $dto->isOverdue = $ticket->isOverdue();

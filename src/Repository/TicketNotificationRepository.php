@@ -15,15 +15,20 @@ class TicketNotificationRepository extends ServiceEntityRepository
         parent::__construct($registry, TicketNotification::class);
     }
 
-    public function findUnreadByUser(User $user): array
+    public function findUnreadByUser(User $user, ?int $limit = null): array
     {
-        return $this->createQueryBuilder('n')
+        $qb = $this->createQueryBuilder('n')
+            ->leftJoin('n.ticket', 't')->addSelect('t')
             ->andWhere('n.user = :user')
             ->andWhere('n.isRead = false')
             ->setParameter('user', $user)
-            ->orderBy('n.createdAt', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->orderBy('n.createdAt', 'DESC');
+
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
     public function countUnreadByUser(User $user): int
@@ -35,6 +40,18 @@ class TicketNotificationRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    public function findLatestForUser(User $user, int $limit = 50): array
+    {
+        return $this->createQueryBuilder('n')
+            ->leftJoin('n.ticket', 't')->addSelect('t')
+            ->andWhere('n.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('n.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 
     public function markAllAsRead(User $user): void

@@ -44,6 +44,11 @@ class AlertService
         ");
     }
 
+    public function countToutesAlertes(): int
+    {
+        return (int) $this->connection->fetchOne("SELECT COUNT(*) FROM site_alert");
+    }
+
     public function marquerLue(int $id): void
     {
         $this->connection->executeStatement(
@@ -59,13 +64,75 @@ class AlertService
 
     public function getHistoriqueAlertes(int $limit = 100, int $offset = 0): array
     {
+        // Toujours inclure les anomalies IA (détectées par cron) + les alertes de l'import le plus récent
         return $this->connection->fetchAllAssociative("
             SELECT id, site, etat, trafic_j, capacite_mbps, taux_utilisation,
                    type_trans, classification, message, date_alerte, alerte_lue, email_envoye
             FROM site_alert
+            WHERE type_trans = 'IA_ANOMALY'
+               OR date_alerte >= (
+                   SELECT COALESCE(MAX(date_analyse) - INTERVAL '2 hours', NOW() - INTERVAL '24 hours')
+                   FROM analyse_resultat
+               )
             ORDER BY date_alerte DESC
             LIMIT :limit OFFSET :offset
         ", ['limit' => $limit, 'offset' => $offset]);
+    }
+
+    public function getSitesSansType(int $limit = 500): array
+    {
+        $lastDate = $this->connection->fetchOne("
+            SELECT MAX(date_analyse) FROM analyse_resultat
+        ");
+
+        if (!$lastDate) {
+            return [];
+        }
+
+        $sql = "
+            SELECT
+                id,
+                site,
+                COALESCE(NULLIF(TRIM(type_trans), ''), 'NON_DEFINI') AS type_trans,
+                COALESCE(NULLIF(TRIM(classification), ''), 'NON_DEFINI') AS classification,
+                date_analyse
+            FROM analyse_resultat
+            WHERE date_analyse = :date_analyse
+              AND (
+                    type_trans IS NULL
+                    OR TRIM(type_trans) = ''
+                    OR UPPER(TRIM(type_trans)) = 'NON_DEFINI'
+                  )
+            ORDER BY site
+            LIMIT " . (int) $limit;
+
+        return $this->connection->fetchAllAssociative($sql, [
+            'date_analyse' => $lastDate,
+        ]);
+    }
+
+    public function countSitesSansType(): int
+    {
+        $lastDate = $this->connection->fetchOne("
+            SELECT MAX(date_analyse) FROM analyse_resultat
+        ");
+
+        if (!$lastDate) {
+            return 0;
+        }
+
+        return (int) $this->connection->fetchOne("
+            SELECT COUNT(*)
+            FROM analyse_resultat
+            WHERE date_analyse = :date_analyse
+              AND (
+                    type_trans IS NULL
+                    OR TRIM(type_trans) = ''
+                    OR UPPER(TRIM(type_trans)) = 'NON_DEFINI'
+                  )
+        ", [
+            'date_analyse' => $lastDate,
+        ]);
     }
 
     public function envoyerAlertesParEmail(): int

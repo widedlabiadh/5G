@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Traiter la tâche - NetWON{% endblock %}
+
+{% block stylesheets %}
+<style>
+.task-container{max-width:920px;margin:0 auto}.task-header-banner{background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);color:white;padding:28px;border-radius:16px;margin-bottom:24px}
+.task-title-main{font-size:28px;font-weight:700;margin:0 0 10px}.task-meta-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:18px}
+.meta-badge{background:rgba(255,255,255,.18);padding:12px;border-radius:10px}.meta-label{display:block;font-size:12px;opacity:.9;margin-bottom:4px}.meta-value{font-weight:700}
+.task-details-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}.task-section,.form-section{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:22px}
+.section-title{font-weight:700;color:#1e293b;margin-bottom:14px;font-size:16px;display:flex;gap:8px}.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:14px}.info-row:last-child{border-bottom:none}
+.info-label{color:#64748b;font-weight:500}.info-value{color:#0f172a;font-weight:600}.form-group{margin-bottom:18px}.form-label,label{display:block;font-weight:700;color:#1e293b;margin-bottom:8px;font-size:14px}
+.form-control,select,textarea{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:14px}textarea{resize:vertical;min-height:110px}
+.button-group{display:flex;gap:12px;justify-content:flex-end;margin-top:22px}.btn{padding:11px 22px;border-radius:10px;font-weight:700;border:none;cursor:pointer;text-decoration:none}.btn-success{background:#10b981;color:white}.btn-secondary{background:#94a3b8;color:white}.alert-info{background:#dbeafe;color:#0c4a6e;border-left:4px solid #3b82f6;padding:14px;border-radius:10px;margin-bottom:18px}
+.site-list{display:grid;gap:10px}.site-item{border:1px solid #e2e8f0;border-radius:12px;padding:12px;background:#f8fafc}.site-name{font-weight:800;color:#0f172a}.site-meta{font-size:13px;color:#475569;margin-top:5px}.badge{display:inline-block;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:800}.badge.green{background:#dcfce7;color:#16a34a}.badge.red{background:#fee2e2;color:#dc2626}
+@media(max-width:768px){.task-details-grid{grid-template-columns:1fr}.button-group{flex-direction:column}.btn{width:100%;text-align:center}}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="task-container">
+    <div class="task-header-banner">
+        <div class="task-title-main">Terminer la tâche</div>
+        <div class="task-meta-info">
+            <div class="meta-badge"><span class="meta-label">Titre</span><span class="meta-value">{{ task.title }}</span></div>
+            <div class="meta-badge"><span class="meta-label">Ticket</span><span class="meta-value">#{{ task.ticket.id }}</span></div>
+            <div class="meta-badge"><span class="meta-label">Étape</span><span class="meta-value">{{ task.stepCode ? task.stepCode|upper|replace({'_': ' '}) : 'TRAITEMENT' }}</span></div>
+        </div>
+    </div>
+
+    <div class="task-details-grid">
+        <div class="task-section">
+            <div class="section-title">Détails de la tâche</div>
+            <div class="info-row"><span class="info-label">Statut</span><span class="info-value">{{ task.status|upper }}</span></div>
+            <div class="info-row"><span class="info-label">Assigné à</span><span class="info-value">{{ task.assignedTo.fullName ?? task.assignedTo.email }}</span></div>
+            {% if task.startedAt %}<div class="info-row"><span class="info-label">Démarrée le</span><span class="info-value">{{ task.startedAt|date('d/m/Y H:i') }}</span></div>{% endif %}
+        </div>
+
+        <div class="task-section">
+            <div class="section-title">Infos du ticket</div>
+            <div class="info-row"><span class="info-label">Titre</span><span class="info-value">{{ ticket.title }}</span></div>
+            <div class="info-row"><span class="info-label">Progression</span><span class="info-value">{{ ticket.progress }}%</span></div>
+            <div class="info-row"><span class="info-label">Site</span><span class="info-value">{{ ticket.site ? ticket.site.site : '-' }}</span></div>
+            <div class="info-row"><span class="info-label">Créé le</span><span class="info-value">{{ ticket.createdAt|date('d/m/Y') }}</span></div>
+        </div>
+    </div>
+
+    {% if task.description %}
+        <div class="task-section">
+            <div class="section-title">Description</div>
+            <p style="color:#475569;line-height:1.6;margin:0;">{{ task.description }}</p>
+        </div>
+    {% endif %}
+
+    {% if ticket.ticketSites is not empty %}
+        <div class="task-section">
+            <div class="section-title">Sites et décision UMPT</div>
+            <div class="site-list">
+                {% for ticketSite in ticket.ticketSites %}
+                    <div class="site-item">
+                        <div class="site-name">{{ ticketSite.siteName|clean_site }}</div>
+                        <div class="site-meta">
+                            Carte:
+                            {% if ticketSite.umptType %}
+                                {% if ticketSite.swapRequired %}
+                                    <span class="badge red">{{ ticketSite.umptType }}</span>
+                                {% else %}
+                                    <span class="badge green">{{ ticketSite.umptType }}</span>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                        <div class="site-meta">{{ ticketSite.swapComment ?: 'Type UMPT non renseigné - vérification SuperUser requise' }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="form-section">
+        <div class="section-title">Valider la tâche</div>
+        <div class="alert-info">Remplissez ce formulaire pour marquer la tâche comme traitée et conserver la décision dans l’historique.</div>
+
+        {{ form_start(form, {'attr': {'class': 'workflow-form'}}) }}
+            {{ form_row(form.decision, {'attr': {'class': 'form-control'}}) }}
+            {% if form.siteValidated is defined %}
+                {{ form_row(form.siteValidated, {'attr': {'class': 'form-control'}}) }}
+            {% endif %}
+            {{ form_row(form.comment, {'attr': {'class': 'form-control'}}) }}
+            {{ form_row(form.proofFile, {'attr': {'class': 'form-control'}}) }}
+
+            <div class="button-group">
+                <a href="{{ path('team_workflow_index') }}" class="btn btn-secondary">← Annuler</a>
+                <button type="submit" class="btn btn-success">✓ Valider et continuer</button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

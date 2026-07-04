@@ -43,7 +43,7 @@ class PythonApiClient
     public function processFiles(UploadedFile $traffic, ?UploadedFile $port, ?UploadedFile $liaison, ?UploadedFile $gps = null): array
     {
         if (!$this->isAvailable()) {
-            return ['success' => false, 'error' => 'API Python hors ligne.'];
+            return ['success' => false, 'message' => 'API Python hors ligne.'];
         }
 
         $files = [
@@ -69,15 +69,24 @@ class PythonApiClient
             $response = $this->http->request('POST', $this->baseUrl . '/traiter', [
                 'body' => $multipart['body'],
                 'headers' => $headers,
-                'timeout' => 600,
+                'timeout' => 1800,
+                'max_duration' => 0,
             ]);
             $data = $response->toArray();
-            if ($data['status'] === 'success') {
-                return ['success' => true, 'message' => $data['message'], 'data' => $data['data']];
+            if (($data['status'] ?? null) === 'success') {
+                return [
+                    'success' => true,
+                    'message' => $data['message'] ?? 'Traitement terminé avec succès.',
+                    'data' => $data['data'] ?? [],
+                ];
             }
-            return ['success' => false, 'error' => $data['message'] ?? 'Erreur inconnue'];
+            return [
+                'success' => false,
+                'message' => $data['message'] ?? 'Erreur inconnue pendant le traitement Python.',
+                'detail' => $data['detail'] ?? null,
+            ];
         } catch (\Exception $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
@@ -108,6 +117,50 @@ class PythonApiClient
             return $response->toArray();
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
+
+    public function importDropCong(UploadedFile $drop1, ?UploadedFile $drop2 = null): array
+    {
+        if (!$this->isAvailable()) {
+            return ['success' => false, 'message' => 'API Python hors ligne.'];
+        }
+
+        $files = [
+            'drop1' => ['path' => $drop1->getPathname(), 'filename' => $drop1->getClientOriginalName()],
+        ];
+        if ($drop2) {
+            $files['drop2'] = ['path' => $drop2->getPathname(), 'filename' => $drop2->getClientOriginalName()];
+        }
+
+        $multipart = $this->buildMultipartBody($files);
+        $headers = [
+            'Content-Type' => 'multipart/form-data; boundary=' . $multipart['boundary'],
+        ];
+
+        try {
+            $response = $this->http->request('POST', $this->baseUrl . '/dropcong', [
+                'body' => $multipart['body'],
+                'headers' => $headers,
+                'timeout' => 300,
+                'max_duration' => 0,
+            ]);
+            $data = $response->toArray();
+            if (($data['status'] ?? null) === 'success') {
+                return [
+                    'success' => true,
+                    'message' => $data['message'] ?? 'DropCong importé avec succès.',
+                    'data' => $data['data'] ?? [],
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => $data['message'] ?? 'Erreur inconnue pendant l’import DropCong.',
+                'detail' => $data['detail'] ?? null,
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 }

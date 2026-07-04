@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Export — {{ conversation.title }}</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111827; margin: 24px; }
+        h1 { font-size: 18px; margin: 0 0 6px; }
+        .meta { color: #64748b; font-size: 10px; margin-bottom: 20px; }
+        .message { margin-bottom: 14px; page-break-inside: avoid; }
+        .role { font-weight: bold; font-size: 10px; text-transform: uppercase; margin-bottom: 4px; }
+        .role.user { color: #1d4ed8; }
+        .role.assistant { color: #c2410c; }
+        .content { white-space: pre-wrap; line-height: 1.5; border-left: 3px solid #e2e8f0; padding-left: 10px; }
+        .raw { margin-top: 6px; font-size: 9px; color: #475569; background: #f8fafc; padding: 8px; }
+    </style>
+</head>
+<body>
+    <h1>{{ conversation.title }}</h1>
+    <p class="meta">
+        Export NetWON — {{ user.fullName ?? user.email }}
+        — {{ exportedAt|date('d/m/Y H:i') }}
+    </p>
+
+    {% for message in conversation.messages %}
+        {% if not (message.system ?? false) %}
+            <div class="message">
+                <div class="role {{ message.role }}">{{ message.role == 'user' ? 'Utilisateur' : 'Assistant NetWON' }}</div>
+                <div class="content">{{ message.content }}</div>
+                {% if message.rawData is defined and message.rawData %}
+                    <div class="raw"><strong>Donnees brutes (mode expert)</strong><br>{{ message.rawData }}</div>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endfor %}
+</body>
+</html>

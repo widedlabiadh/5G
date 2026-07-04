@@ -4,14 +4,20 @@
 namespace App\Controller;
 
 use App\DTO\TicketSummaryDTO;
+use App\Entity\AnalyseResultat;
 use App\Entity\Ticket;
 use App\Entity\TicketComment;
+use App\Entity\TicketSite;
 use App\Entity\TicketTask;
+use App\Form\TicketType;
 use App\Repository\AnalyseResultatRepository;
 use App\Repository\TicketRepository;
-use App\Repository\UserRepository;
+use App\Repository\UmptSiteRepository;
+use App\Service\NotificationService;
 use App\Service\TicketHistoryService;
 use App\Service\TicketWorkflowService;
+use App\Service\UmptCompatibilityService;
+use App\Service\WorkflowAutoAssigner;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,9 +39,7 @@ class WorkflowController extends AbstractController
             $stats = $ticketRepository->getStatistics();
             $kanban = $ticketRepository->getKanbanCards();
         } else {
-            $tickets = $ticketRepository->findByUserOptimized($user);
-            $stats = null;
-            $kanban = null;
+            return $this->redirectToRoute('team_workflow_index');
         }
         
         $ticketsDTO = array_map(fn($t) => TicketSummaryDTO::fromEntity($t, $role), $tickets);
@@ -55,9 +59,76 @@ class WorkflowController extends AbstractController
         EntityManagerInterface $em,
         TicketWorkflowService $workflowService,
         AnalyseResultatRepository $siteRepository,
-        UserRepository $userRepository
+        WorkflowAutoAssigner $autoAssigner,
+        NotificationService $notificationService,
+        UmptSiteRepository $umptRepository,
+        UmptCompatibilityService $umptCompatibility
     ): Response {
         $this->denyAccessUnlessGranted('ROLE_SUPERUSER');
+
+        $ticket = new Ticket();
+        $form = $this->createForm(TicketType::class, $ticket);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $selectedSiteIds = array_values(array_unique(array_filter(
+                array_map('intval', $request->request->all('site_ids')),
+                static fn (int $siteId): bool => $siteId > 0
+            )));
+
+            if (empty($selectedSiteIds)) {
+                $this->addFlash('error', 'Veuillez choisir au moins un site.');
+                return $this->redirectToRoute('workflow_new');
+            }
+
+            $ticket->setCreatedBy($this->getUser());
+            $ticket->setStatus('open');
+            $ticket->setProgress(0);
+            $em->persist($ticket);
+
+            $selectedSites = $siteRepository->findWorkflowSitesByIds($selectedSiteIds);
+            if (empty($selectedSites)) {
+                $this->addFlash('error', 'Aucun site valide sélectionné.');
+                return $this->redirectToRoute('workflow_new');
+            }
+            $umptMap = $umptRepository->findMapBySites(array_column($selectedSites, 'site'));
+
+            foreach ($selectedSites as $site) {
+                $siteName = (string) $site['site'];
+                $umpt = $umptMap[UmptSiteRepository::normalizeSite($siteName)] ?? null;
+
+                if ($ticket->getSite() === null) {
+                    $ticket->setSite($em->getReference(AnalyseResultat::class, (int) $site['id']));
+                }
+
+                $ticketSite = new TicketSite();
+                $ticketSite->setTicket($ticket);
+                $ticketSite->setSourceSiteId((int) $site['id']);
+                $ticketSite->setSiteName($siteName);
+                $ticketSite->setTypeTrans($site['typeTrans'] ?? null);
+                $ticketSite->setServiceName($this->serviceNameForSite($site));
+                $ticketSite->setMaxTrafic(isset($site['maxTrafic']) ? (float) $site['maxTrafic'] : null);
+                $ticketSite->setUmptType($umpt?->getCardType());
+                $ticketSite->setSwapRequired($umpt?->isSwapRequired());
+                $ticketSite->setSwapComment($umpt ? $umpt->getSwapComment() : $umptCompatibility->commentFor(null));
+                $em->persist($ticketSite);
+            }
+
+            $assignedUsers = $autoAssigner->assignUsersForSites($selectedSites, $ticket);
+            $em->flush();
+
+            $workflowService->refreshProgress($ticket);
+            $notificationService->notifyWorkflowAssignment($ticket, $assignedUsers, count($assignedUsers));
+
+            $this->addFlash('success', sprintf('Workflow créé avec succès (%d site(s), %d utilisateur(s) assigné(s)).', count($selectedSites), count($assignedUsers)));
+            return $this->redirectToRoute('workflow_show', ['id' => $ticket->getId()]);
+        }
+
+        return $this->render('workflow/new.html.twig', [
+            'user' => $this->getUser(),
+            'form' => $form->createView(),
+            'availableSites' => $siteRepository->findWorkflowChoices(),
+        ]);
         
         if ($request->isMethod('POST')) {
             $ticket = new Ticket();
@@ -86,6 +157,8 @@ class WorkflowController extends AbstractController
                     $task->setAssignedTo($assignedUser);
                     $task->setTitle('Traitement: ' . $ticket->getTitle());
                     $task->setDescription($ticket->getDescription());
+                    $task->setStepCode('manual_workflow');
+                    $task->setStepOrder(1);
                     $em->persist($task);
                 }
             }
@@ -116,6 +189,25 @@ class WorkflowController extends AbstractController
         ]);
     }
 
+    private function serviceNameForSite($site): string
+    {
+        $type = strtoupper((string) (is_array($site) ? ($site['typeTrans'] ?? '') : $site->getTypeTrans()));
+
+        if (str_contains($type, 'FO') || str_contains($type, 'FIBRE')) {
+            return 'FO';
+        }
+
+        if (str_contains($type, 'FH') || str_contains($type, 'RADIO')) {
+            return 'Radio/FH';
+        }
+
+        if (str_contains($type, 'BH') || str_contains($type, 'BACKBONE')) {
+            return 'Backhaul Sharing/IP';
+        }
+
+        return 'IP';
+    }
+
     #[Route('/show/{id}', name: 'workflow_show')]
     public function show(Ticket $ticket): Response
     {
@@ -130,7 +222,7 @@ class WorkflowController extends AbstractController
     // GESTION DES TÂCHES
     // ============================================================
 
-    #[Route('/task/{id}/complete', name: 'workflow_task_complete', methods: ['POST'])]
+    #[Route('/task/{id}/complete', name: 'workflow_task_complete', methods: ['GET', 'POST'])]
     public function completeTask(
         TicketTask $task,
         Request $request,
@@ -145,6 +237,13 @@ class WorkflowController extends AbstractController
             $this->addFlash('error', '❌ Vous n\'êtes pas autorisé à compléter cette tâche.');
             return $this->redirectToRoute('workflow_show', ['id' => $task->getTicket()->getId()]);
         }
+
+        if ($request->isMethod('GET')) {
+            return $this->render('workflow/task_complete.html.twig', [
+                'user' => $user,
+                'task' => $task,
+            ]);
+        }
         
         $comment = $request->request->get('comment');
         
@@ -156,7 +255,11 @@ class WorkflowController extends AbstractController
         $file = $request->files->get('proofFile');
         if ($file) {
             $filename = uniqid() . '.' . $file->guessExtension();
-            $file->move($this->getParameter('kernel.project_dir') . '/public/uploads/ticket_proofs', $filename);
+            $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/ticket_proofs';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0775, true);
+            }
+            $file->move($uploadDir, $filename);
             $task->setProofFile($filename);
         }
         

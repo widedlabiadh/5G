@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Notifications - NetWON{% endblock %}
+
+{% block stylesheets %}
+<style>
+.notifications-page{display:flex;flex-direction:column;gap:22px}.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.page-title{font-size:30px;font-weight:800;color:#0f172a;margin:0}.page-desc{font-size:14px;color:#64748b;margin-top:6px}.card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:22px;box-shadow:0 8px 24px rgba(15,23,42,.05)}.panel-title{font-size:18px;font-weight:800;color:#1e293b;margin:0 0 16px}.table-like{display:flex;flex-direction:column;gap:0}.table-row{display:grid;grid-template-columns:150px 140px minmax(240px,1fr) 100px 160px;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid #f1f5f9}.table-row:last-child{border-bottom:none}.table-head{font-size:12px;text-transform:uppercase;color:#64748b;font-weight:800;background:#f8fafc;padding:12px;border-radius:10px;border-bottom:0}.muted{font-size:12px;color:#64748b;margin-top:4px}.empty-state{text-align:center;padding:34px 20px;background:#f8fafc;border:2px dashed #cbd5e1;border-radius:14px;color:#64748b}.badge{display:inline-block;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:800}.badge.green{background:#dcfce7;color:#16a34a}.badge.red{background:#fee2e2;color:#dc2626}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:10px;border:0;text-decoration:none;font-weight:800;font-size:13px;background:#f1f5f9;color:#334155;cursor:pointer}.btn:hover{background:#e2e8f0}.btn-sm{padding:7px 10px;font-size:12px}@media(max-width:900px){.table-row{grid-template-columns:1fr}.table-head{display:none}.page-header{align-items:flex-start;flex-direction:column}}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="notifications-page">
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">Notifications</h2>
+            <div class="page-desc">Vos alertes et rappels.</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 class="panel-title">Dernières notifications</h3>
+
+        {% if notifications is empty %}
+            <div class="empty-state">Aucune notification.</div>
+        {% else %}
+            <div class="table-like">
+                <div class="table-row table-head">
+                    <div>Date</div>
+                    <div>Type</div>
+                    <div>Message</div>
+                    <div>Statut</div>
+                    <div>Action</div>
+                </div>
+                {% for n in notifications %}
+                    <div class="table-row">
+                        <div>{{ n.createdAt|date('d/m/Y H:i') }}</div>
+                        <div>{{ n.type }}</div>
+                        <div>
+                            <strong>{{ n.title }}</strong>
+                            {% if n.message %}
+                                <div>{{ n.message }}</div>
+                            {% endif %}
+                            {% if n.ticket %}
+                                <div class="muted">
+                                    <a href="{{ path('workflow_show', {id: n.ticket.id}) }}">Voir ticket #{{ n.ticket.id }}</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% if n.isRead %}
+                                <span class="badge green">Lu</span>
+                            {% else %}
+                                <span class="badge red">Non lu</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% if not n.isRead %}
+                                <form method="post" action="{{ path('dashboard_notification_read', {id: n.id}) }}">
+                                    <button class="btn btn-sm">Marquer comme lu</button>
+                                </form>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

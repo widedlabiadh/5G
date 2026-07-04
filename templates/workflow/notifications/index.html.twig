@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Notifications workflow - NetWON{% endblock %}
+
+{% block stylesheets %}
+<style>
+.card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:22px}.panel-title{font-size:18px;font-weight:700;margin-bottom:16px}.table-like{display:flex;flex-direction:column}.table-row{display:grid;grid-template-columns:150px 150px 1fr 100px 150px;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid #f1f5f9}.table-head{font-weight:700;color:#475569;background:#f8fafc;padding:12px;border-radius:10px}.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}.badge.green{background:#dcfce7;color:#16a34a}.badge.red{background:#fee2e2;color:#dc2626}.btn-sm{padding:7px 10px;border:0;border-radius:8px;background:#e2e8f0;cursor:pointer}.muted{color:#64748b;font-size:12px}.empty-state{text-align:center;padding:30px;color:#64748b}
+@media(max-width:900px){.table-row{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="page-header" style="margin-bottom:20px;">
+    <h2 class="page-title">Notifications</h2>
+    <div class="page-desc">Vos alertes et rappels liés aux workflows.</div>
+</div>
+
+<div class="card">
+    <h3 class="panel-title">Dernières notifications</h3>
+    {% if notifications is empty %}
+        <div class="empty-state">Aucune notification.</div>
+    {% else %}
+        <div class="table-like">
+            <div class="table-row table-head"><div>Date</div><div>Type</div><div>Message</div><div>Statut</div><div>Action</div></div>
+            {% for n in notifications %}
+                <div class="table-row">
+                    <div>{{ n.createdAt|date('d/m/Y H:i') }}</div>
+                    <div>{{ n.type }}</div>
+                    <div>
+                        <strong>{{ n.title }}</strong>
+                        <div>{{ n.message }}</div>
+                        {% if n.ticket %}
+                            <div class="muted"><a href="{{ path('workflow_show', {id: n.ticket.id}) }}">Voir ticket #{{ n.ticket.id }}</a></div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if n.isRead %}
+                            <span class="badge green">Lu</span>
+                        {% else %}
+                            <span class="badge red">Non lu</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if not n.isRead %}
+                            <form method="post" action="{{ path('workflow_notification_read', {id: n.id}) }}">
+                                <button class="btn-sm">Marquer comme lu</button>
+                            </form>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

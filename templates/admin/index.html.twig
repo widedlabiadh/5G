@@ -1,20 +1,541 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello AdminController!{% endblock %}
+{% block title %}Admin Dashboard - NetWON{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+.admin-dashboard {
+    padding: 1.6rem 2rem 3rem;
+}
+
+.admin-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.admin-title {
+    margin: 0;
+    color: #07152f;
+    font-size: 1.55rem;
+    font-weight: 800;
+}
+
+.admin-desc {
+    margin-top: .35rem;
+    color: #64748b;
+    font-size: .9rem;
+}
+
+.admin-actions {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    flex-wrap: wrap;
+}
+
+.admin-date {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: .58rem .85rem;
+    color: #475569;
+    background: #fff;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.btn-admin {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    border: 0;
+    border-radius: 8px;
+    padding: .65rem .95rem;
+    color: #fff;
+    background: #2563eb;
+    text-decoration: none;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.btn-admin:hover {
+    color: #fff;
+    background: #1d4ed8;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.stat-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 134px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.1rem;
+    background: #fff;
+}
+
+.stat-card.blue { border-left: 4px solid #2563eb; }
+.stat-card.red { border-left: 4px solid #dc2626; }
+.stat-card.green { border-left: 4px solid #0f766e; }
+.stat-card.purple { border-left: 4px solid #7c3aed; }
+
+.stat-label {
+    color: #64748b;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    margin-top: .4rem;
+    color: #020617;
+    font-size: 2rem;
+    font-weight: 850;
+    line-height: 1.1;
+}
+
+.stat-small {
+    margin-top: .45rem;
+    color: #64748b;
+    font-size: .78rem;
+}
+
+.stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.stat-card.blue .stat-icon { color: #2563eb; background: #dbeafe; }
+.stat-card.red .stat-icon { color: #dc2626; background: #fee2e2; }
+.stat-card.green .stat-icon { color: #0f766e; background: #ccfbf1; }
+.stat-card.purple .stat-icon { color: #7c3aed; background: #ede9fe; }
+
+.service-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+    margin: .25rem 0 1.25rem;
+}
+
+.service-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: .58rem .8rem;
+    color: #475569;
+    background: #fff;
+    text-decoration: none;
+    font-size: .8rem;
+    font-weight: 800;
+}
+
+.service-tab.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(320px, .9fr);
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.panel-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: .96rem;
+    font-weight: 850;
+}
+
+.panel-sub {
+    color: #64748b;
+    font-size: .76rem;
+    font-weight: 700;
+}
+
+.panel-body {
+    padding: 1.1rem;
+}
+
+.chart-box {
+    height: 320px;
+    position: relative;
+}
+
+.legend {
+    display: grid;
+    gap: .55rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    color: #475569;
+    font-size: .82rem;
+}
+
+.legend-name {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.dot-blue { background: #2563eb; }
+.dot-green { background: #0f766e; }
+.dot-purple { background: #7c3aed; }
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .82rem;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: .82rem 1rem;
+    border-bottom: 1px solid #edf2f7;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.admin-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: .72rem;
+    font-weight: 850;
+    text-transform: uppercase;
+}
+
+.admin-table td {
+    color: #334155;
+}
+
+.badge-admin {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: .22rem .6rem;
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.badge-service { background: #e2e8f0; color: #334155; }
+.badge-critical { background: #fee2e2; color: #dc2626; }
+.badge-normal { background: #dcfce7; color: #15803d; }
+
+.empty-state {
+    padding: 2rem;
+    color: #64748b;
+    text-align: center;
+    font-weight: 700;
+}
+
+@media (max-width: 1180px) {
+    .stats-grid,
+    .charts-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .admin-dashboard {
+        padding: 1rem;
+    }
+    .admin-header,
+    .admin-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .stats-grid,
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+<div class="admin-dashboard">
+    <div class="admin-header">
+        <div>
+            <h1 class="admin-title">Admin Dashboard</h1>
+            <div class="admin-desc">Vue d'administration dynamique basée sur la dernière analyse importée.</div>
+        </div>
+        <div class="admin-actions">
+            <div class="admin-date">
+                {% if lastAnalyseDate %}
+                    Analyse: {{ lastAnalyseDate|date('d/m/Y H:i') }}
+                {% else %}
+                    Aucune analyse
+                {% endif %}
+            </div>
+            <a href="{{ path('admin_export_statistics_pdf') }}" class="btn-admin">
+                <i class="fas fa-file-pdf"></i>
+                Exporter PDF
+            </a>
+        </div>
+    </div>
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <div>
+                <div class="stat-label">Total Sites</div>
+                <div class="stat-value">{{ totalSites }}</div>
+                <div class="stat-small">
+                    FO {{ serviceDistribution.FO|default(0) }} ·
+                    FH {{ serviceDistribution.FH|default(0) }} ·
+                    Shared {{ serviceDistribution.SHARED|default(0) }}
+                </div>
+            </div>
+            <div class="stat-icon"><i class="fas fa-tower-cell"></i></div>
+        </div>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>C:/Users/DELL/PFE_5G/src/Controller/AdminController.php</code></li>
-        <li>Your template at <code>C:/Users/DELL/PFE_5G/templates/admin/index.html.twig</code></li>
-    </ul>
+        <div class="stat-card red">
+            <div>
+                <div class="stat-label">Sites Critiques</div>
+                <div class="stat-value">{{ criticalSites }}</div>
+                <div class="stat-small">{{ criticalPercentage }}% du périmètre sélectionné</div>
+            </div>
+            <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
+        </div>
+
+        <div class="stat-card green">
+            <div>
+                <div class="stat-label">Trafic Moyen</div>
+                <div class="stat-value">{{ avgTraffic|number_format(2, ',', ' ') }}</div>
+                <div class="stat-small">Max observé: {{ maxTraffic|number_format(2, ',', ' ') }} Mbps</div>
+            </div>
+            <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+        </div>
+
+        <div class="stat-card purple">
+            <div>
+                <div class="stat-label">Services Actifs</div>
+                <div class="stat-value">{{ activeServices }}</div>
+                <div class="stat-small">Calculé depuis FO / FH / Shared</div>
+            </div>
+            <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+        </div>
+    </div>
+
+    <div class="service-tabs">
+        <a href="{{ path('admin_dashboard') }}" class="service-tab {{ selectedService == 'ALL' ? 'active' : '' }}">
+            <i class="fas fa-table-cells-large"></i> Tous les sites
+        </a>
+        <a href="{{ path('admin_dashboard_sites', {service: 'FO'}) }}" class="service-tab {{ selectedService == 'FO' ? 'active' : '' }}">
+            <i class="fas fa-network-wired"></i> FO ({{ serviceDistribution.FO|default(0) }})
+        </a>
+        <a href="{{ path('admin_dashboard_sites', {service: 'FH'}) }}" class="service-tab {{ selectedService == 'FH' ? 'active' : '' }}">
+            <i class="fas fa-radio"></i> FH ({{ serviceDistribution.FH|default(0) }})
+        </a>
+        <a href="{{ path('admin_dashboard_sites', {service: 'SHARED'}) }}" class="service-tab {{ selectedService == 'SHARED' ? 'active' : '' }}">
+            <i class="fas fa-share-nodes"></i> Shared ({{ serviceDistribution.SHARED|default(0) }})
+        </a>
+    </div>
+
+    <div class="charts-grid">
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">Classification des sites</h2>
+                <span class="panel-sub">Total vs critique</span>
+            </div>
+            <div class="panel-body">
+                <div class="chart-box">
+                    <canvas id="classificationChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">Distribution service</h2>
+                <span class="panel-sub">{{ activeServices }} actif(s)</span>
+            </div>
+            <div class="panel-body">
+                <div class="chart-box">
+                    <canvas id="serviceDonut"></canvas>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><span class="legend-name"><span class="legend-dot dot-blue"></span>FO</span><strong>{{ serviceDistribution.FO|default(0) }}</strong></div>
+                    <div class="legend-item"><span class="legend-name"><span class="legend-dot dot-green"></span>FH</span><strong>{{ serviceDistribution.FH|default(0) }}</strong></div>
+                    <div class="legend-item"><span class="legend-name"><span class="legend-dot dot-purple"></span>Shared</span><strong>{{ serviceDistribution.SHARED|default(0) }}</strong></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section class="panel">
+        <div class="panel-head">
+            <h2 class="panel-title">Derniers sites traités</h2>
+            <span class="panel-sub">{{ sites|length }} affiché(s)</span>
+        </div>
+
+        {% if sites is empty %}
+            <div class="empty-state">Aucune donnée importée pour ce périmètre.</div>
+        {% else %}
+            <div class="table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Site</th>
+                            <th>Service</th>
+                            <th>Classification</th>
+                            <th>Type Trans</th>
+                            <th>Trafic Max</th>
+                            <th>Occurrences</th>
+                            <th>État</th>
+                            <th>Date Max</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for site in sites %}
+                        <tr>
+                            <td><strong>{{ site.siteName }}</strong></td>
+                            <td><span class="badge-admin badge-service">{{ site.serviceName }}</span></td>
+                            <td>{{ site.classification ?: '-' }}</td>
+                            <td>{{ site.typeTrans ?: '-' }}</td>
+                            <td>{{ site.maxTrafic|number_format(2, ',', ' ') }} Mbps</td>
+                            <td>{{ site.nombreOccurrences }}</td>
+                            <td>
+                                {% if site.isCritical %}
+                                    <span class="badge-admin badge-critical">Critique</span>
+                                {% else %}
+                                    <span class="badge-admin badge-normal">Normal</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ site.dateMax ? site.dateMax|date('d/m/Y H:i') : '-' }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const classificationStats = {{ classificationStats|json_encode|raw }};
+    const classificationLabels = {{ classificationLabels|json_encode|raw }};
+    const serviceDistribution = {{ serviceDistribution|json_encode|raw }};
+
+    const labels = classificationLabels.length ? classificationLabels : ['Aucune donnée'];
+    const totalData = labels.map(label => classificationStats[label]?.total || 0);
+    const criticalData = labels.map(label => classificationStats[label]?.critical || 0);
+
+    const commonTooltip = {
+        backgroundColor: '#ffffff',
+        titleColor: '#020617',
+        bodyColor: '#334155',
+        borderColor: '#e2e8f0',
+        borderWidth: 1,
+        padding: 12,
+        displayColors: true
+    };
+
+    new Chart(document.getElementById('classificationChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Total', data: totalData, backgroundColor: '#2563eb', borderRadius: 5 },
+                { label: 'Critique', data: criticalData, backgroundColor: '#dc2626', borderRadius: 5 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                tooltip: commonTooltip,
+                legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12 } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#edf2f7' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('serviceDonut'), {
+        type: 'doughnut',
+        data: {
+            labels: ['FO', 'FH', 'Shared'],
+            datasets: [{
+                data: [
+                    serviceDistribution.FO || 0,
+                    serviceDistribution.FH || 0,
+                    serviceDistribution.SHARED || 0
+                ],
+                backgroundColor: ['#2563eb', '#0f766e', '#7c3aed'],
+                borderColor: '#ffffff',
+                borderWidth: 4,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '62%',
+            plugins: {
+                tooltip: commonTooltip,
+                legend: { display: false }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
