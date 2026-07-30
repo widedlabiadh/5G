@@ -810,6 +810,10 @@ def predict_site(site: Dict[str, Any], persist: bool = True) -> Dict[str, Any]:
             statut = ""
             conf_statut = 1.0
             probas_statut = {"AUCUN": 1.0}
+        elif etat == "RISQUE_DE_CONGESTION":
+            statut = "SOUS_OBSERVATION"
+            conf_statut = 1.0
+            probas_statut = {"SOUS_OBSERVATION": 1.0}
         else:
             statut, conf_statut, probas_statut = _predict_with_model(row_df, FEATURES_ETAT, statut_model, statut_scaler, statut_enc)
 
@@ -841,7 +845,11 @@ def predict_site(site: Dict[str, Any], persist: bool = True) -> Dict[str, Any]:
             "nombre_occurrences_fdd": proj_j7["occ_fdd_proj_j7"],
         })
         statut_j7 = "" if etat_j7 == "A_VERIFIER_CAPACITE" else business_statut(
-            {"nombre_occurrences": proj_j7["occ_proj_j7"],
+            {**normalized,
+             "taux_utilisation": proj_j7["taux_proj_j7"],
+             "taux_utilisation_tdd": proj_j7["taux_tdd_proj_j7"],
+             "taux_utilisation_fdd": proj_j7["taux_fdd_proj_j7"],
+             "nombre_occurrences": proj_j7["occ_proj_j7"],
              "nombre_occurrences_tdd": proj_j7["occ_tdd_proj_j7"],
              "nombre_occurrences_fdd": proj_j7["occ_fdd_proj_j7"]}, 7
         )
@@ -897,6 +905,8 @@ def _compute_statut_j7(
 ) -> str:
     if etat_j7 == "A_VERIFIER_CAPACITE":
         return ""
+    if etat_j7 == "RISQUE_DE_CONGESTION":
+        return "SOUS_OBSERVATION"
     try:
         proj_df = pd.DataFrame([proj_j7])
         proj_df, _ = _encode_categoricals(proj_df, encoders)
@@ -911,7 +921,13 @@ def _compute_statut_j7(
         return label
     except Exception:
         return business_statut(
-            {"nombre_occurrences": proj_j7.get("occ_proj_j7", 0),
+            {"type_trans": proj_j7.get("type_trans", ""),
+             "classification": proj_j7.get("classification", ""),
+             "capacite_mbps": proj_j7.get("capacite_mbps", 0),
+             "taux_utilisation": proj_j7.get("taux_proj_j7", 0),
+             "taux_utilisation_tdd": proj_j7.get("taux_tdd_proj_j7", 0),
+             "taux_utilisation_fdd": proj_j7.get("taux_fdd_proj_j7", 0),
+             "nombre_occurrences": proj_j7.get("occ_proj_j7", 0),
              "nombre_occurrences_tdd": proj_j7.get("occ_tdd_proj_j7", 0),
              "nombre_occurrences_fdd": proj_j7.get("occ_fdd_proj_j7", 0)}, 7
         )

@@ -433,6 +433,17 @@
                     {% if tauxFdd is null and capacityFdd > 0 and maxFdd > 0 %}
                         {% set tauxFdd = (maxFdd / capacityFdd) * 100 %}
                     {% endif %}
+
+                    {% set risqueCongestion = (
+                        (tauxGlobal is not null and tauxGlobal >= 90 and occurrences < 57)
+                        or (tauxTdd is not null and tauxTdd >= 90 and occurrencesTdd < 57)
+                        or (tauxFdd is not null and tauxFdd >= 90 and occurrencesFdd < 57)
+                    ) %}
+                    {% if risqueCongestion %}
+                        {% set statut = 'SOUS_OBSERVATION' %}
+                        {% set statutLabel = 'SOUS OBSERVATION' %}
+                        {% set etat = 'RISQUE_DE_CONGESTION' %}
+                    {% endif %}
                     
                     {% set statutClass = '' %}
                     {% if statut == 'CRITIQUE' %}
@@ -519,7 +530,7 @@
                         </td>
                         <td class="text-end">
                             {% if tauxGlobal is not null and not isCotrans %}
-                                {% if tauxGlobal > 90 %}
+                                {% if tauxGlobal >= 90 %}
                                     <span class="utilization-badge utilization-high">{{ tauxGlobal|number_format(2, ',', ' ') }}%</span>
                                 {% elseif tauxGlobal > 70 %}
                                     <span class="utilization-badge utilization-med">{{ tauxGlobal|number_format(2, ',', ' ') }}%</span>
@@ -532,7 +543,7 @@
                         </td>
                         <td class="text-end">
                             {% if tauxTdd is not null %}
-                                {% if tauxTdd > 90 %}
+                                {% if tauxTdd >= 90 %}
                                     <span class="utilization-badge utilization-high">{{ tauxTdd|number_format(2, ',', ' ') }}%</span>
                                 {% elseif tauxTdd > 70 %}
                                     <span class="utilization-badge utilization-med">{{ tauxTdd|number_format(2, ',', ' ') }}%</span>
@@ -545,7 +556,7 @@
                         </td>
                         <td class="text-end">
                             {% if tauxFdd is not null %}
-                                {% if tauxFdd > 90 %}
+                                {% if tauxFdd >= 90 %}
                                     <span class="utilization-badge utilization-high">{{ tauxFdd|number_format(2, ',', ' ') }}%</span>
                                 {% elseif tauxFdd > 70 %}
                                     <span class="utilization-badge utilization-med">{{ tauxFdd|number_format(2, ',', ' ') }}%</span>

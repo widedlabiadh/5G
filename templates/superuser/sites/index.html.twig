@@ -471,8 +471,6 @@
                     {% for site in sites %}
                         {% set statutValue = site.statut|default('OK') %}
                         {% set etatValue = site.etat|default('OK') %}
-                        {% set statutClass = 'RISQUE' in statutValue ? 'pill-amber' : ('CONGESTION' in statutValue or statutValue == 'A_VERIFIER_CAPACITE' ? 'pill-red' : ('BRIDAGE' in statutValue ? 'pill-amber' : 'pill-complete')) %}
-                        {% set etatClass = 'RISQUE' in etatValue ? 'pill-amber' : ('CONGESTION' in etatValue or etatValue == 'A_VERIFIER_CAPACITE' ? 'pill-red' : ('BRIDAGE' in etatValue ? 'pill-amber' : 'pill-complete')) %}
                         <tr class="site-row" data-index="{{ loop.index0 }}">
                             <td><a href="{{ path('superuser_sites_edit_by_site', {site: site.name}) }}" class="site-name">{{ site.name }}</a></td>
                             <td>
@@ -496,26 +494,26 @@
                             <td class="text-end">{{ site.capaciteFddMbps > 0 ? site.capaciteFddMbps|number_format(0, ',', ' ') : '-' }}</td>
                             {% set clsS = site.classification|default('')|upper|replace({' ': '', '\t': ''}) %}
                             {% set isCotransS = 'COTRANS' in clsS %}
+                            {% set tauxGlobalS = site.tauxUtilisation is not null ? site.tauxUtilisation + 0 : null %}
+                            {% set tauxTddS = site.tauxUtilisationTdd is not null ? site.tauxUtilisationTdd + 0 : null %}
+                            {% set tauxFddS = site.tauxUtilisationFdd is not null ? site.tauxUtilisationFdd + 0 : null %}
                             <td class="text-end">
-                                {% if not isCotransS and site.tauxUtilisation is not null %}
-                                    {% set tv = site.tauxUtilisation + 0 %}
-                                    <span class="utilization-badge {% if tv > 90 %}utilization-high{% elseif tv > 70 %}utilization-med{% else %}utilization-low{% endif %}">{{ tv|number_format(2, ',', ' ') }}%</span>
+                                {% if not isCotransS and tauxGlobalS is not null %}
+                                    <span class="utilization-badge {% if tauxGlobalS >= 90 %}utilization-high{% elseif tauxGlobalS > 70 %}utilization-med{% else %}utilization-low{% endif %}">{{ tauxGlobalS|number_format(2, ',', ' ') }}%</span>
                                 {% else %}
                                     <span class="text-muted">—</span>
                                 {% endif %}
                             </td>
                             <td class="text-end">
-                                {% if site.tauxUtilisationTdd is not null %}
-                                    {% set tvt = site.tauxUtilisationTdd + 0 %}
-                                    <span class="utilization-badge {% if tvt > 90 %}utilization-high{% elseif tvt > 70 %}utilization-med{% else %}utilization-low{% endif %}">{{ tvt|number_format(2, ',', ' ') }}%</span>
+                                {% if tauxTddS is not null %}
+                                    <span class="utilization-badge {% if tauxTddS >= 90 %}utilization-high{% elseif tauxTddS > 70 %}utilization-med{% else %}utilization-low{% endif %}">{{ tauxTddS|number_format(2, ',', ' ') }}%</span>
                                 {% else %}
                                     <span class="text-muted">—</span>
                                 {% endif %}
                             </td>
                             <td class="text-end">
-                                {% if site.tauxUtilisationFdd is not null %}
-                                    {% set tvf = site.tauxUtilisationFdd + 0 %}
-                                    <span class="utilization-badge {% if tvf > 90 %}utilization-high{% elseif tvf > 70 %}utilization-med{% else %}utilization-low{% endif %}">{{ tvf|number_format(2, ',', ' ') }}%</span>
+                                {% if tauxFddS is not null %}
+                                    <span class="utilization-badge {% if tauxFddS >= 90 %}utilization-high{% elseif tauxFddS > 70 %}utilization-med{% else %}utilization-low{% endif %}">{{ tauxFddS|number_format(2, ',', ' ') }}%</span>
                                 {% else %}
                                     <span class="text-muted">—</span>
                                 {% endif %}
@@ -523,6 +521,20 @@
                             <td class="text-center">{{ site.nombreOccurrences|default(0) }}</td>
                             <td class="text-center">{{ site.nombreOccurrencesTdd|default(0) }}</td>
                             <td class="text-center">{{ site.nombreOccurrencesFdd|default(0) }}</td>
+                            {% set occS = site.nombreOccurrences|default(0) + 0 %}
+                            {% set occTddS = site.nombreOccurrencesTdd|default(0) + 0 %}
+                            {% set occFddS = site.nombreOccurrencesFdd|default(0) + 0 %}
+                            {% set risqueCongestionS = (
+                                (tauxGlobalS is not null and tauxGlobalS >= 90 and occS < 57)
+                                or (tauxTddS is not null and tauxTddS >= 90 and occTddS < 57)
+                                or (tauxFddS is not null and tauxFddS >= 90 and occFddS < 57)
+                            ) %}
+                            {% if risqueCongestionS %}
+                                {% set statutValue = 'SOUS OBSERVATION' %}
+                                {% set etatValue = 'RISQUE DE CONGESTION' %}
+                            {% endif %}
+                            {% set statutClass = 'RISQUE' in statutValue or 'OBSERVATION' in statutValue ? 'pill-amber' : ('CONGESTION' in statutValue or statutValue == 'A_VERIFIER_CAPACITE' ? 'pill-red' : ('BRIDAGE' in statutValue ? 'pill-amber' : 'pill-complete')) %}
+                            {% set etatClass = 'RISQUE' in etatValue ? 'pill-amber' : ('CONGESTION' in etatValue or etatValue == 'A_VERIFIER_CAPACITE' ? 'pill-red' : ('BRIDAGE' in etatValue ? 'pill-amber' : 'pill-complete')) %}
                             <td class="text-center"><span class="pill {{ statutClass }}">{{ statutValue }}</span></td>
                             <td class="text-center"><span class="pill {{ etatClass }}">{{ etatValue }}</span></td>
                             <td class="text-center">
